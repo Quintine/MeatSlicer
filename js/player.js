@@ -19,7 +19,7 @@ function initPlayer() {
       armor: 0, luck: 0, magnet: 1, magnetPull: 1, xpMul: 1, crit: 0.05, critMul: 2, bloodlust: 0,
       bleed: 0, igniteChance: 0, slowOnHit: 0, stunOnHit: 0, acidOnHit: 0, pullOnHit: 0,
       chain: 0, knockbackMul: 1, invBonus: 0, ammoEff: 1, ammoPickupMul: 1,
-      roomHeal: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
+      roomHeal: 0, roomHealChance: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
       orbSpeedMul: 1, orbDmgMul: 1, overShield: 0,
       rerolls: 0, rerollPerLevel: 0,
       maxHp: 6,

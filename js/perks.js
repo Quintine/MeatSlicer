@@ -20,7 +20,7 @@ const PERKS = [
   { id: 'thickhide',name: 'Thick Hide',      desc: '+4% chance to ignore damage', apply: s => { s.armor += 1 / 24; } },
   { id: 'secondwind',name: 'Second Wind',    desc: '+0.15s hurt immunity',  apply: s => { s.invBonus += 0.15; } },
   { id: 'scrapfeed',name: 'Scrap Feed',      desc: '5% less ammo consumed', apply: s => { s.ammoEff *= 1.05; } },
-  { id: 'boneknit', name: 'Bone Knit',       desc: 'Heal ½ heart after each combat room', apply: s => { s.roomHeal += 1; } },
+  { id: 'boneknit', name: 'Bone Knit',       desc: '3% chance to heal ½ heart after combat rooms', apply: s => { s.roomHealChance += 0.03; } },
   { id: 'spiteflesh',name: 'Spite Flesh',    desc: 'Contact attackers take damage', apply: s => { s.thorns += 4; } },
   { id: 'carrion',  name: 'Carrion Sense',   desc: '+8% pickup radius and pull speed', apply: s => { s.magnet *= 1.08; s.magnetPull *= 1.08; } },
   { id: 'sinew',    name: 'Sinew Weave',     desc: '+3% move speed and range', apply: s => { s.speedMul *= 1.03; s.rangeMul *= 1.03; } },

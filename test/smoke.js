@@ -770,6 +770,27 @@ console.log('== adaptive clean-room pressure ==');
   check('new runs reset pressure and streak', ctx.G.pressure === 1 && ctx.G.streak === 0);
 }
 
+console.log('== boneknit is a chance-based room heal ==');
+{
+  const p = ctx.G.player;
+  const savedHeal = p.stats.roomHeal, savedChance = p.stats.roomHealChance;
+  p.stats.roomHeal = 0; p.stats.roomHealChance = 0;
+  ctx.PERKS.find(k => k.id === 'boneknit').apply(p.stats, p);
+  check('boneknit grants a 3% roll per stack', Math.abs(p.stats.roomHealChance - 0.03) < 0.0001);
+  p.hp = 1; p.stats.maxHp = 10; ctx.G.roomDamaged = true; // dirty room: no pressure side-effects
+  const realChance = ctx.chance;
+  ctx.__smokeRealChance = realChance;
+  vm.runInContext('chance = () => true', ctx);
+  ctx.recordRoomClear({ type: 'combat' });
+  check('successful boneknit roll heals half a heart', p.hp === 2);
+  vm.runInContext('chance = () => false', ctx);
+  ctx.recordRoomClear({ type: 'combat' });
+  check('failed boneknit roll heals nothing', p.hp === 2);
+  vm.runInContext('chance = __smokeRealChance', ctx);
+  delete ctx.__smokeRealChance;
+  p.stats.roomHeal = savedHeal; p.stats.roomHealChance = savedChance;
+}
+
 console.log('== weapon swap (R) ==');
 {
   const p = ctx.G.player;

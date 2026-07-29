@@ -180,6 +180,13 @@ function recordRoomClear(room) {
     healPlayer(G.player.stats.roomHeal);
     if (G.player.hp > before) spawnText(G.player.x, G.player.y - 18, 'ROOM KNIT +' + (G.player.hp - before), '#d98991');
   }
+  // Bone Knit perk: small chance of a half-heart mend on each combat clear
+  if (room.type === 'combat' && G.player.stats.roomHealChance > 0 && G.player.hp < G.player.stats.maxHp &&
+      chance(Math.min(0.9, G.player.stats.roomHealChance))) {
+    const before = G.player.hp;
+    healPlayer(1);
+    if (G.player.hp > before) spawnText(G.player.x, G.player.y - 30, 'BONE KNIT +' + (G.player.hp - before), '#d98991');
+  }
 }
 
 function nextFloor() {
