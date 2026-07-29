@@ -74,6 +74,7 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 | **, / .** | Music volume down / up |
 | **[ / ]** or **Left / Right arrows** | Previous / next music track |
 | **Click arrows** | Cycle music tracks |
+| **H / [?] button** | Open the Field Manual (7 pages: controls, loop, arsenal, mutations, implants, bestiary, pressure) |
 
 ### Menus
 
@@ -250,7 +251,7 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 | Screen | What it offers |
 |---|---|
 | **Title** | INITIATE DESCENT, control reference, best score |
-| **Pause** | Jukebox (track cycling), SFX/music volume, resume/swap/auto/mute hints |
+| **Pause** | Jukebox (track cycling), SFX/music volume, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
 | **Mutation Draft** | 3 perk cards, random cut, reroll, auto-draft |
 | **Game Over ("BUTCHERED")** | Floor, kills, score, NEW BEST CUT tag, restart |
 
