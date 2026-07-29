@@ -66,6 +66,7 @@ function startRun() {
   Sfx.stopAllLoops(); Sfx.menu();
   G.floor = 1; G.score = 0; G.kills = 0; G.time = 0;
   G.parts = []; G.corpses = []; G.toasts = []; G.pendingLevelups = 0; G.perkChoices = null;
+  G.pauseHelp = false; G.helpPage = 0;
   G.pressure = 1; G.streak = 0; G.roomDamaged = false; G.roomEnterT = 0; G.recentHits = [];
   G.shake = 0; G.flash = 0;
   initPlayer();
@@ -131,7 +132,11 @@ function update(dt) {
       updateParticles(dt);
       break;
     case 'pause':
+      if (G.pauseHelp) { updatePauseHelp(); break; }
       if (keyPressed('p', 'escape')) { G.mode = 'play'; Sfx.menu(); break; }
+      if (keyPressed('h') || (Input.mpressed && inRect(Input.mx, Input.my, HELP_BUTTON))) {
+        G.pauseHelp = true; G.helpPage = 0; Sfx.menu(); break;
+      }
       if (keyPressed('r')) swapWeapon(true);
       if (keyPressed('t')) setAutoPerk(!G.autoPerk);
       if (keyPressed('-', '_')) { Sfx.setVolume(G.sfxVol - 0.1); Sfx.menu(); }
@@ -202,7 +207,7 @@ function draw() {
   }
 
   if (G.mode === 'levelup') drawLevelup(ctx);
-  else if (G.mode === 'pause') drawPause(ctx);
+  else if (G.mode === 'pause') { drawPause(ctx); if (G.pauseHelp) drawPauseHelp(ctx); }
   else if (G.mode === 'gameover') drawGameOver(ctx);
 }
 
@@ -328,6 +333,13 @@ function drawPause(ctx) {
   ctx.fillStyle = '#69585a'; ctx.font = '9px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('ARROW KEYS / CLICK TO CHANGE TRACK  ·  LIVE BOSS FIGHTS OVERRIDE SELECTION', W / 2, 503);
+
+  const hb = HELP_BUTTON;
+  const helpHover = inRect(Input.mx, Input.my, hb);
+  drawPixelTag(ctx, '[?] HELP', hb.x, hb.y, {
+    width: hb.w, height: hb.h,
+    color: helpHover ? '#f1cb53' : '#b89c46', accent: helpHover ? '#c9a227' : '#7c6424',
+  });
 }
 
 function drawGameOver(ctx) {

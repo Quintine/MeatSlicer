@@ -32,6 +32,8 @@ const G = {
   recentHits: [],
   transition: 0,       // room transition fade
   muted: false,
+  pauseHelp: false,
+  helpPage: 0,
   sfxVol: 0.45,
   musicVol: 0.55,
   imagesLoaded: false,

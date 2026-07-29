@@ -54,7 +54,7 @@ vm.createContext(sandbox);
 
 // load game scripts in index.html order
 const files = ['utils', 'state', 'input', 'sfx', 'sfxbank', 'audio', 'sprites', 'particles', 'weapons',
-  'bullets', 'pickups', 'items', 'perks', 'enemies', 'bosses', 'rooms', 'player', 'hud', 'main'];
+  'bullets', 'pickups', 'items', 'perks', 'enemies', 'bosses', 'rooms', 'player', 'hud', 'help', 'main'];
 for (const f of files) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8');
   vm.runInContext(code, sandbox, { filename: f + '.js' });
@@ -1116,6 +1116,24 @@ check('paused weapon swap stays silent', ctx.G.toasts[ctx.G.toasts.length - 1] =
 tap('r');
 tap('p');
 check('unpaused', ctx.G.mode === 'play');
+
+console.log('== pause help screen ==');
+tap('p');
+check('paused for help', ctx.G.mode === 'pause');
+tap('h');
+check('H opens the field manual', ctx.G.pauseHelp === true);
+step(3, 16);
+tap('arrowright');
+check('arrow advances manual page', ctx.G.helpPage === 1);
+tap('4');
+check('number keys jump to a manual page', ctx.G.helpPage === 3);
+tap('escape');
+check('escape closes manual but stays paused', ctx.G.pauseHelp === false && ctx.G.mode === 'pause');
+tap('h'); tap('h');
+check('H toggles the manual closed', ctx.G.pauseHelp === false);
+tap('p');
+check('unpaused after manual', ctx.G.mode === 'play');
+
 tap('m');
 check('muted', ctx.G.muted === true);
 
