@@ -9,6 +9,7 @@ files:
   - "assets/**"
   - "!assets/raw/**"
   - "mp3-music/**"
+  - "docs/**"
   - "package.json"
 win:
   target:
