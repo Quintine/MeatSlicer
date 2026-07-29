@@ -409,11 +409,12 @@ def a_splitter():
 def a_mini():
     img, d = canvas(24)
     E(d, [4, 8, 20, 17], OUTL)
-    E(d, [5, 9, 19, 16], (122, 90, 48, 255))
-    E(d, [13, 9, 19, 16], BROWN)                               # head
+    E(d, [5, 9, 19, 16], MEAT_D)
+    E(d, [13, 9, 19, 16], GORE)                                # head
     d.point([(15, 15), (17, 15), (16, 15)], fill=BONE)         # teeth
     d.point([(17, 11)], fill=BLACK)                            # eye
-    R(d, [7, 16, 9, 18], SHAMB_D)                              # tail nub
+    d.point([(7, 10), (9, 13), (8, 14)], fill=BLOOD_D)         # gore speckle
+    R(d, [7, 16, 9, 18], BLOOD_D)                              # tail nub
     return img
 
 
@@ -1329,9 +1330,7 @@ ACTORS = [
 def _fit_actor(img, name, frame_size):
     box = img.getbbox()
     img = img.crop(box) if box else img
-    if name == "enemy_mini":
-        target = 28
-    elif name.startswith("boss_"):
+    if name.startswith("boss_"):
         target = 120
     elif name == "player":
         target = 88

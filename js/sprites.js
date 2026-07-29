@@ -73,7 +73,7 @@ const Sprites = {
       const img = new Image();
       img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
       img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=36';
+      img.src = 'assets/' + name + '.png?v=37';
     }
   },
 
@@ -193,8 +193,8 @@ const Sprites = {
       ctx.fillStyle = C('#e8e0d0');
       ctx.beginPath(); ctx.arc(-3, -3, 3.5, 0, TAU); ctx.arc(-3, 4, 3.5, 0, TAU); ctx.fill(); // eyes
     } else if (name.startsWith('enemy_')) {
-      const cols = { enemy_shambler: '#6a8f3c', enemy_runner: '#a33e2e', enemy_spitter: '#7a4f9e', enemy_splitter: '#8f6b3c', enemy_mini: '#7a5a30', enemy_exploder: '#c93b3b' };
-      const r = name === 'enemy_mini' ? 6 : (name === 'enemy_exploder' ? 10 : 11);
+      const cols = { enemy_shambler: '#6a8f3c', enemy_runner: '#a33e2e', enemy_spitter: '#7a4f9e', enemy_splitter: '#8f6b3c', enemy_mini: '#b8202f', enemy_exploder: '#c93b3b' };
+      const r = name === 'enemy_mini' ? 9 : (name === 'enemy_exploder' ? 10 : 11);
       ctx.fillStyle = C(cols[name] || '#888');
       ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
       ctx.fillStyle = C('#1a0505');
@@ -221,7 +221,20 @@ const Sprites = {
       ctx.fillStyle = C('#3d1f22'); ctx.fillRect(-16, -16, 32, 32);
       ctx.fillStyle = C('#54282c'); ctx.fillRect(-16, -16, 32, 5);
     } else if (name === 'door_open' || name === 'door_locked') {
-      ctx.fillStyle = C('#180d0e'); ctx.fillRect(-15, -8, 30, 16);
+      // void
+      ctx.fillStyle = C('#060104'); ctx.fillRect(-16, -10, 32, 20);
+      // jamb
+      ctx.fillStyle = C('#241116'); ctx.fillRect(-16, -12, 32, 3); ctx.fillRect(-16, 9, 32, 3);
+      // crimson rim light
+      ctx.fillStyle = C(name === 'door_locked' ? '#ff2a3c' : '#c4172a');
+      ctx.fillRect(-16, -11, 2, 22); ctx.fillRect(14, -11, 2, 22);
+      // bone teeth
+      ctx.fillStyle = C('#d8ccb2');
+      for (let i = 0; i < 5; i++) {
+        const ty = -8 + i * 4;
+        ctx.beginPath(); ctx.moveTo(-14, ty); ctx.lineTo(-10, ty + 2); ctx.lineTo(-14, ty + 4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(14, ty); ctx.lineTo(10, ty + 2); ctx.lineTo(14, ty + 4); ctx.closePath(); ctx.fill();
+      }
       if (name === 'door_locked') {
         ctx.fillStyle = C('#8f2f2f');
         for (let i = -13; i < 15; i += 6) { ctx.beginPath(); ctx.moveTo(i, -8); ctx.lineTo(i + 3, 0); ctx.lineTo(i, 8); ctx.fill(); }

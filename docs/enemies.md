@@ -65,11 +65,11 @@ Chaser that **splits into 2 Minis on death** (non-elite Splitters only). Slightl
 | Base HP | 6 |
 | Base speed | 120 |
 | Contact damage | 1 |
-| Hitbox radius | 10 |
+| Hitbox radius | 14 |
 | XP | 1 |
 | First appears | Only from Splitter deaths and boss summons |
 
-Tiny, quick chaser with a small hitbox. Never spawns directly from room waves.
+Small, vicious gore-red chaser. Never spawns directly from room waves. Splitter splits and boss summons appear instantly; room-wave enemies telegraph first (see below).
 
 ### Exploder
 
@@ -135,7 +135,11 @@ base speed × (1 + 0.04 × (floor − 1) + 0.01 × power) × (elite ? 0.9 : 1) �
 
 **Contact damage:** flat per type (elites +1) — it **never scales with floor**. What kills you late-game is volume, speed, and HP pools, not bigger hit numbers.
 
-**Pressure** (see [gameplay.md](gameplay.md#pressure-dynamic-difficulty)) ranges 0.75–1.60 and multiplies both HP and speed. Playing flawlessly pushes it up; getting hit pulls it down.
+**Pressure** (see [gameplay.md](gameplay.md#pressure-dynamic-difficulty)) ranges 0.75–1.60 and multiplies both HP and speed. Playing flawlessly pushes it up; getting hit pulls it down. The title-screen **Pressure Dial** (−5…+5) tunes how fast it rises per clean room and how much relief each hit grants — and every point of score is multiplied by the live pressure value.
+
+### Wave spawn telegraph
+
+When a combat-room wave spawns, each enemy first appears as a **pulsing red sigil** for 0.5 s — frozen, harmless, but targetable. After the telegraph it materializes and becomes dangerous. Splitter splits and boss-summoned minions appear instantly (no telegraph).
 
 ### Example: Floor 10 Shambler
 

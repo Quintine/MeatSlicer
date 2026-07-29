@@ -116,7 +116,7 @@ function updateRoom(dt) {
     const stalled = G.time - G.roomEnterT > 90;
     if (lowHealth || stalled) {
       const decay = lowHealth ? 0.02 : 0.008;
-      G.pressure = Math.max(PRESSURE_MIN, G.pressure - decay * dt);
+      G.pressure = Math.max(PRESSURE_MIN, G.pressure - decay * dt * pressureDropScale());
     }
   }
   G.recentHits = (G.recentHits || []).filter(t => G.time - t < 12);
@@ -171,7 +171,7 @@ function updateRoom(dt) {
 function recordRoomClear(room) {
   if (!G.roomDamaged) {
     G.streak++;
-    G.pressure = Math.min(PRESSURE_MAX, G.pressure + PRESSURE_GAIN);
+    G.pressure = Math.min(PRESSURE_MAX, G.pressure + pressureGain());
   } else {
     G.streak = 0;
   }
@@ -363,13 +363,73 @@ function drawWalls(ctx, r) {
     else if (dir === 's') { x = W / 2; y = H - WALL / 2; rot = 0; }
     else if (dir === 'e') { x = W - WALL / 2; y = H / 2; rot = Math.PI / 2; }
     else { x = WALL / 2; y = H / 2; rot = Math.PI / 2; }
-    Sprites.draw(ctx, sprite, x, y, rot, 96);
+    // ---- doorway framing (visual only; DOOR_HALF governs function) ----
+    const horiz = dir === 'n' || dir === 's';
+    const dirSeed = { n: 0, s: 2.1, e: 4.2, w: 6.3 }[dir];
+    // clear dark passage under the art (guaranteed clean opening)
+    ctx.fillStyle = '#050103';
+    if (horiz) ctx.fillRect(x - DOOR_HALF, y - WALL / 2, DOOR_HALF * 2, WALL);
+    else ctx.fillRect(x - WALL / 2, y - DOOR_HALF, WALL, DOOR_HALF * 2);
+    // door art (wide, walkable passage for open; sealed jaws for locked)
+    Sprites.draw(ctx, sprite, x, y, rot, 150, false, 1, 1, 0.82);
+    // accents on top, in wall-aligned local space
+    ctx.save();
+    if (horiz) ctx.translate(x, y); else { ctx.translate(x, y); ctx.rotate(Math.PI / 2); }
+    // warm glow spilling from the threshold so the exit reads as inviting
+    ctx.globalAlpha = 0.20 + Math.sin(G.time * 2.0 + dirSeed) * 0.06;
+    ctx.fillStyle = locked ? '#ff2a3c' : '#e8724a';
+    ctx.fillRect(-DOOR_HALF, WALL / 2 - 8, DOOR_HALF * 2, 8);
+    // frame rim light on both jamb edges
+    const rimAlpha = 0.30 + Math.sin(G.time * 2.2 + dirSeed) * 0.12;
+    ctx.globalAlpha = rimAlpha;
+    ctx.fillStyle = locked ? '#ff2a3c' : '#c4172a';
+    ctx.fillRect(-DOOR_HALF - 2, -WALL / 2 - 2, 3, WALL + 4);
+    ctx.fillRect(DOOR_HALF - 1, -WALL / 2 - 2, 3, WALL + 4);
+    ctx.globalAlpha = 1;
+    // jagged bone teeth ONLY when sealed (locked reads as dangerous, open reads as safe)
+    if (locked) {
+      for (let side = -1; side <= 1; side += 2) {
+        for (let k = 0; k < 7; k++) {
+          const hh = hashTile((r.gx * 3 + 17) * 31 + side * 7 + k, (r.gy * 5 + 11) * 13 + k * 3);
+          const ty = -WALL / 2 + 3 + (hh % 41);
+          const th = 4 + (hh % 3);
+          const tw = 3 + (hh % 2);
+          ctx.fillStyle = hh % 4 === 0 ? '#e8dcc2' : '#cfc0a4';
+          ctx.beginPath();
+          ctx.moveTo(side * DOOR_HALF, ty - tw);
+          ctx.lineTo(side * DOOR_HALF, ty + tw);
+          ctx.lineTo(side * (DOOR_HALF - th), ty);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+    // outward chevrons past the threshold so the exit reads from across the room
+    const chevOff = dir === 'n' ? -1 : (dir === 's' ? 1 : 0);
+    const chevOffX = dir === 'w' ? -1 : (dir === 'e' ? 1 : 0);
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(G.time * 3 + dirSeed) * 0.2;
+    ctx.strokeStyle = locked ? '#ff2a3c' : '#e8b04a';
+    ctx.lineWidth = 3;
+    for (let c = 1; c <= 2; c++) {
+      const d0 = WALL + 10 + c * 12;
+      ctx.beginPath();
+      if (horiz) {
+        const yy = y + chevOff * d0;
+        ctx.moveTo(x - 10, yy); ctx.lineTo(x, yy + chevOff * 8); ctx.lineTo(x + 10, yy);
+      } else {
+        const xx = x + chevOffX * d0;
+        ctx.moveTo(xx, y - 10); ctx.lineTo(xx + chevOffX * 8, y); ctx.lineTo(xx, y + 10);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
     if (locked) {
       ctx.save();
       ctx.globalAlpha = 0.5 + Math.sin(G.time * 6) * 0.2;
       ctx.fillStyle = '#8f1f2a';
-      if (dir === 'n' || dir === 's') ctx.fillRect(x - DOOR_HALF, y - 6, DOOR_HALF * 2, 12);
-      else ctx.fillRect(x - 6, y - DOOR_HALF, 12, DOOR_HALF * 2);
+      if (horiz) ctx.fillRect(x - DOOR_HALF, y - 8, DOOR_HALF * 2, 16);
+      else ctx.fillRect(x - 8, y - DOOR_HALF, 16, DOOR_HALF * 2);
       ctx.restore();
     }
   }

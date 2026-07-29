@@ -5,10 +5,11 @@ const ENEMY_TYPES = {
   runner:   { hp: 12,  spd: 236, dmg: 1, r: 15, drawSize: 64, xp: 1, sprite: 'enemy_runner' },
   spitter:  { hp: 20,  spd: 60,  dmg: 1, r: 18, drawSize: 64, xp: 2, sprite: 'enemy_spitter', ranged: true },
   splitter: { hp: 30,  spd: 70,  dmg: 1, r: 21, drawSize: 64, xp: 1, sprite: 'enemy_splitter', splits: true },
-  mini:     { hp: 6,   spd: 120, dmg: 1, r: 10, drawSize: 32, xp: 1, sprite: 'enemy_mini' },
+  mini:     { hp: 6,   spd: 120, dmg: 1, r: 14, drawSize: 48, xp: 1, sprite: 'enemy_mini' },
   exploder: { hp: 14,  spd: 110, dmg: 2, r: 16, drawSize: 64, xp: 2, sprite: 'enemy_exploder', explodes: true },
 };
 const MAX_ENEMIES = 72;
+const SPAWN_WARN = 0.5; // seconds a wave-spawned enemy materializes, frozen + harmless
 
 function makeEnemy(type, x, y, floor, elite) {
   const t = ENEMY_TYPES[type];
@@ -32,6 +33,7 @@ function makeEnemy(type, x, y, floor, elite) {
     fireT: rand(1, 2.5), fuse: -1, wob: rand(0, TAU),
     animSeed: rand(0, TAU), animT: rand(0, 1), attackT: 0, actionT: 0,
     spawnT: 0, dead: false,
+    warmT: 0,
     boss: false,
   };
   return e;
@@ -83,6 +85,7 @@ function spawnWave(count, floor) {
     const pos = spawnPosAwayFromPlayer();
     const elite = chance(Math.min(0.03 + floor * 0.02, 0.2));
     const e = makeEnemy(pickEnemyType(floor), pos.x, pos.y, floor, elite);
+    e.warmT = SPAWN_WARN; // telegraph the incoming spawn so the player isn't blindsided
     G.enemies.push(e);
     spawnBlood(pos.x, pos.y, rand(0, TAU), 4);
     Sfx.spawn(e);
@@ -269,7 +272,7 @@ function killEnemy(e, ang) {
   if (ENEMY_TYPES[e.type].splits && !e.elite) {
     Sfx.split(e);
     for (let i = 0; i < 2 && G.enemies.length < MAX_ENEMIES; i++) {
-      const m = makeEnemy('mini', e.x + rand(-12, 12), e.y + rand(-12, 12), G.floor, false);
+      const m = makeEnemy('mini', e.x + rand(-18, 18), e.y + rand(-18, 18), G.floor, false);
       G.enemies.push(m);
     }
   }
@@ -296,6 +299,13 @@ function updateEnemies(dt) {
     e.spawnT = Math.min((e.spawnT || 0) + dt, 1);
     e.animT = (e.animT || 0) + dt;
     if (e.attackT > 0) { e.attackT -= dt; e.actionT += dt; }
+
+    // materializing spawns are frozen and harmless until the telegraph ends
+    if (e.warmT > 0) {
+      e.warmT -= dt;
+      e.vx = 0; e.vy = 0;
+      if (e.warmT > 0) continue;
+    }
 
     // status effects
     if (e.flash > 0) e.flash -= dt;
@@ -393,6 +403,27 @@ function updateEnemyAI(e, dt) {
 function drawEnemies(ctx) {
   for (const e of G.enemies) {
     if (e.hp <= 0) continue;
+    // spawn telegraph: pulsing sigil + ghost, harmless until warmT expires
+    if (e.warmT > 0) {
+      const k = clamp(1 - e.warmT / SPAWN_WARN, 0, 1);
+      const ringR = e.r + 30 * (1 - k);
+      ctx.save();
+      ctx.globalAlpha = 0.35 + Math.sin(G.time * 26) * 0.2;
+      ctx.strokeStyle = '#ff2a3c'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(e.x, e.y, ringR, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 0.22 + k * 0.30;
+      ctx.fillStyle = '#4a0713';
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * (0.3 + k * 0.7), 0, TAU); ctx.fill();
+      ctx.restore();
+      Sprites.actor(ctx, e.sprite, e.x, e.y, 0, 'idle', e.animT || 0,
+        e.drawSize || (e.boss ? 128 : 64), 0.18 + k * 0.55, 0.45 + k * 0.55, 0.45 + k * 0.55);
+      if (e.elite) {
+        ctx.strokeStyle = '#ffd060'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, TAU); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      continue;
+    }
     const p = G.player;
     const face = angleTo(e.x, e.y, p.x, p.y);
     const speed = Math.min(Math.hypot(e.vx, e.vy) / Math.max(e.spd, 1), 1);

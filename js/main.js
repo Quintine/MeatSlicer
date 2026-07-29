@@ -2,6 +2,17 @@
 
 let canvas, ctx, lastT = 0;
 
+const PRESSURE_SLIDER_RECT = { x: 300, y: 470, w: 360, h: 46 };
+
+function pauseBars() {
+  const x = W / 2 - 55, w = 225;
+  return [
+    { rect: { x, y: 418, w, h: 10 }, set: v => Sfx.setVolume(v) },
+    { rect: { x, y: 446, w, h: 10 }, set: v => Music.setVolume(v) },
+    { rect: { x, y: 474, w, h: 10 }, set: v => setHudAlpha(0.25 + v * 0.75) },
+  ];
+}
+
 function init() {
   canvas = document.getElementById('game');
   ctx = canvas.getContext('2d');
@@ -25,8 +36,23 @@ function init() {
     if (Number.isFinite(sv)) G.sfxVol = clamp(sv, 0, 1);
     if (Number.isFinite(mv)) G.musicVol = clamp(mv, 0, 1);
     G.autoPerk = localStorage.getItem('meatslicer_autoperk') === '1';
+    const pd = parseFloat(localStorage.getItem('meatslicer_pressure_dial'));
+    if (Number.isFinite(pd)) G.pressureDial = clamp(Math.round(pd), PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
+    const ha = parseFloat(localStorage.getItem('meatslicer_hud_alpha'));
+    if (Number.isFinite(ha)) G.hudAlpha = clamp(ha, 0.25, 1);
   } catch (e) {}
   requestAnimationFrame(loop);
+}
+
+function setPressureDial(n) {
+  G.pressureDial = clamp(Math.round(n), PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
+  try { localStorage.setItem('meatslicer_pressure_dial', String(G.pressureDial)); } catch (e) {}
+  Sfx.menu();
+}
+
+function setHudAlpha(v) {
+  G.hudAlpha = clamp(Math.round(v * 100) / 100, 0.25, 1);
+  try { localStorage.setItem('meatslicer_hud_alpha', String(G.hudAlpha)); } catch (e) {}
 }
 
 function setAutoPerk(enabled) {
@@ -108,9 +134,18 @@ function update(dt) {
   }
 
   switch (G.mode) {
-    case 'menu':
-      if (Input.mpressed || keyPressed('enter', ' ')) startRun();
+    case 'menu': {
+      const sl = PRESSURE_SLIDER_RECT;
+      if (keyPressed('arrowleft', 'a', '-', '_')) setPressureDial(G.pressureDial - 1);
+      if (keyPressed('arrowright', 'd', '=', '+')) setPressureDial(G.pressureDial + 1);
+      if (Input.mpressed && inRect(Input.mx, Input.my, sl)) G.menuDialDrag = true;
+      if (G.menuDialDrag && Input.mdown) {
+        setPressureDial(Math.round(((Input.mx - sl.x) / sl.w) * 10) - 5);
+      }
+      if (!Input.mdown) G.menuDialDrag = false;
+      if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl))) startRun();
       break;
+    }
     case 'play':
       G.time += dt;
       if (keyPressed('p', 'escape')) { G.mode = 'pause'; Sfx.stopAllLoops(); Sfx.menu(); break; }
@@ -143,6 +178,21 @@ function update(dt) {
       if (keyPressed('=', '+')) { Sfx.setVolume(G.sfxVol + 0.1); Sfx.menu(); }
       if (keyPressed(',', '<')) { Music.setVolume(G.musicVol - 0.1); Sfx.menu(); }
       if (keyPressed('.', '>')) { Music.setVolume(G.musicVol + 0.1); Sfx.menu(); }
+      if (keyPressed(';', ':')) { setHudAlpha(G.hudAlpha - 0.1); Sfx.menu(); }
+      if (keyPressed("'", '"')) { setHudAlpha(G.hudAlpha + 0.1); Sfx.menu(); }
+      // click-and-drag on the three pause sliders
+      {
+        const bars = pauseBars();
+        if (Input.mpressed) {
+          for (let i = 0; i < bars.length; i++) if (inRect(Input.mx, Input.my, bars[i].rect)) { G.pauseDrag = i; break; }
+        }
+        if (G.pauseDrag !== null && G.pauseDrag !== undefined && Input.mdown) {
+          const b = bars[G.pauseDrag];
+          const v = clamp((Input.mx - b.rect.x) / b.rect.w, 0, 1);
+          b.set(v);
+        }
+        if (!Input.mdown) G.pauseDrag = null;
+      }
       if (keyPressed('arrowleft', '[')) Music.cycle(-1);
       else if (keyPressed('arrowright', ']')) Music.cycle(1);
       else if (Input.mpressed) {
@@ -272,41 +322,74 @@ function drawMenu(ctx) {
     tx += widths[i] + 6;
   }
 
+  // ---- pressure dial ----
+  drawPressureDial(ctx);
+
   ctx.fillStyle = '#655155'; ctx.font = '9px monospace';
-  ctx.fillText('ROOM-CLEAR COMBAT  //  PERK DRAFTS  //  SIXTEEN WEAPONS  //  CROWNED MEAT', W / 2, 474);
+  ctx.fillText('ROOM-CLEAR COMBAT  //  PERK DRAFTS  //  SIXTEEN WEAPONS  //  CROWNED MEAT', W / 2, 530);
   if (G.best) {
-    drawPixelTag(ctx, 'BEST CUT  ' + String(G.best).padStart(6, '0'), W / 2 - 74, 503, {
+    drawPixelTag(ctx, 'BEST CUT  ' + String(G.best).padStart(6, '0'), W / 2 - 74, 556, {
       width: 148, height: 26, color: '#e0b94e', accent: '#a47e25',
     });
   }
 }
 
+function drawPressureDial(ctx) {
+  const sl = PRESSURE_SLIDER_RECT;
+  const d = G.pressureDial;
+  const gain = pressureGainUnits(d), drop = pressureDropUnits(d);
+  const accent = d < 0 ? '#3d8f99' : (d === 0 ? '#c59231' : '#e22b46');
+  drawPixelPanel(ctx, sl.x, sl.y, sl.w, sl.h, {
+    cut: 6, shadow: false, accent, fill: 'rgba(12,5,8,0.92)', border: '#63303a',
+  });
+  const name = d <= -4 ? 'MERCIFUL' : d <= -2 ? 'EASED' : d <= 0 ? 'STANDARD' : d <= 2 ? 'TENSE' : d <= 4 ? 'SAVAGE' : 'RELENTLESS';
+  ctx.textAlign = 'left'; ctx.fillStyle = '#9e857a'; ctx.font = 'bold 8px monospace';
+  ctx.fillText('PRESSURE DIAL', sl.x + 10, sl.y + 12);
+  ctx.textAlign = 'right'; ctx.fillStyle = accent; ctx.font = 'bold 9px monospace';
+  ctx.fillText((d > 0 ? '+' : '') + d + ' ' + name, sl.x + sl.w - 10, sl.y + 12);
+  // track with 10 steps / 11 notches
+  const bx = sl.x + 34, bw = sl.w - 68, by = sl.y + 20, bh = 10;
+  drawPixelBar(ctx, bx, by, bw, bh, (d + 5) / 10, {
+    fill: accent, glint: '#f4d86d', border: '#5d3c43', segments: 10,
+  });
+  // bright notch marker
+  const nx = bx + Math.round((d + 5) / 10 * bw);
+  ctx.fillStyle = '#f5e9d6';
+  ctx.fillRect(nx - 1, by - 2, 2, bh + 4);
+  // end labels
+  ctx.fillStyle = '#7d6262'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('-5', bx - 16, by + 9); ctx.fillText('+5', bx + bw + 16, by + 9);
+  // derived readout
+  ctx.fillStyle = '#8f7770'; ctx.font = '8px monospace';
+  ctx.fillText('RISE +' + gain.toFixed(1) + '/5 · RELIEF ' + drop.toFixed(1) + '/5 · SCORE ×LIVE PRESSURE', sl.x + sl.w / 2, sl.y + sl.h - 7);
+}
+
 function drawPause(ctx) {
   ctx.fillStyle = 'rgba(4,2,3,0.78)'; ctx.fillRect(0, 0, W, H);
-  drawPixelPanel(ctx, W / 2 - 270, 126, 540, 388, {
+  drawPixelPanel(ctx, W / 2 - 270, 104, 540, 452, {
     accent: '#c92a40', border: 'rgba(119,51,61,0.95)', fill: 'rgba(11,5,8,0.96)',
     blood: true, seed: 8, bloodAlpha: 0.25,
   });
   ctx.textAlign = 'center';
   ctx.fillStyle = '#7f6768'; ctx.font = 'bold 9px monospace';
-  ctx.fillText('RUN STATE // SUSPENDED', W / 2, 158);
+  ctx.fillText('RUN STATE // SUSPENDED', W / 2, 136);
   ctx.fillStyle = '#f0e5d7'; ctx.font = 'bold 36px monospace';
-  ctx.fillText('PAUSED', W / 2, 202);
-  drawBloodTrim(ctx, W / 2 - 130, 213, 260, 8, 0.45);
+  ctx.fillText('PAUSED', W / 2, 180);
+  drawBloodTrim(ctx, W / 2 - 130, 191, 260, 8, 0.45);
 
   ctx.fillStyle = '#b89532'; ctx.font = 'bold 10px monospace';
-  ctx.fillText('JUKEBOX // ACTIVE TRACK', W / 2, 270);
+  ctx.fillText('JUKEBOX // ACTIVE TRACK', W / 2, 248);
   const sel = (G.musicSel === undefined || G.musicSel < 0) ? 'AUTO · FLOOR ROTATION' : Music.pretty(Music.PLAYLIST[G.musicSel]).toUpperCase();
-  drawPixelPanel(ctx, W / 2 - 170, H / 2 + 20, 340, 82, {
+  drawPixelPanel(ctx, W / 2 - 170, 318, 340, 82, {
     cut: 5, shadow: false, accent: '#468e9d', fill: 'rgba(5,10,12,0.7)', border: '#315b65',
   });
   ctx.fillStyle = '#8faeb2'; ctx.font = 'bold 9px monospace';
-  ctx.fillText('NOW PLAYING', W / 2, H / 2 + 43);
+  ctx.fillText('NOW PLAYING', W / 2, 341);
   ctx.fillStyle = '#e9ded0'; ctx.font = 'bold 14px monospace';
-  ctx.fillText(sel, W / 2, H / 2 + 70);
+  ctx.fillText(sel, W / 2, 368);
 
   for (const sx of [-200, 200]) {
-    const x = W / 2 + sx, y = H / 2 + 60;
+    const x = W / 2 + sx, y = 358;
     const hover = dist(Input.mx, Input.my, x, y) < 22;
     drawPixelPanel(ctx, x - 20, y - 20, 40, 40, {
       cut: 5, shadow: false, fill: hover ? '#631526' : '#251017',
@@ -316,23 +399,31 @@ function drawPause(ctx) {
     ctx.fillText(sx < 0 ? '<' : '>', x, y + 6);
   }
 
+  // three sliders: SFX / MUSIC / HUD (drag or key pairs)
+  const sliders = [
+    { label: 'SFX  [- / +]', val: G.sfxVol, colors: { fill: '#c92a40', glint: '#ff7d82', border: '#63303a', segments: 10 } },
+    { label: 'MUSIC [, / .]', val: G.musicVol, colors: { fill: '#468e9d', glint: '#a5edee', border: '#315b65', segments: 10 } },
+    { label: "HUD  [; / ']", val: (G.hudAlpha - 0.25) / 0.75, colors: { fill: '#b5892f', glint: '#f4d86d', border: '#5d3c43', segments: 10 } },
+  ];
+  const bars = pauseBars();
   ctx.textAlign = 'left'; ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#a99a91';
-  ctx.fillText('SFX  [- / +]', W / 2 - 170, 435);
-  drawPixelBar(ctx, W / 2 - 55, 426, 225, 10, G.sfxVol, {
-    fill: '#c92a40', glint: '#ff7d82', border: '#63303a', segments: 10,
-  });
-  ctx.fillText('MUSIC [, / .]', W / 2 - 170, 445);
-  drawPixelBar(ctx, W / 2 - 55, 436, 225, 10, G.musicVol, {
-    fill: '#468e9d', glint: '#a5edee', border: '#315b65', segments: 10,
-  });
+  for (let i = 0; i < sliders.length; i++) {
+    const by = bars[i].rect.y;
+    ctx.fillStyle = '#a99a91'; ctx.fillText(sliders[i].label, W / 2 - 170, by + 9);
+    drawPixelBar(ctx, bars[i].rect.x, by, bars[i].rect.w, 10, sliders[i].val, sliders[i].colors);
+    ctx.fillStyle = '#e9ded0'; ctx.textAlign = 'right';
+    const pct = i === 2 ? Math.round(G.hudAlpha * 100) : Math.round(sliders[i].val * 100);
+    ctx.fillText(pct + '%', W / 2 + 185, by + 9);
+    ctx.textAlign = 'left';
+  }
 
-  drawPixelTag(ctx, '[P] RESUME', W / 2 - 250, 462, { width: 112, height: 28, color: '#f0e5d7', accent: '#b5243a' });
-  drawPixelTag(ctx, '[R] SWAP', W / 2 - 125, 462, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
-  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), W / 2, 462, { width: 112, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
-  drawPixelTag(ctx, '[M] MUTE', W / 2 + 125, 462, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
+  drawPixelTag(ctx, '[P] RESUME', W / 2 - 250, 502, { width: 112, height: 28, color: '#f0e5d7', accent: '#b5243a' });
+  drawPixelTag(ctx, '[R] SWAP', W / 2 - 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
+  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), W / 2, 502, { width: 112, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
+  drawPixelTag(ctx, '[M] MUTE', W / 2 + 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
   ctx.fillStyle = '#69585a'; ctx.font = '9px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('ARROW KEYS / CLICK TO CHANGE TRACK  ·  LIVE BOSS FIGHTS OVERRIDE SELECTION', W / 2, 503);
+  ctx.fillText('ARROWS / CLICK CHANGE TRACK  ·  DRAG SLIDERS  ·  LIVE BOSSES OVERRIDE TRACK', W / 2, 543);
 
   const hb = HELP_BUTTON;
   const helpHover = inRect(Input.mx, Input.my, hb);

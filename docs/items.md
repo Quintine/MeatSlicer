@@ -77,7 +77,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Iron Stomach** | +½ heart container, heal ½ heart | `maxHp +1`, heal 1 |
 | **Ghoul Heart** | +2 max HP, heal 2 | `maxHp +2`, heal 2 |
 | **Twin Hearts** | +1 max heart, heal 1 heart | `maxHp +2`, heal 2 (identical to Ghoul Heart) |
-| **Bone Plate** | +½ shield heart each floor | `shieldPerk +1`, `shieldHp +1` — shields refill every floor |
+| **Bone Plate** | +½ shield heart each floor | `shieldPerk +1`, `shieldHp +1` — shields refill every floor (1 shield HP = ½ heart, renders as half a cyan pip) |
 | **Second Stomach** | +½ heart and excess healing shields | `maxHp +1`, heal 1, `overShield +1` — overflow healing becomes shield HP |
 | **Tanned Hide** | +8% chance to ignore damage | `armor +0.087` — block chance `armor / (1 + armor)`, cap 75% |
 | **Dead Man's Clock** | +0.25s hurt immunity | `invBonus +0.25` — post-hit invulnerability 0.9 s → 1.15 s at tier I |
@@ -103,7 +103,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Magnet Maw** | +60% pickup radius | `magnet ×1.6` — magnet radius 46 × magnet px |
 | **Gorging Leech** | +20% XP gained | `xpMul ×1.20` |
 | **Reroll Rib** | +1 perk reroll each level | `rerollPerLevel +1` and +1 reroll immediately |
-| **Brass Magazine** | 15% less ammo use, +20% ammo found | `ammoEff ×1.15`, `ammoPickupMul ×1.20` |
+| **Brass Magazine** | 15% less ammo use, +20% ammo found | `ammoEff ×1.15`, `ammoPickupMul ×1.20` (the ×1.15 stays multiplicative; the **Scrap Feed** perk's additive stacks sit underneath it) |
 | **Hollow Bones** | +12% move speed | `speedMul ×1.12` (178 → ~199 px/s at tier I) |
 
 ---

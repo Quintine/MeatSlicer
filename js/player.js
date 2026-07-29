@@ -177,7 +177,7 @@ function pressureRelief(dmgTaken) {
   const severity = clamp(dmgTaken / Math.max(2, p.stats.maxHp * 0.25), 0.4, 2);
   const desperation = 1 + (1 - hpFrac) * 2;
   const churn = 1 + Math.min(G.recentHits.length, 4) * 0.35;
-  return 0.03 * severity * desperation * churn;
+  return PRESSURE_DROP_BASE * PRESSURE_UNIT * severity * desperation * churn * pressureDropScale();
 }
 
 function hurtPlayer(dmg, ang, attacker) {

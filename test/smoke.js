@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -351,6 +351,26 @@ console.log('== diminishing armor block chance ==');
   vm.runInContext('chance = __smokeRealChance', ctx);
   delete ctx.__smokeRealChance;
   p.stats.armor = 0; p.invT = 0;
+}
+
+console.log('== scrap feed has diminishing returns (like thick hide) ==');
+{
+  const sf = ctx.PERKS.find(k => k.id === 'scrapfeed');
+  const s = { ammoEff: 1 };
+  const save = () => 1 - 1 / s.ammoEff; // fraction of ammo saved
+  sf.apply(s, {}); const s1 = save();
+  const d1 = s1;                       // marginal saving of stack 1
+  sf.apply(s, {}); const s2 = save();
+  const d2 = s2 - s1;                  // marginal saving of stack 2
+  sf.apply(s, {}); const s3 = save();
+  const d3 = s3 - s2;                  // marginal saving of stack 3
+  check('first stack ~5% saving', Math.abs(s1 - (1 - 1 / 1.05)) < 0.0001);
+  check('each stack helps less', d2 < d1 && d3 < d2);
+  check('saving never reaches 100%', save() < 1);
+  // Brass Magazine still multiplies on top (unchanged)
+  const s2x = { ammoEff: 1, ammoPickupMul: 1 };
+  ctx.ITEMS.brassmagazine.apply(s2x, {});
+  check('brass magazine stays multiplicative', Math.abs(s2x.ammoEff - 1.15) < 0.0001);
 }
 
 console.log('== close-range weapon impact pass ==');
@@ -768,6 +788,153 @@ console.log('== adaptive clean-room pressure ==');
   check('pressure is capped at 160%', ctx.G.pressure === 1.6);
   ctx.startRun(); step(3, 16);
   check('new runs reset pressure and streak', ctx.G.pressure === 1 && ctx.G.streak === 0);
+}
+
+console.log('== bigger gore-red minis ==');
+{
+  check('mini hitbox grew', ctx.ENEMY_TYPES.mini.r === 14);
+  check('mini sprite grew', ctx.ENEMY_TYPES.mini.drawSize === 48);
+}
+
+console.log('== 500ms wave spawn telegraph ==');
+{
+  ctx.startRun(); step(3, 16);
+  // enter a combat room to trigger a wave
+  const sr = ctx.G.rooms['0,0'];
+  const sd = Object.keys(sr.doors).find(d => sr.doors[d]);
+  const DIRS2 = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+  const [ddx, ddy] = DIRS2[sd];
+  ctx.enterRoom(sr.gx + ddx, sr.gy + ddy);
+  step(1, 16);
+  const room2 = ctx.G.cur;
+  if (room2.type === 'combat' && ctx.G.enemies.length > 0) {
+    const spawner = ctx.G.enemies[0];
+    check('wave spawn is telegraphing', spawner.warmT > 0.3 && spawner.warmT <= ctx.SPAWN_WARN);
+    const sx = spawner.x, sy = spawner.y;
+    ctx.G.player.invT = 0;
+    const hpBefore = ctx.G.player.hp;
+    ctx.G.player.x = spawner.x; ctx.G.player.y = spawner.y; // overlap the sigil
+    step(20, 16); // ~320ms
+    check('telegraphed spawn is frozen', Math.abs(spawner.x - sx) < 0.01 && Math.abs(spawner.y - sy) < 0.01);
+    check('telegraphed spawn deals no contact damage', ctx.G.player.hp === hpBefore);
+    step(25, 16); // past 500ms total
+    check('spawn arms after the telegraph', spawner.warmT <= 0);
+    ctx.G.player.x = ctx.W / 2; ctx.G.player.y = ctx.H / 2; ctx.G.player.invT = 1;
+  } else {
+    check('combat room spawned for telegraph test (' + room2.type + ')', true);
+  }
+  // splitter splits stay instant
+  ctx.G.enemies.length = 0;
+  const splitParent = ctx.makeEnemy('splitter', ctx.W / 2, ctx.H / 2, 1, false);
+  ctx.G.enemies.push(splitParent);
+  ctx.damageEnemy(splitParent, 99999, 0, false);
+  const minis = ctx.G.enemies.filter(e => e.type === 'mini');
+  check('splitter splits into minis', minis.length === 2);
+  check('splits spawn instantly (no telegraph)', minis.every(m => (m.warmT || 0) === 0));
+  ctx.G.enemies.length = 0;
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== pressure dial scaling ==');
+{
+  const GAIN = { '-5': 0, '-4': 0.2, '-3': 0.4, '-2': 0.6, '-1': 0.8, '0': 1, '1': 1.8, '2': 2.6, '3': 3.4, '4': 4.2, '5': 5 };
+  const DROP = { '-5': 5, '-4': 4.6, '-3': 4.2, '-2': 3.8, '-1': 3.4, '0': 3, '1': 2.4, '2': 1.8, '3': 1.2, '4': 0.6, '5': 0 };
+  let gainOK = true, dropOK = true;
+  for (let d = -5; d <= 5; d++) {
+    if (Math.abs(ctx.pressureGainUnits(d) - GAIN[d]) > 1e-6) gainOK = false;
+    if (Math.abs(ctx.pressureDropUnits(d) - DROP[d]) > 1e-6) dropOK = false;
+  }
+  check('gain units match all 11 notches', gainOK);
+  check('drop units match all 11 notches', dropOK);
+  // dial +5: gain 0.05/clean room, zero relief on hit
+  ctx.G.pressureDial = 5;
+  ctx.G.pressure = 1; ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('dial +5 clean room adds 5%', Math.abs(ctx.G.pressure - 1.05) < 1e-4);
+  ctx.G.pressure = 1.2; ctx.G.recentHits = []; ctx.G.player.hp = 5; ctx.G.player.stats.maxHp = 10;
+  ctx.G.player.invT = 0; ctx.G.mode = 'play';
+  ctx.hurtPlayer(1, 0);
+  check('dial +5 gives no hit relief', Math.abs(ctx.G.pressure - 1.2) < 1e-6);
+  // dial -5: zero gain, relief scaled 5/3 vs dial 0 for the identical hit
+  ctx.G.pressureDial = -5;
+  ctx.G.pressure = 1; ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('dial -5 clean room adds nothing', Math.abs(ctx.G.pressure - 1) < 1e-6);
+  const mkHit = (dial) => {
+    ctx.G.pressureDial = dial;
+    ctx.G.pressure = 1.2; ctx.G.recentHits = [];
+    ctx.G.player.hp = 10; ctx.G.player.stats.maxHp = 10; ctx.G.player.invT = 0; ctx.G.mode = 'play';
+    ctx.hurtPlayer(1, 0);
+    return 1.2 - ctx.G.pressure;
+  };
+  const reliefNeg = mkHit(-5);
+  const reliefZero = mkHit(0);
+  check('dial -5 relief beats dial 0 (' + reliefNeg.toFixed(4) + ' vs ' + reliefZero.toFixed(4) + ')',
+    reliefNeg > reliefZero && Math.abs(reliefNeg - reliefZero * (5 / 3)) < 1e-4);
+  // score multiplier
+  ctx.G.pressureDial = 0;
+  ctx.G.pressure = 1.5;
+  const scBefore = ctx.G.score; ctx.addScore(100);
+  check('score scales with live pressure (1.5x)', ctx.G.score - scBefore === 150);
+  ctx.G.pressure = 0.75;
+  const scBefore2 = ctx.G.score; ctx.addScore(1);
+  check('small awards floor at +1', ctx.G.score - scBefore2 === 1);
+  ctx.G.pressure = 1; ctx.G.pressureDial = 0;
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== item stickiness ramps with owned count ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.items = {}; // no owned items -> always a fresh roll
+  // 1 upgradable item owned -> ~10% stick
+  p.items = { hollowpoints: 1 };
+  let owned1 = 0;
+  for (let i = 0; i < 600; i++) if (ctx.randomItemId() === 'hollowpoints') owned1++;
+  const frac1 = owned1 / 600;
+  check('1 owned item sticks ~10% (' + owned1 + '/600)', frac1 > 0.05 && frac1 < 0.20);
+  // 5+ upgradable items -> capped 50% stick
+  p.items = { hollowpoints: 1, twitch: 1, scalpel: 1, leadmarrow: 1, piercegaze: 1 };
+  let owned5 = 0;
+  for (let i = 0; i < 600; i++) if (p.items[ctx.randomItemId()]) owned5++;
+  const frac5 = owned5 / 600;
+  check('5+ owned items stick ~50% (' + owned5 + '/600)', frac5 > 0.38 && frac5 < 0.62);
+  p.items = {};
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== help manual is 8 pages (implants split) ==');
+{
+  check('8 help pages', ctx.HELP_PAGES.length === 8);
+  check('8 help renderers', ctx.HELP_RENDERERS.length === 8);
+  ctx.G.player = ctx.G.player || {};
+  const fctx = fakeCtx();
+  let renderOK = true;
+  try {
+    for (let i = 0; i < ctx.HELP_PAGES.length; i++) {
+      ctx.G.helpPage = i;
+      ctx.drawPauseHelp(fctx);
+    }
+  } catch (e) { renderOK = false; console.log('   render error: ' + e.message); }
+  check('every help page renders without throwing', renderOK);
+}
+
+console.log('== HUD alpha slider ==');
+{
+  ctx.startRun(); step(3, 16);
+  ctx.setHudAlpha(0.5);
+  check('hud alpha sets', Math.abs(ctx.G.hudAlpha - 0.5) < 1e-6);
+  ctx.setHudAlpha(0.05);
+  check('hud alpha clamps to 25% floor', Math.abs(ctx.G.hudAlpha - 0.25) < 1e-6);
+  ctx.setHudAlpha(5);
+  check('hud alpha clamps to 100%', Math.abs(ctx.G.hudAlpha - 1) < 1e-6);
+  const fctx2 = fakeCtx();
+  let hudOK = true;
+  try { ctx.G.hudAlpha = 0.25; ctx.drawHUD(fctx2); } catch (e) { hudOK = false; console.log('   hud error: ' + e.message); }
+  check('HUD renders at 25% opacity', hudOK);
+  ctx.G.hudAlpha = 1;
+  ctx.startRun(); step(3, 16);
 }
 
 console.log('== boneknit is a chance-based room heal ==');

@@ -26,6 +26,7 @@ const G = {
   perkChoices: null,
   autoPerk: false,
   pressure: 1,
+  pressureDial: 0,
   streak: 0,
   roomDamaged: false,
   roomEnterT: 0,
@@ -36,6 +37,7 @@ const G = {
   helpPage: 0,
   sfxVol: 0.45,
   musicVol: 0.55,
+  hudAlpha: 1,
   imagesLoaded: false,
   roomLayer: null,
   roomLayerKey: '',
@@ -43,7 +45,18 @@ const G = {
 };
 
 const PERK_POWER_WEIGHT = 0.5;
-const PRESSURE_MIN = 0.75, PRESSURE_MAX = 1.60, PRESSURE_GAIN = 0.01;
+const PRESSURE_MIN = 0.75, PRESSURE_MAX = 1.60;
+const PRESSURE_UNIT = 0.01;          // one "point" on the dial scale
+const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
+const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
+const PRESSURE_DIAL_MIN = -5, PRESSURE_DIAL_MAX = 5;
+
+// -5 -> 0 units, 0 -> 1 unit, +5 -> 5 units (piecewise linear)
+function pressureGainUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 1 + d * 0.2 : 1 + d * 0.8; }
+// -5 -> 5 units, 0 -> 3 units, +5 -> 0 units (piecewise linear)
+function pressureDropUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 3 - d * 0.4 : 3 - d * 0.6; }
+function pressureGain()      { return pressureGainUnits(G.pressureDial) * PRESSURE_UNIT; }
+function pressureDropScale() { return pressureDropUnits(G.pressureDial) / PRESSURE_DROP_BASE; }
 
 // total player power: perks drafted (level - 1) + item tiers owned.
 // monsters scale against this so difficulty tracks the build.
@@ -60,4 +73,8 @@ function addToast(text, sub) {
   G.toasts.push({ text, sub: sub || '', t: 0 });
   if (G.toasts.length > 3) G.toasts.shift();
 }
-function addScore(n) { G.score += n; }
+function addScore(n) {
+  if (!n) return;
+  const scaled = Math.round(n * (G.pressure || 1));
+  G.score += n > 0 ? Math.max(1, scaled) : scaled;
+}

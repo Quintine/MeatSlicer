@@ -49,12 +49,13 @@ const ITEMS = {
   rerollrib:     { name: 'Reroll Rib',        desc: '+1 perk reroll each level', apply: s => { s.rerollPerLevel += 1; s.rerolls += 1; } },
 };
 
-// 50% of rolls favor items the player already owns (below cap) so high tiers
-// are reachable if you commit to them
+// Stickiness ramps with commitment: 10% per distinct upgradable item owned,
+// capped at 50%. Your first pickup barely biases the pool, so early drops vary.
 function randomItemId() {
   const p = G.player;
   const owned = p ? Object.keys(p.items).filter(iid => (p.items[iid] || 0) < ITEM_LEVEL_CAP) : [];
-  if (owned.length && chance(0.5)) return choice(owned);
+  const stick = Math.min(0.5, owned.length * 0.10);
+  if (owned.length && chance(stick)) return choice(owned);
   return choice(Object.keys(ITEMS));
 }
 

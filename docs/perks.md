@@ -70,7 +70,7 @@ XP comes from gems dropped by kills, room clears, and bosses, scaled by your `xp
 | **Carrion Sense** | +8% pickup radius and pull speed | `magnet ×1.08`, `magnetPull ×1.08` *(note: pull speed is not currently wired into pickup movement — the radius half works)* |
 | **Scavenger** | +4% drop luck | `luck +0.04` |
 | **Bloodrush** | +5% XP gain, bonus crystal chance | `xpMul ×1.05` |
-| **Scrap Feed** | 5% less ammo consumed | `ammoEff ×1.05` |
+| **Scrap Feed** | 5% less ammo (diminishing) | `ammoEff +0.05` per stack — saving fraction = rating/(1+rating), so each extra stack helps less (like Thick Hide) |
 
 ---
 

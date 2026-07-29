@@ -19,7 +19,7 @@ const PERKS = [
   { id: 'heavyhand',name: 'Heavy Hand',      desc: '+20% knockback',        apply: s => { s.knockbackMul *= 1.20; } },
   { id: 'thickhide',name: 'Thick Hide',      desc: '+4% chance to ignore damage', apply: s => { s.armor += 1 / 24; } },
   { id: 'secondwind',name: 'Second Wind',    desc: '+0.15s hurt immunity',  apply: s => { s.invBonus += 0.15; } },
-  { id: 'scrapfeed',name: 'Scrap Feed',      desc: '5% less ammo consumed', apply: s => { s.ammoEff *= 1.05; } },
+  { id: 'scrapfeed',name: 'Scrap Feed',      desc: '5% less ammo (diminishing)', apply: s => { s.ammoEff += 0.05; } },
   { id: 'boneknit', name: 'Bone Knit',       desc: '3% chance to heal ½ heart after combat rooms', apply: s => { s.roomHealChance += 0.03; } },
   { id: 'spiteflesh',name: 'Spite Flesh',    desc: 'Contact attackers take damage', apply: s => { s.thorns += 4; } },
   { id: 'carrion',  name: 'Carrion Sense',   desc: '+8% pickup radius and pull speed', apply: s => { s.magnet *= 1.08; s.magnetPull *= 1.08; } },

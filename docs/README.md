@@ -66,4 +66,4 @@ Runs the smoke test (`test/smoke.js`).
 
 ## The fantasy in one paragraph
 
-Rooms lock behind you. The meat waves come in threes. Elites gleam gold and drop the good stuff. The Pressure gauge climbs the longer you stay flawless, and every boss — saw, crown, mother, flenser, choir, father, auger, scald — cycles back around, deeper and meaner, until the meat finally wins. Take the meat. Take the stairs.
+Rooms lock behind you. The meat waves come in threes. Elites gleam gold and drop the good stuff. Set the Pressure Dial before you descend — the gauge climbs the longer you stay flawless, and every point of score rides it. Every boss — saw, crown, mother, flenser, choir, father, auger, scald — cycles back around, deeper and meaner, until the meat finally wins. Take the meat. Take the stairs.

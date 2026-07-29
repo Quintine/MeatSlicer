@@ -72,9 +72,11 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 |---|---|
 | **- / =** | SFX volume down / up |
 | **, / .** | Music volume down / up |
+| **; / '** | HUD opacity down / up (25%–100%) |
 | **[ / ]** or **Left / Right arrows** | Previous / next music track |
 | **Click arrows** | Cycle music tracks |
-| **H / [?] button** | Open the Field Manual (7 pages: controls, loop, arsenal, mutations, implants, bestiary, pressure) |
+| **Drag sliders** | SFX / Music / HUD opacity bars are click-and-drag |
+| **H / [?] button** | Open the Field Manual (8 pages: controls, loop, arsenal, mutations, implants I, implants II, bestiary, pressure) |
 
 ### Menus
 
@@ -106,7 +108,7 @@ Right-click is disabled (context menu suppressed). There is **no dash, no intera
 
 - Every hit taken deals a **minimum of 1 damage** (`max(1, round(dmg))`).
 - **Armor** gives a chance to completely ignore a hit: block chance = `armor / (1 + armor)`, capped at 75%. A blocked hit shows "BLOCKED" and grants only 0.2 s of invulnerability.
-- **Shield hearts** (cyan pips) absorb damage before real HP. They come from the Bone Plate item and Shield Heart perk, and are refilled to full at the start of each floor. Losing your last shield pip triggers a "SHIELD DOWN" warning.
+- **Shield hearts** (cyan) absorb damage before real HP. They come from the Bone Plate item and Shield Heart perk, and are refilled to full at the start of each floor. Losing your last shield triggers a "SHIELD DOWN" warning. On the HUD they render at half-heart granularity — **2 shield HP = one full cyan heart**, matching red hearts (2 HP = 1 heart).
 - Getting hit knocks you back 14 px, shakes the screen, and flashes a red vignette.
 
 ### Healing
@@ -207,15 +209,25 @@ Clearing a combat room drops:
 
 ## Pressure (Dynamic Difficulty)
 
-The **PRESSURE** meter on the HUD is a run-long adaptive difficulty multiplier applied to enemy and boss **HP and speed at spawn time**:
+The **PRESSURE** meter on the HUD is a run-long adaptive difficulty multiplier applied to enemy and boss **HP and speed at spawn time**. It also **multiplies every point of score you earn** — the higher the pressure, the more each kill, room, and floor is worth.
 
 - Range: **0.75 – 1.60** (starts at 1.00).
-- **+0.01** for every room cleared **without taking damage** (flawless streak).
+- Gains for rooms cleared **without taking damage** (flawless streak).
 - Taking damage **relieves** pressure, scaled by how big the hit was, how low your HP is, and how many recent hits you've taken.
-- Decays passively at 0.02/s while below 35% HP, or 0.008/s if you stall in a room for 90+ seconds.
+- Decays passively while below 35% HP, or if you stall in a room for 90+ seconds.
 - Only affects enemies spawned *after* the change — living enemies keep their stats.
 
-In short: playing flawlessly slowly raises the heat; getting hurt cools things down.
+### The Pressure Dial
+
+The title screen has a **PRESSURE DIAL** (−5 … +5) that tunes how pressure responds. It sets two curves — how fast pressure **rises** per clean room, and how much **relief** each hit grants (which also scales the passive decay). The midpoint (0) is the standard tuning; the dial persists between sessions.
+
+| Dial | Rise / clean room | Relief on hit (base) | Behaviour |
+|---|---|---|---|
+| **−5** | 0 | 0.050 (max) | Mercy — pressure can only ever fall; score capped at 1.00× |
+| **0** | +0.010 | 0.030 | Standard — today's balance |
+| **+5** | +0.050 | 0 (none) | Ratchet — pressure can only ever rise; score floored at 1.00× |
+
+Values between the ends interpolate linearly (rise: 0→1→5 units; relief: 5→3→0 units, 1 unit = 0.01). At −5 pressure never rises so your score multiplier stays ≤ 1.00×; at +5 it never falls, so pressure climbs to the 1.60× cap and your score climbs with it. **Cranking the dial up is how you chase the BEST CUT.**
 
 ### Streak
 
@@ -239,10 +251,11 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 
 ## HUD Reference
 
-- **Top-left — BUTCHER // VITALS:** level, hearts (red) and shield hearts (cyan), XP bar, active weapon + ammo (red when below 25%), holstered weapon with `[R]` swap hint.
+- **Top-left — BUTCHER // VITALS:** level, hearts (red, 2 HP per heart; half containers render as half outlines) and shield hearts (cyan, 2 shield HP per heart), shown on up to two rows, XP bar, active weapon + ammo (red when below 25%), holstered weapon with `[R]` swap hint.
 - **Item tray** (below vitals): up to 24 item icons with tier numerals I–IX.
 - **Top-right — SECTOR MAP:** minimap. White = current room, red = boss, gold = item, gray = cleared, maroon = uncleared. Includes floor number.
-- **Bottom-right — RUN DATA:** floor, kills, score, PRESSURE %, STREAK, pressure bar.
+- **Bottom-right — RUN DATA:** floor, kills, score (with the live pressure multiplier), PRESSURE % (with the dial setting), STREAK, pressure bar.
+- **HUD opacity** is adjustable from the pause menu (`;` / `'` or the HUD slider, 25%–100%). The boss HP bar and toast notifications always stay fully opaque.
 - **Bottom-center:** boss HP bar (during boss fights).
 - **Top-center:** toast notifications (pickups, floor intros, boss events).
 
@@ -250,8 +263,8 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 
 | Screen | What it offers |
 |---|---|
-| **Title** | INITIATE DESCENT, control reference, best score |
-| **Pause** | Jukebox (track cycling), SFX/music volume, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
+| **Title** | INITIATE DESCENT, PRESSURE DIAL (−5…+5), control reference, best score |
+| **Pause** | Jukebox (track cycling), SFX/music volume + HUD opacity sliders, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
 | **Mutation Draft** | 3 perk cards, random cut, reroll, auto-draft |
 | **Game Over ("BUTCHERED")** | Floor, kills, score, NEW BEST CUT tag, restart |
 
@@ -265,5 +278,7 @@ Stored in `localStorage` between sessions:
 - `meatslicer_sfx_volume` (default 0.45)
 - `meatslicer_music_volume` (default 0.55)
 - `meatslicer_autoperk` — auto-draft toggle
+- `meatslicer_pressure_dial` — Pressure Dial setting (−5…+5, default 0)
+- `meatslicer_hud_alpha` — HUD opacity (default 1.0)
 
 Nothing else carries over: no unlocks, no meta-currency, no saved runs. Every descent starts fresh with a Bone Popper and 6 HP.

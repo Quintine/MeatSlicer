@@ -126,7 +126,7 @@ SPECS: dict[str, Spec] = {
     "enemy_runner": Spec("lean feral abattoir ghoul sprinting on four long limbs, exposed spine and jaw, facing right, directly top-down", 64),
     "enemy_spitter": Spec("bloated infected slaughterhouse mutant with huge toxic bile maw, swollen sacs and drool, facing right, directly top-down", 64),
     "enemy_splitter": Spec("round tumour beast made of fused meat nodules and industrial staples, splitting seams, facing right, directly top-down", 64),
-    "enemy_mini": Spec("small vicious meat grub with tiny hooked legs and an oversized ring of teeth, facing right, directly top-down", 32),
+    "enemy_mini": Spec("small vicious blood-red meat grub, glistening raw gore-red flesh, wet crimson skin, tiny hooked bone legs and an oversized ring of teeth, dripping blood, facing right, directly top-down", 64),
     "enemy_exploder": Spec("swollen explosive cyst mutant with taut pale skin, glowing red-yellow cracks and embedded blasting cap, facing right, directly top-down", 64),
     "boss_bonesaw": Spec("colossal radial bone-saw machine monster, multiple concentric serrated rusted discs, bone hub, one hateful red lens, directly top-down", 128),
     "boss_gorecrown": Spec("colossal pulsing heart monarch fused to an iron crown of bone spikes and chains, radial silhouette, directly top-down", 128),
@@ -151,8 +151,8 @@ SPECS: dict[str, Spec] = {
     "tile_wall2": Spec("reinforced concrete wall panel with steel edge columns, cracks and old blood run", 64, "tile"),
     "tile_wall3": Spec("oxidized copper wall panel with teal patina, rivets and a recessed conduit", 64, "tile"),
     "tile_wall4": Spec("slaughterhouse wall panel with steel braces, hanging hook and dirty bone deposits", 64, "tile"),
-    "door_open": Spec("wide open industrial blast doorway viewed top-down, thick riveted steel frame, pitch black opening, blood-worn threshold", 96),
-    "door_locked": Spec("wide sealed industrial blast doorway viewed top-down, interlocking steel jaws, red warning lamp, chains and dried blood", 96),
+    "door_open": Spec("very wide open industrial slaughterhouse doorway viewed top-down, a huge clear empty pitch-black rectangular passage in the center that you can walk straight through, thick riveted rusted steel frame and pillars only on the outer left and right edges, glowing crimson accent lamps on the frame, hanging chains and hooks at the sides, worn blood-stained metal threshold, the center opening is completely empty and unobstructed, no teeth, no jaws, evil but clearly an open entrance", 128),
+    "door_locked": Spec("massive menacing sealed industrial slaughterhouse doorway viewed top-down, interlocking rusted steel jaws clamped over jagged bone teeth, glowing red warning lamps, heavy chains and padlocks, dried blood and gore along the threshold, evil and foreboding", 128),
 
     # Projectiles and pickups.
     "bullet_bone": Spec("sharp dirty bone shard projectile pointing right", 16),
