@@ -1,0 +1,16 @@
+appId: com.meatslicer.game
+productName: MeatSlicer
+asar: false
+files:
+  - "desktop/**"
+  - "index.html"
+  - "css/**"
+  - "js/**"
+  - "assets/**"
+  - "!assets/raw/**"
+  - "mp3-music/**"
+  - "package.json"
+win:
+  target:
+    - zip
+  icon: build/icon.png

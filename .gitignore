@@ -1,6 +1,8 @@
 tools/.env
 tools/.venv/
 assets/raw/
+node_modules/
+dist/
 .playwright-mcp/
 .serena/
 served-state.txt
