@@ -1,0 +1,8 @@
+tools/.env
+tools/.venv/
+assets/raw/
+.playwright-mcp/
+.serena/
+served-state.txt
+__pycache__/
+*.pyc

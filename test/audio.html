@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeatSlicer SFX Lab</title>
+<style>
+  body { background:#090305; color:#eadfd3; font:14px monospace; margin:24px; }
+  h1 { color:#ef3150; } h2 { color:#d6aa39; margin:24px 0 8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:7px; }
+  button { background:#251017; color:#eadfd3; border:1px solid #773142; padding:9px; text-align:left; cursor:pointer; }
+  button:hover { background:#631526; border-color:#ef3150; }
+  .controls { position:sticky; top:0; background:#090305e8; padding:8px 0; z-index:2; }
+  #status { color:#8faeb2; margin-left:16px; }
+</style>
+<script>
+window.onerror = (msg, src, line) => { console.error('PAGEERROR:', msg, src, line); };
+</script>
+</head>
+<body>
+<h1>MEATSLICER // SFX LAB</h1>
+<div class="controls">
+  <button id="init">INITIALIZE / PRELOAD</button>
+  <button id="stop">STOP LOOPS</button>
+  <label> SFX <input id="vol" type="range" min="0" max="1" step="0.05" value="0.45"></label>
+  <span id="status">click initialize, then audition</span>
+</div>
+<div id="catalog"></div>
+<script src="../js/utils.js?v=23"></script>
+<script src="../js/state.js?v=23"></script>
+<script src="../js/sfx.js?v=23"></script>
+<script src="../js/sfxbank.js?v=23"></script>
+<script src="../js/weapons.js?v=23"></script>
+<script>
+G.player = { x: W / 2, y: H / 2 };
+const groups = {
+  '16 WEAPONS': Object.values(WEAPONS).map(w => [w.name, () => Sfx.shoot(w)]),
+  'WEAPON LOOPS': [
+    ['Bile loop', () => Sfx.syncWeaponLoop(WEAPONS.bile, true)],
+    ['Cauterizer loop', () => Sfx.syncWeaponLoop(WEAPONS.cauterizer, true)],
+    ['Red Hand loop', () => Sfx.syncWeaponLoop(WEAPONS.redhand, true)],
+    ['Spinal charge loop', () => Sfx.syncWeaponLoop(WEAPONS.spinaltap, true)],
+  ],
+  'MONSTERS': ['shambler','runner','spitter','splitter','mini','exploder'].flatMap((type, i) => {
+    const e = { type, x: 170 + i * 120, y: 300, elite: false };
+    return [[type + ' death', () => Sfx.enemyDie(e)], ...(type === 'spitter' ? [['spitter attack', () => Sfx.spit(e)]] : [])];
+  }).concat([
+    ['split burst', () => Sfx.split({x:480,y:300})], ['exploder fuse', () => Sfx.fuse({x:650,y:300})],
+    ['spawn', () => Sfx.spawn({x:250,y:300,elite:false})],
+  ]),
+  'BOSSES': ['bonesaw','gorecrown','knifecrawl'].flatMap((bossKind, i) => {
+    const e = { bossKind, x: 240 + i * 240, y: 260 };
+    const events = bossKind === 'bonesaw' ? ['roar','charge','saws'] : bossKind === 'gorecrown' ? ['roar','volley','summon'] : ['roar','dash','knives'];
+    return events.map(event => [bossKind + ' ' + event, () => Sfx.boss(e, event)]);
+  }).concat([
+    ['boss enrage', () => Sfx.boss({bossKind:'bonesaw',x:480,y:260}, 'enrage')],
+    ['boss death', () => Sfx.boss({bossKind:'bonesaw',x:480,y:260}, 'death')],
+  ]),
+  'PICKUPS / UI': ['gem','heart','ammo','weapon','item','levelup','perk','stairs','menu'].map(name => [name, () => Sfx[name] ? Sfx[name]() : Sfx.menu()]),
+  'IMPACTS / PLAYER': [
+    ['flesh hit', () => Sfx.hit({x:480,y:250}, false)], ['critical hit', () => Sfx.hit({x:480,y:250}, true)],
+    ['ricochet left', () => Sfx.ricochet({x:80,y:300})], ['explosion right', () => Sfx.explode({x:880,y:300})],
+    ['trap set', () => Sfx.trapSet({x:480,y:300})], ['trap snap', () => Sfx.trapSnap({x:480,y:300})],
+    ['player hurt', () => Sfx.hurt()], ['player death', () => Sfx.playerDeath()], ['footstep', () => Sfx.footstep(1)],
+    ['shield break', () => Sfx.shieldBreak()], ['shield up', () => Sfx.shieldUp()],
+    ['door', () => Sfx.door({x:80,y:320})], ['room clear', () => Sfx.roomClear()],
+  ],
+};
+const catalog = document.getElementById('catalog');
+for (const [title, entries] of Object.entries(groups)) {
+  const h = document.createElement('h2'); h.textContent = title; catalog.appendChild(h);
+  const grid = document.createElement('div'); grid.className = 'grid';
+  for (const [label, play] of entries) {
+    const b = document.createElement('button'); b.textContent = label; b.onclick = () => { Sfx.resume(); play(); }; grid.appendChild(b);
+  }
+  catalog.appendChild(grid);
+}
+document.getElementById('init').onclick = () => {
+  Sfx.init(); Sfx.resume(); SfxBank.preload();
+  document.getElementById('status').textContent = 'loading ' + Object.keys(SfxBank.FILES).length + ' clips';
+  setTimeout(() => document.getElementById('status').textContent = 'decoded ' + SfxBank.buffers.size + ' / failed ' + SfxBank.failed.size, 2500);
+};
+document.getElementById('stop').onclick = () => Sfx.stopAllLoops();
+document.getElementById('vol').oninput = e => Sfx.setVolume(Number(e.target.value));
+</script>
+</body>
+</html>
