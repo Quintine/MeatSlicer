@@ -45,20 +45,6 @@ const SPRITE_MANIFEST = [
   'boss_platefather_sheet', 'boss_augerprime_sheet', 'boss_scald_sheet',
 ];
 
-// These planned icons intentionally use the built-in gold '?' treatment until
-// the second-pass image generation is approved. Keeping them in the manifest
-// documents the asset contract without issuing noisy 404 requests at runtime.
-const SPRITE_FALLBACK_ONLY = new Set([
-  'perk_critbone', 'perk_critmeat', 'perk_flensing', 'perk_ember', 'perk_frostbile',
-  'perk_heavyhand', 'perk_thickhide', 'perk_secondwind', 'perk_scrapfeed', 'perk_boneknit',
-  'perk_spiteflesh', 'perk_carrion', 'perk_sinew',
-  'i_chainsinew', 'i_mortarbone', 'i_bloatrounds', 'i_marrowglut', 'i_hollowneedle', 'i_bloodshoteye',
-  'i_flayerkiss', 'i_emberjar', 'i_acidgland', 'i_hookrounds', 'i_sledgerounds', 'i_graftedtrigger',
-  'i_deadmanswitch', 'i_orbitcrown', 'i_tannedhide', 'i_deadmansclock', 'i_hollowbones', 'i_boneplate',
-  'i_wormgut', 'i_spinecage', 'i_secondstomach', 'i_spitewell', 'i_twinhearts', 'i_brassmagazine',
-  'i_crowbait', 'i_gorgingleech', 'i_rerollrib',
-]);
-
 const ACTOR_ANIMS = {
   idle:   { frames: 4, fps: 5,  offset: 0 },
   move:   { frames: 8, fps: 12, offset: 32 },
@@ -83,12 +69,11 @@ const Sprites = {
   load() {
     let pending = 0;
     for (const name of SPRITE_MANIFEST) {
-      if (SPRITE_FALLBACK_ONLY.has(name)) continue;
       pending++;
       const img = new Image();
       img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
       img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=34';
+      img.src = 'assets/' + name + '.png?v=35';
     }
   },
 
