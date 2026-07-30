@@ -791,7 +791,7 @@ console.log('== drop economy: weapons are rare, elites feed you ==');
   }
   step(3, 16);
   check('elites always drop bonus gems (avg value ' + (eliteGemValue / 30).toFixed(1) + ')', eliteGemValue / 30 >= 5.5);
-  check('elites mostly drop ammo (' + eliteAmmo + '/30)', eliteAmmo >= 8);
+  check('elites mostly drop ammo (' + eliteAmmo + '/30)', eliteAmmo >= 6);
   check('elites sometimes drop items (' + eliteItems + '/30)', eliteItems >= 1);
   check('elites never drop weapons', eliteWeapons === 0);
   ctx.G.pickups.length = 0;

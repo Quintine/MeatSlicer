@@ -25,14 +25,14 @@ function ammoRefillFraction(w) {
   const rateWeight = Math.log2(interval / 0.3);
   // Heavy, slow attacks push the fraction down; light, rapid attacks push it up.
   const heaviness = clamp((damageWeight + rateWeight) / 4, -1, 1);
-  return clamp(0.62 - heaviness * 0.28, 0.30, 0.88) * (w.ammoWeight || 1);
+  return clamp(0.62 - heaviness * 0.28, 0.30, 0.88) * (w.ammoWeight || 1) * AMMO_REFILL_SCALE;
 }
 
 // room-clear reward burst (weapons come from bosses / item rooms, not room clears)
 function spawnRoomReward(x, y, floor) {
   spawnGems(x, y, irand(3, 5 + floor));
   const luck = G.player.stats.luck;
-  if (chance(0.24 + luck * 0.3)) spawnPickup('ammo', x + rand(-30, 30), y + rand(-30, 30));
+  if (chance((0.24 + luck * 0.3) * AMMO_DROP_SCALE)) spawnPickup('ammo', x + rand(-30, 30), y + rand(-30, 30));
   if (chance(0.10 + luck * 0.3)) spawnPickup('heart', x + rand(-30, 30), y + rand(-30, 30));
 }
 

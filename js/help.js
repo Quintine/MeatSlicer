@@ -122,9 +122,9 @@ function drawHelpLoop(ctx, px, py) {
       'WAVES SPAWN 0.9S APART · INCOMING SPAWNS TELEGRAPH FOR 0.5S · CAP 72',
     ] },
     { head: 'DROPS (LUCK SCALES MOST CHANCES)', lines: [
-      'ROOM CLEAR: 3–5+FLOOR XP · 24%+LUCK×30% AMMO · 10%+LUCK×30% HEART',
-      'NORMAL KILL: 7%+LUCK×4% AMMO · 2.2%+LUCK×3% HEART',
-      'ELITE KILL: 3× XP + 3–5 GEMS · 18%+LUCK×10% ITEM · ELSE 60%+LUCK×20% AMMO',
+      'ROOM CLEAR: 3–5+FLOOR XP · 18%+LUCK×22.5% AMMO · 10%+LUCK×30% HEART',
+      'NORMAL KILL: 5.25%+LUCK×3% AMMO · 2.2%+LUCK×3% HEART',
+      'ELITE KILL: 3× XP + 3–5 GEMS · 18%+LUCK×10% ITEM · ELSE 45%+LUCK×15% AMMO',
     ] },
     { head: 'SCORE (× LIVE PRESSURE)', lines: [
       'KILL +10 · ELITE +40 · BOSS 500 + FLOOR × 100 · ROOM +50 · FLOOR +250',

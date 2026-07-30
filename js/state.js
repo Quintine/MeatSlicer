@@ -45,6 +45,9 @@ const G = {
 };
 
 const PERK_POWER_WEIGHT = 0.5;
+// ammo economy: global dials for refill size and drop frequency
+const AMMO_REFILL_SCALE = 0.75;
+const AMMO_DROP_SCALE = 0.75;
 const PRESSURE_MIN = 0.75, PRESSURE_MAX = 1.60;
 const PRESSURE_UNIT = 0.01;          // one "point" on the dial scale
 const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point

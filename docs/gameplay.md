@@ -190,8 +190,8 @@ Clearing a combat room drops:
 
 | Source | Drops |
 |---|---|
-| Normal enemy | XP gems (enemy's XP value) · 7% + luck×4% ammo · 2.2% + luck×3% heart |
-| Elite enemy | 3× XP + 3–5 bonus gems · 18% + luck×10% **item** · else 60% + luck×20% ammo |
+| Normal enemy | XP gems (enemy's XP value) · 5.25% + luck×3% ammo · 2.2% + luck×3% heart |
+| Elite enemy | 3× XP + 3–5 bonus gems · 18% + luck×10% **item** · else 45% + luck×15% ammo |
 | Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + stairs |
 
 **Luck** is a player stat (Lucky Coin, Crow Bait, Scavenger perk) that scales most drop chances as shown above.

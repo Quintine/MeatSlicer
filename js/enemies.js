@@ -300,12 +300,12 @@ function killEnemy(e, ang) {
     spawnGems(e.x, e.y, gemVal);
     if (chance(0.18 + luck * 0.1)) {
       spawnPickup('item', e.x, e.y, { iid: rollItemId('elite', G.floor) });
-    } else if (chance(0.6 + luck * 0.2)) {
+    } else if (chance((0.6 + luck * 0.2) * AMMO_DROP_SCALE)) {
       spawnPickup('ammo', e.x, e.y);
     }
   } else {
     spawnGems(e.x, e.y, gemVal);
-    if (chance(0.07 + luck * 0.04)) {
+    if (chance((0.07 + luck * 0.04) * AMMO_DROP_SCALE)) {
       spawnPickup('ammo', e.x, e.y);
     } else if (chance(0.022 + luck * 0.03)) {
       spawnPickup('heart', e.x, e.y);
