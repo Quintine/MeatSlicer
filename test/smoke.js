@@ -147,6 +147,8 @@ check('every weapon has layered render and muzzle geometry', Object.values(ctx.W
   Number.isFinite(w.torsoW) && Number.isFinite(w.torsoFwd) && Number.isFinite(w.muzzle) && w.muzzle > 0));
 check('every weapon has finite impact punch metadata', Object.values(ctx.WEAPONS).every(w => Number.isFinite(w.punch) && w.punch > 0));
 check('arsenal still contains exactly 16 weapons', Object.keys(ctx.WEAPONS).length === 16);
+check('quantitative tier rebalance: 2/4/5/4 distribution', [0, 1, 2, 3].every(t => Object.values(ctx.WEAPONS).filter(w => w.tier === t).length === [2, 4, 5, 4][t]));
+check('every drop tier has at least one weapon', [0, 1, 2, 3].every(t => Object.values(ctx.WEAPONS).some(w => w.tier === t)));
 check('visceral DSP and fallback events are wired',
   ['punch', 'duck', 'wallHit', 'lifesteal'].every(name => typeof ctx.Sfx[name] === 'function'));
 const missingSfxFiles = Object.values(ctx.SfxBank.FILES).filter(file => {

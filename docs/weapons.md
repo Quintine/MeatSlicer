@@ -12,7 +12,7 @@ Weapons have **no upgrade levels** — their stats are fixed. All scaling comes 
 - Press **R** to swap between them. Holstered weapons keep their remaining ammo.
 - Picking up a new special weapon drops your current one (with its remaining ammo) so you can swap back.
 - When a special weapon runs dry, you automatically fall back to the Bone Popper.
-- Special weapons consume ammo per shot: `1 / ammoEff` units per shot (so Brass Magazine's +15% `ammoEff` stretches every magazine).
+- Special weapons consume ammo per shot: `1 / ammoEff` units per shot (so Brass Magazine's additive `ammoEff` stretches every magazine).
 
 ### Where weapons come from
 
@@ -97,6 +97,10 @@ Rapid-fire bullet hose. Low per-shot damage, excellent proc-per-second carrier f
 
 Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but the short lifetime makes it strictly close-range.
 
+---
+
+## Tier 1 — Uncommon
+
 ### Cleaver Cadence
 
 > *It always comes back*
@@ -111,10 +115,6 @@ Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but
 | Recoil | 0.42 |
 
 Boomerang: flies out while decelerating for 0.45 s, then accelerates back to you (caught within 20 px). **Always pierces** — it can hit enemies on both the outbound and return trip.
-
----
-
-## Tier 1 — Uncommon
 
 ### Sawblade Launcher
 
@@ -131,24 +131,6 @@ Boomerang: flies out while decelerating for 0.45 s, then accelerates back to you
 | Recoil | 0.45 |
 
 Spinning ricochet blades. Deadly in cramped rooms where blades ping off walls into packs.
-
-### Bile Blunderbuss
-
-> *A brutal corrosive torrent; pools linger*
-
-| Stat | Value |
-|---|---|
-| Damage | 7 |
-| Fire interval | 0.12 s (rapid, hold to spray) |
-| Projectiles per shot | 2 |
-| Projectile speed | 340 |
-| Spread | 0.32 rad |
-| Range | 0.36 s |
-| Pierce | 2 (+ item pierce) |
-| Ammo | 70 |
-| Recoil | 0.34 |
-
-Corrosive cone spray. On hit: **slows for 1.6 s** and 45% chance to leave an **acid pool** (radius 24 × sizeMul, 3.5 s life, DPS = bullet damage × 1.5). Projectiles that expire mid-flight have a separate 35% chance to drop a pool.
 
 ### Hemophage
 
@@ -186,6 +168,24 @@ Aggressively seeking projectiles. Aim roughly, let the eyes do the rest.
 
 ## Tier 2 — Rare
 
+### Bile Blunderbuss
+
+> *A brutal corrosive torrent; pools linger*
+
+| Stat | Value |
+|---|---|
+| Damage | 7 |
+| Fire interval | 0.12 s (rapid, hold to spray) |
+| Projectiles per shot | 2 |
+| Projectile speed | 340 |
+| Spread | 0.32 rad |
+| Range | 0.36 s |
+| Pierce | 2 (+ item pierce) |
+| Ammo | 70 |
+| Recoil | 0.34 |
+
+Corrosive cone spray. On hit: **slows for 1.6 s** and 45% chance to leave an **acid pool** (radius 24 × sizeMul, 3.5 s life, DPS = bullet damage × 1.5). Projectiles that expire mid-flight have a separate 35% chance to drop a pool.
+
 ### Gut Hook
 
 > *Impales and drags the catch*
@@ -200,24 +200,6 @@ Aggressively seeking projectiles. Aim roughly, let the eyes do the rest.
 | Recoil | 0.95 |
 
 Harpoon that pierces everything and **drags the first non-boss enemy it hits** along its flight path. When the projectile expires, the dragged enemy takes 50% of the bullet's damage again. Excellent for yanking a priority target out of a pack.
-
-### The Cauterizer
-
-> *Incinerates anything brave enough to get close*
-
-| Stat | Value |
-|---|---|
-| Damage | 4.5 per flame tick |
-| Fire interval | 0.05 s (20 ticks/sec, hold to spray) |
-| Projectiles per shot | 2 |
-| Projectile speed | 310 |
-| Spread | 0.34 rad |
-| Range | 0.36 s (very short) |
-| Pierce | 2 (+ item pierce) |
-| Ammo | 110 |
-| Recoil | 0.32 |
-
-Flamethrower. Hits **ignite for 2.2 s** with burn DPS = bullet damage × 2 (9 DPS base). Melt hordes that get close; useless at range.
 
 ### Flesh Masher
 
@@ -250,21 +232,6 @@ Grenade lobber. Flight time auto-computed from distance (clamped 0.12–0.8 s). 
 
 Area denial. Traps persist on the floor and damage any enemy that steps on them — pre-lay them along doorways and kiting paths.
 
-### The Tenderizer
-
-> *A room-shaking close-range meat paste*
-
-| Stat | Value |
-|---|---|
-| Damage | 60 (instant area hit) |
-| Fire interval | 0.58 s |
-| Range | 46 × rangeMul × √shotSpeedMul from player |
-| Blast radius | 70 × rangeMul × √sizeMul |
-| Ammo | 26 |
-| Recoil | 1.00 (max), screen shake 5 |
-
-Point-blank slam — no projectile, an instant circular blast in front of you. Bonus "inert" damage scaling: +6% per point of pierce + bounce + homing you own.
-
 ### Red Right Hand
 
 > *A chainsaw that liquefies anything in reach*
@@ -283,6 +250,39 @@ Continuous melee chainsaw — hold LMB and walk into things. Damage scales with 
 ---
 
 ## Tier 3 — Legendary
+
+### The Cauterizer
+
+> *Incinerates anything brave enough to get close*
+
+| Stat | Value |
+|---|---|
+| Damage | 4.5 per flame tick |
+| Fire interval | 0.05 s (20 ticks/sec, hold to spray) |
+| Projectiles per shot | 2 |
+| Projectile speed | 310 |
+| Spread | 0.34 rad |
+| Range | 0.36 s (very short) |
+| Pierce | 2 (+ item pierce) |
+| Ammo | 110 |
+| Recoil | 0.32 |
+
+Flamethrower. Hits **ignite for 2.2 s** with burn DPS = bullet damage × 2 (9 DPS base). Melt hordes that get close; useless at range.
+
+### The Tenderizer
+
+> *A room-shaking close-range meat paste*
+
+| Stat | Value |
+|---|---|
+| Damage | 60 (instant area hit) |
+| Fire interval | 0.58 s |
+| Range | 46 × rangeMul × √shotSpeedMul from player |
+| Blast radius | 70 × rangeMul × √sizeMul |
+| Ammo | 26 |
+| Recoil | 1.00 (max), screen shake 5 |
+
+Point-blank slam — no projectile, an instant circular blast in front of you. Bonus "inert" damage scaling: +6% per point of pierce + bounce + homing you own.
 
 ### Spinal Tap
 
