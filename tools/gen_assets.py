@@ -279,6 +279,18 @@ ITEMS = {
     "rimedfang": "a long predatory fang crusted with white frost and a steel collar",
     "butcherstwine": "a spool of blood-stained butcher twine with a frayed loose end",
     "cindersump": "a smouldering iron sump grate with orange cinders and green acid drips",
+    "deadweight": "a heavy iron butcher weight crushing a pale bone",
+    "cauterizedveins": "a forearm cross-section with glowing cauterized orange veins",
+    "hollowchoir": "a hollow bone pipe organ with three small singing mouths",
+    "sawbonecoil": "a coiled spring made of interlocking bone saw teeth",
+    "gluttonsgut": "a distended stomach with a second mouth and spilled half-digested hearts",
+    "slaughterrhythm": "a metronome with a pendulum made of a bloody cleaver",
+    "painengine": "a small iron engine with a pressure gauge and a screaming flesh piston",
+    "thresherplate": "a spiked iron threshing plate bristling with rotating barbs",
+    "bloodmoat": "a ring-shaped moat of dark blood with a bone drawbridge",
+    "ironlung": "a riveted iron lung with bellows and a steel windpipe",
+    "meathook": "a huge rusted slaughterhouse meat hook on a taut chain",
+    "blooddebt": "a parchment contract signed in blood with a heart seal",
 }
 for iid, subject in ITEMS.items():
     SPECS["i_" + iid] = Spec(subject + ", isolated inventory object, strong top-left light, no medallion, no icon background", 32)

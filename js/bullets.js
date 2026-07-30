@@ -89,6 +89,20 @@ function updateBullets(dt) {
       if (b.behavior === 'cone' && chance(0.35)) {
         G.hazards.push({ kind: 'acid', x: b.x, y: b.y, r: 24 * (b.sizeMul || 1), life: 3.5, t: 0, dps: b.dmg * 1.5 });
       }
+      // Sawbone Coil: bullets split into 2 shards on expiry
+      if (p.stats.sawboneCoil > 0 && !b.shard && b.behavior !== 'lob' && b.behavior !== 'lob_trap' && b.behavior !== 'lob_swarm') {
+        for (let k = 0; k < 2; k++) {
+          const sa = rand(0, TAU);
+          G.bullets.push({
+            x: b.x, y: b.y, ang: sa,
+            vx: Math.cos(sa) * 260 * p.stats.shotSpeedMul, vy: Math.sin(sa) * 260 * p.stats.shotSpeedMul,
+            r: 3 * p.stats.sizeMul, dmg: b.dmg * 0.4, pierce: 0, bounce: p.stats.bounce,
+            life: 0.4 * p.stats.rangeMul, t: 0, behavior: 'bullet', sprite: 'bullet_bone',
+            homing: p.stats.homing ? 1.6 + p.stats.homing * 0.7 : 0, shard: true, sizeMul: p.stats.sizeMul,
+          });
+        }
+        spawnSpark(b.x, b.y, rand(0, TAU));
+      }
     }
 
     // lobbed projectiles trigger on expiry (reached target)

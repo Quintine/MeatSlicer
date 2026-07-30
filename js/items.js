@@ -75,6 +75,20 @@ const ITEMS = {
   rimedfang:     { name: 'Rimed Fang',       desc: '+4% crit chance, +25% crit damage', rarity: 'common', cap: 6, apply: s => { s.crit += 0.04; s.critMul += 0.25; } },
   butcherstwine: { name: 'Butcher\'s Twine', desc: '+12% bleed, +8% fire rate',   rarity: 'uncommon', cap: 5, apply: s => { s.bleed += 0.12; s.rateMul *= 1.08; } },
   cindersump:    { name: 'Cinder Sump',      desc: '+12% ignite, +12% acid',      rarity: 'uncommon', cap: 5, apply: s => { s.igniteChance += 0.12; s.acidOnHit += 0.12; } },
+
+  // ---- phase 3 additions (small engine hooks) ----
+  deadweight:    { name: 'Dead Weight',      desc: '+40% damage to enemies under 30% HP', rarity: 'uncommon', cap: 5, apply: s => { s.executeBonus += 0.40; } },
+  cauterizedveins:{ name: 'Cauterized Veins', desc: '+15% ignite, +25% damage to burning enemies', rarity: 'uncommon', cap: 5, apply: s => { s.igniteChance += 0.15; s.burnDamageBonus += 0.25; } },
+  hollowchoir:   { name: 'Hollow Choir',     desc: 'Every 4th shot fires a free extra volley', rarity: 'rare', cap: 3, apply: s => { s.choirEvery += 1; } },
+  sawbonecoil:   { name: 'Sawbone Coil',     desc: 'Expiring bullets split into 2 shards', rarity: 'uncommon', cap: 5, apply: s => { s.sawboneCoil += 1; } },
+  gluttonsgut:   { name: "Glutton's Gut",    desc: 'Hearts heal +1 extra; overheal becomes score', rarity: 'common', cap: 5, apply: s => { s.gluttonGut += 1; } },
+  slaughterrhythm:{ name: 'Slaughter Rhythm', desc: '+4% fire rate per recent kill (cap +40%)', rarity: 'rare', cap: 3, apply: s => { s.slaughterRhythm += 0.04; } },
+  painengine:    { name: 'Pain Engine',      desc: '+30% damage for 4s after being hit', rarity: 'rare', cap: 3, apply: s => { s.painEngine += 0.30; } },
+  thresherplate: { name: 'Thresher Plate',   desc: 'Passive contact-damage aura', rarity: 'uncommon', cap: 5, apply: s => { s.thresherPlate += 1; } },
+  bloodmoat:     { name: 'Blood Moat',       desc: 'Kills leave an acid pool',     rarity: 'uncommon', cap: 4, apply: s => { s.bloodMoat += 1; } },
+  ironlung:      { name: 'Iron Lung',        desc: 'The first hit each room is blocked', rarity: 'rare', cap: 3, apply: s => { s.ironLung += 1; } },
+  meathook:      { name: 'Meat Hook',        desc: 'Kills yank nearby enemies to the corpse', rarity: 'uncommon', cap: 4, apply: s => { s.meatHook += 1; } },
+  blooddebt:     { name: 'Blood Debt',       desc: '+35% damage, −½ heart container', rarity: 'rare', cap: 3, apply: (s, p) => { s.dmgMul *= 1.35; s.maxHp = Math.max(1, s.maxHp - 1); p.hp = Math.min(p.hp, s.maxHp); } },
 };
 
 const ITEM_LEVEL_CAP = 9;

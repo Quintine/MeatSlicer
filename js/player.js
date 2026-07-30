@@ -22,6 +22,10 @@ function initPlayer() {
       roomHeal: 0, roomHealChance: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
       orbSpeedMul: 1, orbDmgMul: 1, overShield: 0,
       rerolls: 0, rerollPerLevel: 0,
+      // phase-3 conditional / hook passives
+      dmgLiveMul: 1, executeBonus: 0, burnDamageBonus: 0, choirEvery: 0, sawboneCoil: 0,
+      gluttonGut: 0, slaughterRhythm: 0, painEngine: 0, thresherPlate: 0, bloodMoat: 0,
+      ironLung: 0, meatHook: 0, bloodDebt: 0,
       maxHp: 6,
     },
   };
@@ -100,7 +104,7 @@ function updatePlayer(dt) {
   Sfx.syncWeaponLoop(w, sustained && Input.mdown && p.weapon.ammo > 0);
   if (p.fireT > 0) p.fireT -= dt;
   const frenzyMul = p.frenzyT > 0 ? 1 + st.frenzy : 1;
-  const effectiveRate = st.rateMul * frenzyMul;
+  const effectiveRate = st.rateMul * (1 + (st.rhythmRateBonus || 0)) * frenzyMul;
   const rate = w.interval / effectiveRate;
 
   if (w.behavior === 'saw') {
@@ -123,6 +127,11 @@ function updatePlayer(dt) {
   } else {
     if (Input.mdown && p.fireT <= 0 && p.weapon.ammo > 0) {
       fireWeapon(p, w);
+      // Hollow Choir: every 4th shot fires a free extra volley
+      if (st.choirEvery > 0) {
+        p.choirCount = (p.choirCount || 0) + 1;
+        if (p.choirCount >= 4) { p.choirCount = 0; fireWeapon(p, w); }
+      }
       p.recoil = Math.min(1, p.recoil + (w.behavior === 'slam' ? 1 : 0.45));
       p.muzzleT = 0.07;
       p.attackT = 0.4; p.actionT = 0;
@@ -154,7 +163,7 @@ function updatePlayer(dt) {
         if (e.orbT > 0) continue;
         if (dist2(ox, oy, e.x, e.y) < (12 + e.r) * (12 + e.r)) {
           e.orbT = 0.35;
-          damageEnemy(e, 12 * st.dmgMul * st.orbDmgMul, a + Math.PI / 2, true, {
+          damageEnemy(e, 12 * st.dmgMul * st.dmgLiveMul * st.orbDmgMul, a + Math.PI / 2, true, {
             source: 'player', procScale: 0.5, procMagnitudeScale: 0.5,
           });
           spawnBlood(e.x, e.y, a, 3);
@@ -165,6 +174,30 @@ function updatePlayer(dt) {
 
   // open queued level-ups
   if (G.pendingLevelups > 0 && G.mode === 'play') openPerkDraft();
+
+  // ---- phase-3 live multipliers & auras ----
+  // Slaughter Rhythm: +rate per recent kill, Pain Engine: +dmg after being hit
+  p.killStamps = (p.killStamps || []).filter(t => G.time - t < 3);
+  const rhythm = st.slaughterRhythm > 0 ? Math.min(p.killStamps.length * st.slaughterRhythm, 0.40) : 0;
+  st.rhythmRateBonus = rhythm;
+  if (p.painEngineT > 0) p.painEngineT -= dt;
+  st.dmgLiveMul = p.painEngineT > 0 ? 1 + st.painEngine : 1;
+
+  // Thresher Plate: passive contact-damage aura (no need to be hit)
+  if (st.thresherPlate > 0) {
+    p.thresherTick = (p.thresherTick || 0) - dt;
+    if (p.thresherTick <= 0) {
+      p.thresherTick = 0.4;
+      const range = 46 * Math.sqrt(st.sizeMul);
+      for (const e of G.enemies) {
+        if (e.hp <= 0 || e.boss) continue;
+        if (dist2(e.x, e.y, p.x, p.y) < (range + e.r) * (range + e.r)) {
+          damageEnemy(e, 6 * st.thresherPlate * st.dmgMul * st.dmgLiveMul, angleTo(p.x, p.y, e.x, e.y), true, { noProc: true });
+        }
+      }
+    }
+  }
+  // Iron Lung room-block cooldown flag is set in enterRoom
 }
 
 function armorBlockChance(rating) {
@@ -183,6 +216,14 @@ function pressureRelief(dmgTaken) {
 function hurtPlayer(dmg, ang, attacker) {
   const p = G.player;
   if (p.invT > 0 || p.hp <= 0 || G.mode !== 'play') return;
+  // Iron Lung: the first hit each room is blocked
+  if (p.ironLungReady) {
+    p.ironLungReady = false;
+    p.invT = 0.5; p.hitT = 0.1;
+    spawnText(p.x, p.y - 20, 'IRON LUNG', '#9fb4bd');
+    addShake(2); Sfx.shieldUp();
+    return;
+  }
   if (p.stats.armor > 0 && chance(armorBlockChance(p.stats.armor))) {
     p.invT = 0.2;
     p.hitT = 0.1;
@@ -201,6 +242,7 @@ function hurtPlayer(dmg, ang, attacker) {
   p.hp -= reduced;
   p.hitT = 0.18;
   p.invT = 0.9 + p.stats.invBonus;
+  if (reduced > 0 && p.stats.painEngine > 0) p.painEngineT = 4;
   G.flash = 0.35;
   addShake(7);
   Sfx.hurt();

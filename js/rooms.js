@@ -67,6 +67,8 @@ function enterRoom(gx, gy) {
 
   // spawn protection: brief invincibility walking into a fresh room
   if (G.player) G.player.invT = Math.max(G.player.invT, 1.0);
+  // Iron Lung: re-arm the once-per-room hit block
+  if (G.player && G.player.stats.ironLung > 0) G.player.ironLungReady = true;
 
   if (!room.visited) {
     room.visited = true;

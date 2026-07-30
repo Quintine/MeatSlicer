@@ -43,7 +43,7 @@ function fireWeapon(p, w) {
   const ang = p.aim;
   const muzzle = w.muzzle || 35;
   const bx = p.x + Math.cos(ang) * muzzle, by = p.y + Math.sin(ang) * muzzle;
-  const dmgMul = st.dmgMul;
+  const dmgMul = st.dmgMul * st.dmgLiveMul;
   const spdMul = st.shotSpeedMul;
   spawnMuzzleFx(bx, by, ang, w.behavior);
 
@@ -144,7 +144,7 @@ function sawTick(p, def, inst, dt) {
     for (const e of G.enemies) {
       if (dist2(cx, cy, e.x, e.y) < (radius + e.r) * (radius + e.r)) {
         const tickScale = dt / Math.max(0.01, def.interval || 0.1);
-        damageEnemy(e, def.dmg * st.dmgMul * st.rateMul * inert * tickScale, a, false, {
+        damageEnemy(e, def.dmg * st.dmgMul * st.dmgLiveMul * st.rateMul * inert * tickScale, a, false, {
           source: 'player', procScale: tickScale, procIntervalScale: tickScale,
         });
         hitAny = true;
@@ -166,7 +166,7 @@ function fireBeam(p, def, charge) {
   for (let i = 1; i <= st.rear; i++) angles.push(p.aim + Math.PI + (i - (st.rear + 1) / 2) * 0.18);
   const len = 900 * st.rangeMul;
   const inert = 1 + (st.pierce + st.bounce + st.homing) * 0.06;
-  const dmg = def.dmg * st.dmgMul * (0.4 + 0.6 * charge) * inert;
+  const dmg = def.dmg * st.dmgMul * st.dmgLiveMul * (0.4 + 0.6 * charge) * inert;
   const width = 14 * Math.sqrt(st.sizeMul);
   for (const ang of angles) {
     const x2 = p.x + Math.cos(ang) * len, y2 = p.y + Math.sin(ang) * len;

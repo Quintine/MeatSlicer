@@ -318,9 +318,9 @@ step(30, 16);
 
 console.log('== expanded perk and item rosters ==');
 {
-  check('41 new items added (14 phase-2 passives)', Object.keys(ctx.ITEMS).length === 60);
+  check('41 new items added (14 phase-2 + 12 phase-3 passives)', Object.keys(ctx.ITEMS).length === 72);
   const newPerks = ['critbone', 'critmeat', 'flensing', 'ember', 'frostbile', 'heavyhand', 'thickhide', 'secondwind', 'scrapfeed', 'boneknit', 'spiteflesh', 'carrion', 'sinew'];
-  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib', 'chillgland', 'hookedsinew', 'gyroscopicribs', 'marrowpiston', 'splitcortex', 'gristlecord', 'renderedfat', 'whipcordtendon', 'rusteddiadem', 'gorgedtick', 'bonemealpowder', 'rimedfang', 'butcherstwine', 'cindersump'];
+  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib', 'chillgland', 'hookedsinew', 'gyroscopicribs', 'marrowpiston', 'splitcortex', 'gristlecord', 'renderedfat', 'whipcordtendon', 'rusteddiadem', 'gorgedtick', 'bonemealpowder', 'rimedfang', 'butcherstwine', 'cindersump', 'deadweight', 'cauterizedveins', 'hollowchoir', 'sawbonecoil', 'gluttonsgut', 'slaughterrhythm', 'painengine', 'thresherplate', 'bloodmoat', 'ironlung', 'meathook', 'blooddebt'];
   check('all new perks have manifest icons or fallbacks', newPerks.every(id => ctx.SPRITE_MANIFEST.includes('perk_' + id)));
   check('all new items have manifest icons or fallbacks', newItems.every(id => ctx.SPRITE_MANIFEST.includes('i_' + id)));
   check('new roster entries all have names, descriptions and effects',
@@ -496,6 +496,53 @@ console.log('== tier-scaled items + duplicate favoring ==');
     if (p.items[ctx.randomItemId()]) ownedHits++;
   }
   check('item rolls favor owned items (' + ownedHits + '/200)', ownedHits >= 40);
+}
+
+console.log('== phase-3 hook passives ==');
+{
+  const p = ctx.G.player;
+  const s = p.stats;
+  // Dead Weight: execute bonus on wounded enemies (isolate stats so no leftover items leak)
+  const savedStats = s;
+  p.stats = Object.assign({}, s, { executeBonus: 0.40, burnDamageBonus: 0, crit: 0, critMul: 2 });
+  const wounded = ctx.makeEnemy('shambler', 500, 300, 1, false); wounded.hp = wounded.maxHp = 100; wounded.hp = 20; // 20% of maxHp
+  const healthy = ctx.makeEnemy('shambler', 500, 300, 1, false); healthy.hp = healthy.maxHp = 100;
+  const wBefore = wounded.hp, hBefore = healthy.hp;
+  ctx.damageEnemy(wounded, 10, 0, false, { noCrit: true });
+  ctx.damageEnemy(healthy, 10, 0, false, { noCrit: true });
+  check('Dead Weight executes wounded enemies', Math.abs((wBefore - wounded.hp) - 14) < 0.01 && Math.abs((hBefore - healthy.hp) - 10) < 0.01);
+  p.stats = savedStats;
+
+  // Cauterized Veins: bonus damage to burning enemies
+  const savedBurn = s.burnDamageBonus;
+  s.burnDamageBonus = 0.25;
+  const burner = ctx.makeEnemy('shambler', 500, 300, 1, false); burner.burnT = 1;
+  const bBefore = burner.hp;
+  ctx.damageEnemy(burner, 10, 0, false, { noCrit: true });
+  check('Cauterized Veins boosts damage on burning enemies', Math.abs((bBefore - burner.hp) - 12.5) < 0.01);
+  s.burnDamageBonus = savedBurn;
+  ctx.G.enemies.length = 0;
+
+  // Pain Engine: dmgLiveMul rises after being hit
+  const savedPain = s.painEngine, savedArmor = s.armor, savedMax = s.maxHp;
+  s.painEngine = 0.30; s.armor = 0; s.maxHp = 999; p.hp = 999; p.invT = 0; p.painEngineT = 0; ctx.G.mode = 'play';
+  ctx.hurtPlayer(1, 0);
+  check('Pain Engine arms after being hit', p.painEngineT > 0);
+  s.painEngine = savedPain; s.armor = savedArmor; s.maxHp = savedMax; p.invT = 1; p.painEngineT = 0;
+
+  // Iron Lung: first hit in a room is blocked
+  const savedLung = s.ironLung;
+  s.ironLung = 1; p.ironLungReady = true; p.invT = 0; const hpBeforeLung = p.hp;
+  ctx.hurtPlayer(1, 0);
+  check('Iron Lung blocks the first room hit', p.hp === hpBeforeLung && p.ironLungReady === false);
+  s.ironLung = savedLung; p.invT = 1;
+
+  // Slaughter Rhythm: recent kills grant fire rate
+  const savedRhythm = s.slaughterRhythm;
+  s.slaughterRhythm = 0.04; p.killStamps = [ctx.G.time, ctx.G.time, ctx.G.time];
+  p.fireT = 0; ctx.updatePlayer(0.016);
+  check('Slaughter Rhythm grants live fire rate', (s.rhythmRateBonus || 0) > 0);
+  s.slaughterRhythm = savedRhythm; p.killStamps = [];
 }
 
 console.log('== all weapons fire without crashing ==');
@@ -937,8 +984,8 @@ console.log('== item stickiness ramps with owned count ==');
 
 console.log('== help manual grows with the implant roster ==');
 {
-  check('9 help pages (3 implant pages for 60 items)', ctx.HELP_PAGES.length === 9);
-  check('9 help renderers', ctx.HELP_RENDERERS.length === 9);
+  check('10 help pages (4 implant pages for 72 items)', ctx.HELP_PAGES.length === 10);
+  check('10 help renderers', ctx.HELP_RENDERERS.length === 10);
   ctx.G.player = ctx.G.player || {};
   const fctx = fakeCtx();
   let renderOK = true;

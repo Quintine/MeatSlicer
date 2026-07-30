@@ -39,6 +39,9 @@ const SPRITE_MANIFEST = [
   'i_chillgland', 'i_hookedsinew', 'i_gyroscopicribs', 'i_marrowpiston', 'i_splitcortex',
   'i_gristlecord', 'i_renderedfat', 'i_whipcordtendon', 'i_rusteddiadem', 'i_gorgedtick',
   'i_bonemealpowder', 'i_rimedfang', 'i_butcherstwine', 'i_cindersump',
+  'i_deadweight', 'i_cauterizedveins', 'i_hollowchoir', 'i_sawbonecoil', 'i_gluttonsgut',
+  'i_slaughterrhythm', 'i_painengine', 'i_thresherplate', 'i_bloodmoat', 'i_ironlung',
+  'i_meathook', 'i_blooddebt',
   // full 64px/128px eight-direction action atlases
   'player_sheet', 'player_legs_sheet',
   'enemy_shambler_sheet', 'enemy_runner_sheet', 'enemy_spitter_sheet',

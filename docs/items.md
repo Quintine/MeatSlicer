@@ -1,6 +1,6 @@
 # Items
 
-All **60 passive items** in MeatSlicer, with exact effects pulled from `js/items.js` and the proc logic in `js/enemies.js` / `js/player.js`.
+All **72 passive items** in MeatSlicer, with exact effects pulled from `js/items.js` and the proc logic in `js/enemies.js` / `js/player.js`.
 
 ---
 
@@ -77,6 +77,18 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Ember Jar** | 20% chance to ignite | `+0.20` chance — burn for 1.8 s at `5 × dmgMul` DPS |
 | **Chill Gland** | 18% chance to chill | `+0.18` chance — slows enemies (activates the previously unused `slowOnHit` stat) |
 | **Cinder Sump** | +12% ignite, +12% acid | `igniteChance +0.12`, `acidOnHit +0.12` — dual-element hybrid |
+| **Dead Weight** | +40% damage to enemies under 30% HP | `executeBonus +0.40` — checked in `damageEnemy` |
+| **Cauterized Veins** | +15% ignite, +25% damage to burning enemies | `igniteChance +0.15`, `burnDamageBonus +0.25` |
+| **Hollow Choir** | Every 4th shot fires a free extra volley | `choirEvery +1` — fires a second `fireWeapon` every 4th trigger pull |
+| **Sawbone Coil** | Expiring bullets split into 2 shards | `sawboneCoil +1` — on bullet expiry, spawns 2 shards at 40% damage |
+| **Glutton's Gut** | Hearts heal +1 extra; overheal becomes score | `gluttonGut +1` — heart heal `2 + tier`, full-HP score `25 + tier × 10` |
+| **Slaughter Rhythm** | +4% fire rate per recent kill (cap +40%) | `slaughterRhythm +0.04` — kills stamp `killStamps`; rate bonus decays after 3 s |
+| **Pain Engine** | +30% damage for 4s after being hit | `painEngine +0.30` — `dmgLiveMul` rises while `painEngineT` is active |
+| **Thresher Plate** | Passive contact-damage aura | `thresherPlate +1` — ticks `6 × tier × dmgMul` on nearby enemies every 0.4 s |
+| **Blood Moat** | Kills leave an acid pool | `bloodMoat +1` — on kill, spawns an acid hazard at the corpse |
+| **Iron Lung** | The first hit each room is blocked | `ironLung +1` — re-armed by `enterRoom`; blocks one hit with a 0.5 s i-frame |
+| **Meat Hook** | Kills yank nearby enemies to the corpse | `meatHook +1` — on kill, nearby enemies are pulled toward the body |
+| **Blood Debt** | +35% damage, −½ heart container | `dmgMul ×1.35`, `maxHp −1` — the Rare trade-off item |
 | **Acid Gland** | Hits may leave acid pools | `+0.12` chance (cap 65%) — pool radius 18 × sizeMul, 2.5 s, `5 × dmgMul` DPS |
 | **Hook Rounds** | Hits pull enemies toward you | `+0.18` chance (cap 80%) — yanks the enemy toward you at speed 170 |
 | **Sledge Rounds** | More knockback, hits may stun | `knockbackMul ×1.35`, `+0.08` stun chance (cap 75%) — 0.35 s stun, non-bosses only |
@@ -200,6 +212,18 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | 58 | Volatile Bile | Rare | III | On-kill |
 | 59 | Whipcord Tendon | Uncommon | V | Damage |
 | 60 | Worm Gut | Rare | III | Survivability |
+| 61 | Blood Debt | Rare | III | Damage |
+| 62 | Blood Moat | Uncommon | IV | On-kill |
+| 63 | Cauterized Veins | Uncommon | V | On-hit proc |
+| 64 | Dead Weight | Uncommon | V | Damage |
+| 65 | Glutton's Gut | Common | V | Survivability |
+| 66 | Hollow Choir | Rare | III | Shot modifier |
+| 67 | Iron Lung | Rare | III | Survivability |
+| 68 | Meat Hook | Uncommon | IV | On-kill |
+| 69 | Pain Engine | Rare | III | Damage |
+| 70 | Sawbone Coil | Uncommon | V | Shot modifier |
+| 71 | Slaughter Rhythm | Rare | III | Fire rate |
+| 72 | Thresher Plate | Uncommon | V | Survivability |
 
 ## Synergy notes
 

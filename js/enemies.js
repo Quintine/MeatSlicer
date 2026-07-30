@@ -102,6 +102,10 @@ function damageEnemy(e, dmg, ang, knockback, opts) {
   const o = opts || {};
   const crit = !!(p && !o.noCrit && chance(p.stats.crit || 0));
   if (crit) dmg *= p.stats.critMul || 2;
+  // Dead Weight: execute wounded enemies
+  if (p && p.stats.executeBonus > 0 && e.maxHp > 0 && e.hp / e.maxHp < 0.30) dmg *= 1 + p.stats.executeBonus;
+  // Cauterized Veins: bonus damage to burning enemies
+  if (p && p.stats.burnDamageBonus > 0 && e.burnT > 0) dmg *= 1 + p.stats.burnDamageBonus;
   const mitigated = e.dmgTakenMul !== undefined && e.dmgTakenMul < 1;
   dmg *= e.dmgTakenMul === undefined ? 1 : e.dmgTakenMul;
   e.hp -= dmg;
@@ -222,6 +226,7 @@ function killEnemy(e, ang) {
   const p = G.player;
   if (p.stats.frenzy > 0) p.frenzyT = Math.max(p.frenzyT || 0, 3);
   G.kills++;
+  if (p.stats.slaughterRhythm > 0) { p.killStamps = p.killStamps || []; p.killStamps.push(G.time); }
   addScore(e.boss ? 500 : (e.elite ? 40 : 10));
   spawnBlood(e.x, e.y, ang || rand(0, TAU), e.boss ? 40 : (e.elite ? 20 : 10), e.boss || e.elite);
   spawnGibs(e.x, e.y, e.boss ? 16 : (e.elite ? 8 : 4), e.boss || e.elite);
@@ -235,6 +240,22 @@ function killEnemy(e, ang) {
   }
 
   if (e.boss) { onBossDeath(e); return; }
+
+  // Blood Moat: kills leave an acid pool
+  if (p.stats.bloodMoat > 0 && G.hazards.length < 80) {
+    G.hazards.push({ kind: 'acid', x: e.x, y: e.y, r: 16 * p.stats.sizeMul, life: 2.5, t: 0, dps: 5 * p.stats.dmgMul * p.stats.dmgLiveMul });
+  }
+  // Meat Hook: kills yank nearby enemies to the corpse
+  if (p.stats.meatHook > 0) {
+    const yankR = 120 + p.stats.meatHook * 15;
+    for (const o of G.enemies) {
+      if (o === e || o.hp <= 0 || o.boss) continue;
+      if (dist2(o.x, o.y, e.x, e.y) < yankR * yankR) {
+        const a = angleTo(o.x, o.y, e.x, e.y);
+        o.vx += Math.cos(a) * 240; o.vy += Math.sin(a) * 240;
+      }
+    }
+  }
 
   // Volatile Bile: kills explode — radius and damage scale with tier
   if (p.stats.explodeOnKill > 0) {

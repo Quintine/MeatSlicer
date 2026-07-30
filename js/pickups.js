@@ -69,11 +69,14 @@ function collectPickup(k) {
       gainXP(k.v * p.stats.xpMul);
       Sfx.gem();
       break;
-    case 'heart':
-      if (p.hp < p.stats.maxHp) { healPlayer(2); spawnText(p.x, p.y, '+2', '#d92038'); }
-      else addScore(25);
+    case 'heart': {
+      // Glutton's Gut: hearts heal +1 extra per tier; overheal becomes score
+      const healAmt = 2 + (p.stats.gluttonGut || 0);
+      if (p.hp < p.stats.maxHp) { healPlayer(healAmt); spawnText(p.x, p.y, '+' + healAmt, '#d92038'); }
+      else addScore(25 + (p.stats.gluttonGut || 0) * 10);
       Sfx.heart();
       break;
+    }
     case 'ammo': {
       // Generic rounds refill every finite-ammo weapon the butcher is carrying,
       // including a special weapon currently holstered behind the Bone Popper.
