@@ -61,14 +61,15 @@ function updateBullets(dt) {
     if (b.behavior === 'bounce' || b.behavior === 'pierce_drag') b.ang += 12 * dt;
 
     // walls
-    const outL = b.x < WALL + 4, outR = b.x > W - WALL - 4, outU = b.y < WALL + 4, outD = b.y > H - WALL - 4;
+    const outL = b.x < G.arena.x0 + 4, outR = b.x > G.arena.x1 - 4;
+    const outU = b.y < G.arena.y0 + 4, outD = b.y > G.arena.y1 - 4;
     if (outL || outR || outU || outD) {
       const bouncesLeft = (b.bounces || 0) + (b.bounce || 0);
       if (bouncesLeft > 0) {
         if (outL || outR) b.vx = -b.vx;
         if (outU || outD) b.vy = -b.vy;
-        b.x = clamp(b.x, WALL + 4, W - WALL - 4);
-        b.y = clamp(b.y, WALL + 4, H - WALL - 4);
+        b.x = clamp(b.x, G.arena.x0 + 4, G.arena.x1 - 4);
+        b.y = clamp(b.y, G.arena.y0 + 4, G.arena.y1 - 4);
         if (b.bounces > 0) b.bounces--; else if (b.bounce > 0) b.bounce--;
         b.ang = Math.atan2(b.vy, b.vx);
         spawnSpark(b.x, b.y, b.ang);
@@ -196,14 +197,14 @@ function updateBullets(dt) {
     }
     let dead = b.t >= b.life;
     if (b.behavior !== 'orbit') {
-      const outL = b.x < WALL + 4, outR = b.x > W - WALL - 4;
-      const outU = b.y < WALL + 4, outD = b.y > H - WALL - 4;
+      const outL = b.x < G.arena.x0 + 4, outR = b.x > G.arena.x1 - 4;
+      const outU = b.y < G.arena.y0 + 4, outD = b.y > G.arena.y1 - 4;
       if (outL || outR || outU || outD) {
         if (b.bounces > 0) {
           if (outL || outR) b.vx = -b.vx;
           if (outU || outD) b.vy = -b.vy;
-          b.x = clamp(b.x, WALL + 4, W - WALL - 4);
-          b.y = clamp(b.y, WALL + 4, H - WALL - 4);
+          b.x = clamp(b.x, G.arena.x0 + 4, G.arena.x1 - 4);
+          b.y = clamp(b.y, G.arena.y0 + 4, G.arena.y1 - 4);
           b.bounces--;
         } else dead = true;
       }

@@ -2,6 +2,28 @@
 
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const OPP = { n: 's', s: 'n', e: 'w', w: 'e' };
+const ROOM_SHAPES = {
+  hall:      { x0: 48,  y0: 48,  x1: 912, y1: 592 },
+  wide_hall: { x0: 48,  y0: 208, x1: 912, y1: 432 },
+  tall_hall: { x0: 368, y0: 48,  x1: 592, y1: 592 },
+  chamber:   { x0: 208, y0: 128, x1: 752, y1: 512 },
+  pit:       { x0: 128, y0: 88,  x1: 832, y1: 552 },
+};
+const ROOM_THEMES = {
+  abattoir: { floor: ['tile_floor1', 'tile_floor1', 'tile_floor4', 'tile_floor6'], wall: ['tile_wall', 'tile_wall2'] },
+  plant:    { floor: ['tile_floor2', 'tile_floor5', 'tile_floor7'], wall: ['tile_wall', 'tile_wall4'] },
+  oxide:    { floor: ['tile_floor3', 'tile_floor3', 'tile_floor6'], wall: ['tile_wall3', 'tile_wall'] },
+  flesh:    { floor: ['tile_floor8', 'tile_floor8', 'tile_floor1'], wall: ['tile_wall4', 'tile_wall2'] },
+};
+
+function roomBounds(room) {
+  const def = ROOM_SHAPES[(room && room.shape) || 'hall'] || ROOM_SHAPES.hall;
+  return { x0: def.x0, y0: def.y0, x1: def.x1, y1: def.y1,
+    cx: (def.x0 + def.x1) / 2, cy: (def.y0 + def.y1) / 2,
+    w: def.x1 - def.x0, h: def.y1 - def.y0 };
+}
+
+function setArenaForRoom(room) { G.arena = roomBounds(room); }
 
 function genFloor(floor) {
   G.rooms = {};
@@ -24,8 +46,13 @@ function genFloor(floor) {
     const d = Math.abs(r.gx) + Math.abs(r.gy);
     if (r.type === 'combat' && d >= 2) { r.type = 'item'; break; }
   }
-  // wire doors
+  const combatShapes = ['hall', 'hall', 'hall', 'pit', 'chamber', 'wide_hall', 'tall_hall'];
+  const themes = Object.keys(ROOM_THEMES);
   for (const r of Object.values(G.rooms)) {
+    r.theme = choice(themes);
+    if (r.type === 'start' || r.type === 'boss') r.shape = 'hall';
+    else if (r.type === 'item') r.shape = 'chamber';
+    else r.shape = choice(combatShapes);
     for (const [dir, [dx, dy]] of Object.entries(DIRS)) {
       r.doors[dir] = !!G.rooms[(r.gx + dx) + ',' + (r.gy + dy)];
     }
@@ -33,7 +60,8 @@ function genFloor(floor) {
 }
 
 function makeRoom(gx, gy, type) {
-  return { gx, gy, type, doors: {}, cleared: type === 'start', visited: false, decals: [], wavesLeft: 0, spawnT: 0, bossSpawned: false, pickups: [] };
+  return { gx, gy, type, shape: 'hall', theme: 'abattoir', doors: {}, cleared: type === 'start',
+    visited: false, decals: [], wavesLeft: 0, spawnT: 0, bossSpawned: false, pickups: [] };
 }
 
 function roomKey(x, y) { return x + ',' + y; }
@@ -63,10 +91,16 @@ function enterRoom(gx, gy) {
 
   const room = G.rooms[roomKey(gx, gy)];
   G.cur = room;
+  setArenaForRoom(room);
   G.pickups = room.pickups;
+  const a = G.arena;
 
   // spawn protection: brief invincibility walking into a fresh room
-  if (G.player) G.player.invT = Math.max(G.player.invT, 1.0);
+  if (G.player) {
+    G.player.invT = Math.max(G.player.invT, 1.0);
+    G.player.x = clamp(G.player.x, a.x0 + G.player.r, a.x1 - G.player.r);
+    G.player.y = clamp(G.player.y, a.y0 + G.player.r, a.y1 - G.player.r);
+  }
   // Iron Lung: re-arm the once-per-room hit block
   if (G.player && G.player.stats.ironLung > 0) G.player.ironLungReady = true;
 
@@ -83,17 +117,17 @@ function enterRoom(gx, gy) {
       const boss = spawnBoss(G.floor);
       room.bossSpawned = true;
       // boss fights are a pure ammo drain, so stock the room on the way in
-      spawnPickup('ammo', W / 2, H / 2 + 140);
+      spawnPickup('ammo', a.cx, a.cy + 140);
       Music.playBoss(boss.bossKind);
     } else if (room.type === 'item') {
-      spawnItemPedestal(W / 2 - 45, H / 2, null, 'room');
+      spawnItemPedestal(a.cx - 45, a.cy, null, 'room');
       // item rooms sometimes also stock a weapon
       if (chance(0.35)) {
         const w = rollWeaponDrop(G.floor);
-        spawnPickup('weapon', W / 2 + 55, H / 2, { wid: w.id });
+        spawnPickup('weapon', a.cx + 55, a.cy, { wid: w.id });
       }
       // and occasionally a bonus active pedestal
-      if (chance(0.15)) spawnActivePedestal(W / 2 + 130, H / 2 + 55);
+      if (chance(0.15)) spawnActivePedestal(a.cx + 130, a.cy + 55);
       room.cleared = true;
     }
   } else if (room.type === 'combat' && !room.cleared && room.wavesLeft > 0) {
@@ -114,6 +148,7 @@ function roomLocked() {
 function updateRoom(dt) {
   const r = G.cur;
   const p = G.player;
+  const a = G.arena;
 
   // If the current pressure is clearly overwhelming the build, ease it down
   // smoothly. Spawn-time application means living enemies never jump stats.
@@ -140,7 +175,7 @@ function updateRoom(dt) {
       } else {
         r.cleared = true;
         recordRoomClear(r);
-        spawnRoomReward(W / 2, H / 2, G.floor);
+        spawnRoomReward(a.cx, a.cy, G.floor);
         Sfx.roomClear();
         addScore(50);
       }
@@ -156,18 +191,21 @@ function updateRoom(dt) {
   // door transitions
   if (!roomLocked()) {
     let dir = null;
-    if (p.y < WALL + p.r + 6 && Math.abs(p.x - W / 2) < DOOR_HALF && keyDown('w', 'arrowup')) dir = 'n';
-    else if (p.y > H - WALL - p.r - 6 && Math.abs(p.x - W / 2) < DOOR_HALF && keyDown('s', 'arrowdown')) dir = 's';
-    else if (p.x > W - WALL - p.r - 6 && Math.abs(p.y - H / 2) < DOOR_HALF && keyDown('d', 'arrowright')) dir = 'e';
-    else if (p.x < WALL + p.r + 6 && Math.abs(p.y - H / 2) < DOOR_HALF && keyDown('a', 'arrowleft')) dir = 'w';
+    if (p.y < a.y0 + p.r + 6 && Math.abs(p.x - a.cx) < DOOR_HALF && keyDown('w', 'arrowup')) dir = 'n';
+    else if (p.y > a.y1 - p.r - 6 && Math.abs(p.x - a.cx) < DOOR_HALF && keyDown('s', 'arrowdown')) dir = 's';
+    else if (p.x > a.x1 - p.r - 6 && Math.abs(p.y - a.cy) < DOOR_HALF && keyDown('d', 'arrowright')) dir = 'e';
+    else if (p.x < a.x0 + p.r + 6 && Math.abs(p.y - a.cy) < DOOR_HALF && keyDown('a', 'arrowleft')) dir = 'w';
     if (dir && r.doors[dir]) {
       const [dx, dy] = DIRS[dir];
       enterRoom(r.gx + dx, r.gy + dy);
-      // place player at opposite door
-      if (dir === 'n') { p.y = H - WALL - p.r - 8; }
-      if (dir === 's') { p.y = WALL + p.r + 8; }
-      if (dir === 'e') { p.x = WALL + p.r + 8; }
-      if (dir === 'w') { p.x = W - WALL - p.r - 8; }
+      const next = G.arena;
+      // place player at the opposite door in the destination's own shape
+      if (dir === 'n') p.y = next.y1 - p.r - 8;
+      if (dir === 's') p.y = next.y0 + p.r + 8;
+      if (dir === 'e') p.x = next.x0 + p.r + 8;
+      if (dir === 'w') p.x = next.x1 - p.r - 8;
+      p.x = clamp(p.x, next.x0 + p.r, next.x1 - p.r);
+      p.y = clamp(p.y, next.y0 + p.r, next.y1 - p.r);
       G.transition = 0.3;
       Sfx.door();
     }
@@ -281,13 +319,22 @@ const FLOOR_TILE_POOL = [
 const WALL_TILE_POOL = ['tile_wall', 'tile_wall', 'tile_wall2', 'tile_wall3', 'tile_wall4'];
 
 function drawFloorTiles(target, r) {
-  for (let ty = 0; ty < H / TILE; ty++) {
-    for (let tx = 0; tx < W / TILE; tx++) {
+  const a = roomBounds(r);
+  const theme = ROOM_THEMES[r.theme] || ROOM_THEMES.abattoir;
+  target.fillStyle = '#050204';
+  target.fillRect(0, 0, W, H);
+  target.save();
+  target.beginPath(); target.rect(a.x0, a.y0, a.w, a.h); target.clip();
+  const tx0 = Math.floor(a.x0 / TILE), tx1 = Math.ceil(a.x1 / TILE);
+  const ty0 = Math.floor(a.y0 / TILE), ty1 = Math.ceil(a.y1 / TILE);
+  for (let ty = ty0; ty < ty1; ty++) {
+    for (let tx = tx0; tx < tx1; tx++) {
       const h = hashTile(tx + r.gx * 31, ty + r.gy * 31);
-      const sprite = FLOOR_TILE_POOL[h % FLOOR_TILE_POOL.length];
+      const sprite = theme.floor[h % theme.floor.length];
       Sprites.draw(target, sprite, tx * TILE + TILE / 2, ty * TILE + TILE / 2, 0, TILE);
     }
   }
+  target.restore();
 }
 
 function drawFloor(ctx, r) {
@@ -295,7 +342,7 @@ function drawFloor(ctx, r) {
   // browser; headless tests keep the simple direct path.
   const canCache = typeof document !== 'undefined' && document.createElement && G.imagesLoaded;
   if (!canCache) { drawFloorTiles(ctx, r); return; }
-  const key = r.gx + ',' + r.gy + ':' + G.floor;
+  const key = r.gx + ',' + r.gy + ':' + G.floor + ':' + r.shape + ':' + r.theme;
   if (!G.roomLayer || G.roomLayerKey !== key) {
     const layer = document.createElement('canvas');
     layer.width = W; layer.height = H;
@@ -336,89 +383,82 @@ function drawRoom(ctx) {
 
 function drawWalls(ctx, r) {
   const locked = roomLocked();
-  // Draw 64px industrial panels into exact 48px collision bands. Door gaps
-  // are clipping regions, not skipped whole tiles, so they remain precisely
-  // 88px wide even though the art grid is larger.
+  const a = roomBounds(r);
+  const theme = ROOM_THEMES[r.theme] || ROOM_THEMES.abattoir;
+  const wallPool = theme.wall;
+  const left = a.x0 - WALL, right = a.x1 + WALL;
+  const top = a.y0 - WALL, bottom = a.y1 + WALL;
+
   function clipBand(dir) {
     ctx.beginPath();
     if (dir === 'n' || dir === 's') {
-      const y = dir === 'n' ? 0 : H - WALL;
+      const y = dir === 'n' ? top : a.y1;
       if (r.doors[dir]) {
-        ctx.rect(0, y, W / 2 - DOOR_HALF, WALL);
-        ctx.rect(W / 2 + DOOR_HALF, y, W / 2 - DOOR_HALF, WALL);
-      } else ctx.rect(0, y, W, WALL);
+        ctx.rect(left, y, a.cx - DOOR_HALF - left, WALL);
+        ctx.rect(a.cx + DOOR_HALF, y, right - a.cx - DOOR_HALF, WALL);
+      } else ctx.rect(left, y, right - left, WALL);
     } else {
-      const x = dir === 'w' ? 0 : W - WALL;
+      const x = dir === 'w' ? left : a.x1;
       if (r.doors[dir]) {
-        ctx.rect(x, 0, WALL, H / 2 - DOOR_HALF);
-        ctx.rect(x, H / 2 + DOOR_HALF, WALL, H / 2 - DOOR_HALF);
-      } else ctx.rect(x, 0, WALL, H);
+        ctx.rect(x, top, WALL, a.cy - DOOR_HALF - top);
+        ctx.rect(x, a.cy + DOOR_HALF, WALL, bottom - a.cy - DOOR_HALF);
+      } else ctx.rect(x, top, WALL, bottom - top);
     }
     ctx.clip();
   }
 
   for (const dir of ['n', 's']) {
     ctx.save(); clipBand(dir);
-    const y = dir === 'n' ? TILE / 2 : H - TILE / 2;
-    for (let x = 0; x < W; x += TILE) {
-      const h = hashTile(x / TILE + r.gx * 17, (dir === 'n' ? -1 : 11) + r.gy * 19);
-      Sprites.draw(ctx, WALL_TILE_POOL[h % WALL_TILE_POOL.length], x + TILE / 2, y, 0, TILE);
+    const y = dir === 'n' ? top + TILE / 2 : a.y1 + TILE / 2;
+    for (let x = left; x < right; x += TILE) {
+      const h = hashTile(Math.floor(x / TILE) + r.gx * 17, (dir === 'n' ? -1 : 11) + r.gy * 19);
+      Sprites.draw(ctx, wallPool[h % wallPool.length], x + TILE / 2, y, 0, TILE);
     }
     ctx.restore();
   }
   for (const dir of ['w', 'e']) {
     ctx.save(); clipBand(dir);
-    const x = dir === 'w' ? TILE / 2 : W - TILE / 2;
-    for (let y = 0; y < H; y += TILE) {
-      const h = hashTile((dir === 'w' ? -1 : 16) + r.gx * 17, y / TILE + r.gy * 19);
-      Sprites.draw(ctx, WALL_TILE_POOL[h % WALL_TILE_POOL.length], x, y + TILE / 2, Math.PI / 2, TILE);
+    const x = dir === 'w' ? left + TILE / 2 : a.x1 + TILE / 2;
+    for (let y = top; y < bottom; y += TILE) {
+      const h = hashTile((dir === 'w' ? -1 : 16) + r.gx * 17, Math.floor(y / TILE) + r.gy * 19);
+      Sprites.draw(ctx, wallPool[h % wallPool.length], x, y + TILE / 2, Math.PI / 2, TILE);
     }
     ctx.restore();
   }
-  // dark inner edge
   ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 3;
-  ctx.strokeRect(WALL, WALL, W - WALL * 2, H - WALL * 2);
+  ctx.strokeRect(a.x0, a.y0, a.w, a.h);
 
-  // doors
   for (const [dir, has] of Object.entries(r.doors)) {
     if (!has) continue;
     const sprite = locked ? 'door_locked' : 'door_open';
     let x, y, rot;
-    if (dir === 'n') { x = W / 2; y = WALL / 2; rot = 0; }
-    else if (dir === 's') { x = W / 2; y = H - WALL / 2; rot = 0; }
-    else if (dir === 'e') { x = W - WALL / 2; y = H / 2; rot = Math.PI / 2; }
-    else { x = WALL / 2; y = H / 2; rot = Math.PI / 2; }
-    // ---- doorway framing (visual only; DOOR_HALF governs function) ----
+    if (dir === 'n') { x = a.cx; y = a.y0 - WALL / 2; rot = 0; }
+    else if (dir === 's') { x = a.cx; y = a.y1 + WALL / 2; rot = 0; }
+    else if (dir === 'e') { x = a.x1 + WALL / 2; y = a.cy; rot = Math.PI / 2; }
+    else { x = a.x0 - WALL / 2; y = a.cy; rot = Math.PI / 2; }
     const horiz = dir === 'n' || dir === 's';
     const dirSeed = { n: 0, s: 2.1, e: 4.2, w: 6.3 }[dir];
-    // clear dark passage under the art (guaranteed clean opening)
     ctx.fillStyle = '#050103';
     if (horiz) ctx.fillRect(x - DOOR_HALF, y - WALL / 2, DOOR_HALF * 2, WALL);
     else ctx.fillRect(x - WALL / 2, y - DOOR_HALF, WALL, DOOR_HALF * 2);
-    // door art (wide, walkable passage for open; sealed jaws for locked)
     Sprites.draw(ctx, sprite, x, y, rot, 150, false, 1, 1, 0.82);
-    // accents on top, in wall-aligned local space
     ctx.save();
     if (horiz) ctx.translate(x, y); else { ctx.translate(x, y); ctx.rotate(Math.PI / 2); }
-    // warm glow spilling from the threshold so the exit reads as inviting
     ctx.globalAlpha = 0.20 + Math.sin(G.time * 2.0 + dirSeed) * 0.06;
     ctx.fillStyle = locked ? '#ff2a3c' : '#e8724a';
     ctx.fillRect(-DOOR_HALF, WALL / 2 - 8, DOOR_HALF * 2, 8);
-    // frame rim light on both jamb edges
     const rimAlpha = 0.30 + Math.sin(G.time * 2.2 + dirSeed) * 0.12;
     ctx.globalAlpha = rimAlpha;
     ctx.fillStyle = locked ? '#ff2a3c' : '#c4172a';
     ctx.fillRect(-DOOR_HALF - 2, -WALL / 2 - 2, 3, WALL + 4);
     ctx.fillRect(DOOR_HALF - 1, -WALL / 2 - 2, 3, WALL + 4);
     ctx.globalAlpha = 1;
-    // jagged bone teeth ONLY when sealed (locked reads as dangerous, open reads as safe)
     if (locked) {
       for (let side = -1; side <= 1; side += 2) {
         for (let k = 0; k < 7; k++) {
           const hh = hashTile((r.gx * 3 + 17) * 31 + side * 7 + k, (r.gy * 5 + 11) * 13 + k * 3);
           const ty = -WALL / 2 + 3 + (hh % 41);
-          const th = 4 + (hh % 3);
-          const tw = 3 + (hh % 2);
+          const th = 4 + (hh % 3), tw = 3 + (hh % 2);
           ctx.fillStyle = hh % 4 === 0 ? '#e8dcc2' : '#cfc0a4';
           ctx.beginPath();
           ctx.moveTo(side * DOOR_HALF, ty - tw);
@@ -429,7 +469,6 @@ function drawWalls(ctx, r) {
       }
     }
     ctx.restore();
-    // outward chevrons past the threshold so the exit reads from across the room
     const chevOff = dir === 'n' ? -1 : (dir === 's' ? 1 : 0);
     const chevOffX = dir === 'w' ? -1 : (dir === 'e' ? 1 : 0);
     ctx.save();

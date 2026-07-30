@@ -45,6 +45,7 @@ const G = {
   roomLayer: null,
   roomLayerKey: '',
   atmosphereLayer: null,
+  arena: { x0: WALL, y0: WALL, x1: W - WALL, y1: H - WALL, cx: W / 2, cy: H / 2, w: W - WALL * 2, h: H - WALL * 2 },
 };
 
 const PERK_POWER_WEIGHT = 0.5;

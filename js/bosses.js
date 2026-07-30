@@ -23,7 +23,7 @@ function spawnBoss(floor) {
   const hpMul = (1 + (floor - 1) * 0.30) * (1 + up * 0.05) * pressureHp;
   const e = {
     type: 'boss_' + def.kind, bossKind: def.kind, boss: true, name: def.name,
-    x: W / 2, y: H / 2 - 100, vx: 0, vy: 0,
+    x: G.arena.cx, y: G.arena.cy - 100, vx: 0, vy: 0,
     r: def.r, hp: def.hp * hpMul, maxHp: def.hp * hpMul,
     drawSize: def.drawSize,
     spd: def.spd * (1 + cycle * 0.1 + up * 0.01) * G.pressure, dmg: 2,
@@ -99,7 +99,7 @@ function updateBoneSaw(e, dt, a, d, spdMul, enraged) {
     if (chance(0.5)) spawnBlood(e.x, e.y, e.chargeAng + Math.PI, 2);
     // wall slam
     const nx = e.x + e.vx * dt, ny = e.y + e.vy * dt;
-    if (nx < WALL + e.r + 2 || nx > W - WALL - e.r - 2 || ny < WALL + e.r + 2 || ny > H - WALL - e.r - 2) {
+    if (nx < G.arena.x0 + e.r + 2 || nx > G.arena.x1 - e.r - 2 || ny < G.arena.y0 + e.r + 2 || ny > G.arena.y1 - e.r - 2) {
       e.state = 'idle'; e.stateT = 1; e.atkT = 1.2;
       addShake(10); Sfx.explode({ x: e.x, y: e.y });
     }
@@ -175,7 +175,7 @@ function updateKnifeCrawl(e, dt, a, d, spdMul, enraged) {
         const ty = i === 0 ? p.y : p.y + rand(-130, 130);
         G.telegraphs.push({
           kind: 'knives',
-          x: clamp(tx, WALL + 20, W - WALL - 20), y: clamp(ty, WALL + 20, H - WALL - 20),
+          x: clamp(tx, G.arena.x0 + 20, G.arena.x1 - 20), y: clamp(ty, G.arena.y0 + 20, G.arena.y1 - 20),
           r: 34, t: 0, dur: Math.max(0.7 - e.cycle * 0.05, 0.45), tick: 0,
           track: e.tier >= 1 && i === 0 ? 0.4 : 0, // tier 2+: one telegraph hunts you
         });
@@ -205,7 +205,7 @@ function updateKnifeCrawl(e, dt, a, d, spdMul, enraged) {
       // cycle 2+: knives erupt where the dash ends
       if (e.tier >= 1) {
         G.telegraphs.push({
-          kind: 'knives', x: clamp(e.x, WALL + 20, W - WALL - 20), y: clamp(e.y, WALL + 20, H - WALL - 20),
+          kind: 'knives', x: clamp(e.x, G.arena.x0 + 20, G.arena.x1 - 20), y: clamp(e.y, G.arena.y0 + 20, G.arena.y1 - 20),
           r: 34, t: 0, dur: 0.55, tick: 0, track: 0,
         });
       }
@@ -257,8 +257,8 @@ function updateVealMother(e, dt, a, d, spdMul, enraged) {
     const slots = Math.max(0, MAX_ENEMIES - G.enemies.length);
     for (let i = 0; i < Math.min(2, slots); i++) {
       const ang = a + Math.PI + (i ? 0.7 : -0.7);
-      const m = makeEnemy('splitter', clamp(e.x + Math.cos(ang) * 90, WALL + 30, W - WALL - 30),
-        clamp(e.y + Math.sin(ang) * 90, WALL + 30, H - WALL - 30), G.floor, true);
+      const m = makeEnemy('splitter', clamp(e.x + Math.cos(ang) * 90, G.arena.x0 + 30, G.arena.x1 - 30),
+        clamp(e.y + Math.sin(ang) * 90, G.arena.y0 + 30, G.arena.y1 - 30), G.floor, true);
       e.escorts.push(m); G.enemies.push(m); Sfx.spawn(m);
     }
     if (e.escorts.length) e.dmgTakenMul = 0.35;
@@ -314,8 +314,8 @@ function updateFlenser(e, dt, a, d, spdMul, enraged) {
     if (e.stateT <= 0) {
       e.state = 'gone'; e.stateT = enraged ? 0.3 : 0.5; e.phased = true; e.alpha = 0;
       const behind = p.aim + Math.PI, range = rand(90, 140);
-      e.x = clamp(p.x + Math.cos(behind) * range, WALL + e.r, W - WALL - e.r);
-      e.y = clamp(p.y + Math.sin(behind) * range, WALL + e.r, H - WALL - e.r);
+      e.x = clamp(p.x + Math.cos(behind) * range, G.arena.x0 + e.r, G.arena.x1 - e.r);
+      e.y = clamp(p.y + Math.sin(behind) * range, G.arena.y0 + e.r, G.arena.y1 - e.r);
       G.telegraphs.push({ kind: 'knives', x: e.x, y: e.y, r: 38, t: 0, dur: e.stateT + 0.22, tick: 0, track: 0 });
       if (e.tier >= 1) G.telegraphs.push({ kind: 'knives', x: e.oldX, y: e.oldY, r: 30, t: 0, dur: 0.6, tick: 0, track: 0 });
     }
@@ -462,7 +462,7 @@ function updateScald(e, dt, a, d, spdMul, enraged) {
       const tx = i === 0 ? p.x : p.x + rand(-180, 180);
       const ty = i === 0 ? p.y : p.y + rand(-150, 150);
       G.telegraphs.push({ kind: 'pool', owner: e,
-        x: clamp(tx, WALL + radius, W - WALL - radius), y: clamp(ty, WALL + radius, H - WALL - radius),
+        x: clamp(tx, G.arena.x0 + radius, G.arena.x1 - radius), y: clamp(ty, G.arena.y0 + radius, G.arena.y1 - radius),
         r: radius, t: 0, dur: 0.6, life: enraged ? 7 : 5 });
     }
     e.attackT = 0.45; e.actionT = 0; Sfx.boss(e, 'vent');
@@ -507,8 +507,8 @@ function updateTelegraphs(dt) {
       t.track -= dt;
       const ta = angleTo(t.x, t.y, p.x, p.y);
       const ts = 140 * dt;
-      t.x = clamp(t.x + Math.cos(ta) * ts, WALL + 20, W - WALL - 20);
-      t.y = clamp(t.y + Math.sin(ta) * ts, WALL + 20, H - WALL - 20);
+      t.x = clamp(t.x + Math.cos(ta) * ts, G.arena.x0 + 20, G.arena.x1 - 20);
+      t.y = clamp(t.y + Math.sin(ta) * ts, G.arena.y0 + 20, G.arena.y1 - 20);
     }
     if (t.kind === 'knives' && t.t >= t.dur) {
       // erupt
@@ -593,13 +593,13 @@ function onBossDeath(e) {
   addScore(500 + G.floor * 100);
   addShake(12);
   // boss reward: item pedestal + a real weapon drop + ammo + stairs down
-  spawnItemPedestal(W / 2 - 90, H / 2, null, 'boss');
-  spawnPickup('ammo', W / 2, H / 2 - 40);
+  spawnItemPedestal(G.arena.cx - 90, G.arena.cy, null, 'boss');
+  spawnPickup('ammo', G.arena.cx, G.arena.cy - 40);
   // 30% chance of a bonus active pedestal (additive — never replaces the passive)
-  if (chance(0.30)) spawnActivePedestal(W / 2 - 160, H / 2 + 60);
+  if (chance(0.30)) spawnActivePedestal(G.arena.cx - 160, G.arena.cy + 60);
   const bw = rollWeaponDrop(G.floor + 2); // bosses drop the good stuff
-  spawnPickup('weapon', W / 2 + 90, H / 2, { wid: bw.id });
-  spawnPickup('stairs', W / 2, H / 2 + 80);
+  spawnPickup('weapon', G.arena.cx + 90, G.arena.cy, { wid: bw.id });
+  spawnPickup('stairs', G.arena.cx, G.arena.cy + 80);
   addToast(e.name + ' DESTROYED', 'take the meat, take the stairs');
   Music.requestFloorMusic();
 }

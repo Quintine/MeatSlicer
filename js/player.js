@@ -85,8 +85,8 @@ function updatePlayer(dt) {
   p.moveBlend = lerp(p.moveBlend, mx || my ? 1 : 0, clamp(dt * 12, 0, 1));
   p.recoil = Math.max(0, p.recoil - dt * 7);
   p.muzzleT = Math.max(0, p.muzzleT - dt);
-  p.x = clamp(p.x, WALL + p.r, W - WALL - p.r);
-  p.y = clamp(p.y, WALL + p.r, H - WALL - p.r);
+  p.x = clamp(p.x, G.arena.x0 + p.r, G.arena.x1 - p.r);
+  p.y = clamp(p.y, G.arena.y0 + p.r, G.arena.y1 - p.r);
 
   // aim
   p.aim = angleTo(p.x, p.y, Input.mx, Input.my);

@@ -59,25 +59,30 @@ function pickEnemyType(floor) {
 function nearAnyDoor(x, y) {
   const r = G.cur;
   if (!r) return false;
-  const M = 130; // spawn keep-out radius around doors
-  if (r.doors.n && Math.abs(x - W / 2) < DOOR_HALF + 30 && y < WALL + M) return true;
-  if (r.doors.s && Math.abs(x - W / 2) < DOOR_HALF + 30 && y > H - WALL - M) return true;
-  if (r.doors.e && Math.abs(y - H / 2) < DOOR_HALF + 30 && x > W - WALL - M) return true;
-  if (r.doors.w && Math.abs(y - H / 2) < DOOR_HALF + 30 && x < WALL + M) return true;
+  const a = G.arena;
+  const M = Math.min(130, Math.min(a.w, a.h) * 0.32);
+  if (r.doors.n && Math.abs(x - a.cx) < DOOR_HALF + 30 && y < a.y0 + M) return true;
+  if (r.doors.s && Math.abs(x - a.cx) < DOOR_HALF + 30 && y > a.y1 - M) return true;
+  if (r.doors.e && Math.abs(y - a.cy) < DOOR_HALF + 30 && x > a.x1 - M) return true;
+  if (r.doors.w && Math.abs(y - a.cy) < DOOR_HALF + 30 && x < a.x0 + M) return true;
   return false;
 }
 
 function spawnPosAwayFromPlayer() {
   const p = G.player;
+  const a = G.arena;
+  const safeDist = Math.min(200, Math.min(a.w, a.h) * 0.42);
   for (let tries = 0; tries < 30; tries++) {
-    const x = rand(WALL + 40, W - WALL - 40);
-    const y = rand(WALL + 40, H - WALL - 40);
-    if (dist(x, y, p.x, p.y) <= 200) continue;
+    const x = rand(a.x0 + 40, a.x1 - 40);
+    const y = rand(a.y0 + 40, a.y1 - 40);
+    if (dist(x, y, p.x, p.y) <= safeDist) continue;
     if (nearAnyDoor(x, y)) continue;
     return { x, y };
   }
-  // fallback: center of the room, away from every door
-  return { x: rand(W / 2 - 150, W / 2 + 150), y: rand(H / 2 - 120, H / 2 + 120) };
+  // fallback: a bounded central region, valid even in the thin hall variants
+  const rx = Math.max(12, Math.min(150, a.w / 2 - 40));
+  const ry = Math.max(12, Math.min(120, a.h / 2 - 40));
+  return { x: rand(a.cx - rx, a.cx + rx), y: rand(a.cy - ry, a.cy + ry) };
 }
 
 function spawnWave(count, floor) {
@@ -395,8 +400,8 @@ function updateEnemies(dt) {
         e.x += px; e.y += py; o.x -= px; o.y -= py;
       }
     }
-    e.x = clamp(e.x, WALL + e.r, W - WALL - e.r);
-    e.y = clamp(e.y, WALL + e.r, H - WALL - e.r);
+    e.x = clamp(e.x, G.arena.x0 + e.r, G.arena.x1 - e.r);
+    e.y = clamp(e.y, G.arena.y0 + e.r, G.arena.y1 - e.r);
 
     // contact damage
     if (e.hitT > 0) e.hitT -= dt;

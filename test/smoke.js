@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -246,6 +246,37 @@ console.log('== spawn safety ==');
   }
   check('no spawns near doors', nearDoor === 0);
   check('no spawns near player', tooClose === 0);
+}
+
+console.log('== variable room shapes and themes ==');
+{
+  const generated = Object.values(ctx.G.rooms);
+  check('generated rooms all have valid shapes and themes', generated.every(r => ctx.ROOM_SHAPES[r.shape] && ctx.ROOM_THEMES[r.theme]));
+  check('start and boss rooms retain full arenas', generated.filter(r => r.type === 'start' || r.type === 'boss').every(r => r.shape === 'hall'));
+  check('item rooms use compact chambers', generated.filter(r => r.type === 'item').every(r => r.shape === 'chamber'));
+  const savedRoom = ctx.G.cur, savedArena = ctx.G.arena;
+  const px = ctx.G.player.x, py = ctx.G.player.y;
+  let allBounds = true, allSpawns = true, allDraw = true;
+  for (const shape of Object.keys(ctx.ROOM_SHAPES)) {
+    const shaped = ctx.makeRoom(77, 88, 'combat');
+    shaped.shape = shape; shaped.theme = 'oxide'; shaped.doors = {};
+    ctx.G.cur = shaped; ctx.setArenaForRoom(shaped);
+    const a = ctx.G.arena;
+    ctx.G.player.x = -999; ctx.G.player.y = -999; ctx.Input.mdown = false;
+    ctx.updatePlayer(0.016);
+    allBounds = allBounds && ctx.G.player.x >= a.x0 + ctx.G.player.r && ctx.G.player.x <= a.x1 - ctx.G.player.r
+      && ctx.G.player.y >= a.y0 + ctx.G.player.r && ctx.G.player.y <= a.y1 - ctx.G.player.r;
+    ctx.G.player.x = a.cx; ctx.G.player.y = a.cy;
+    for (let i = 0; i < 20; i++) {
+      const pos = ctx.spawnPosAwayFromPlayer();
+      allSpawns = allSpawns && pos.x >= a.x0 && pos.x <= a.x1 && pos.y >= a.y0 && pos.y <= a.y1;
+    }
+    try { ctx.drawFloorTiles(fakeCtx(), shaped); ctx.drawWalls(fakeCtx(), shaped); } catch (err) { allDraw = false; }
+  }
+  check('player clamps inside every room shape', allBounds);
+  check('enemy spawn positions stay inside every room shape', allSpawns);
+  check('every room shape and theme renders headlessly', allDraw);
+  ctx.G.cur = savedRoom; ctx.G.arena = savedArena; ctx.G.player.x = px; ctx.G.player.y = py;
 }
 
 console.log('== XP / perks ==');
