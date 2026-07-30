@@ -5,6 +5,7 @@
 const SPRITE_MANIFEST = [
   'player', 'player_legs',
   'enemy_shambler', 'enemy_runner', 'enemy_spitter', 'enemy_splitter', 'enemy_mini', 'enemy_exploder',
+  'enemy_censer', 'enemy_bulwark', 'enemy_choirmaster', 'enemy_flenserling', 'enemy_broodsac',
   'boss_bonesaw', 'boss_gorecrown', 'boss_knifecrawl',
   'boss_vealmother', 'boss_flenser', 'boss_hookchoir',
   'boss_platefather', 'boss_augerprime', 'boss_scald',
@@ -51,6 +52,7 @@ const SPRITE_MANIFEST = [
   'player_sheet', 'player_legs_sheet', 'player_death_sheet',
   'enemy_shambler_sheet', 'enemy_runner_sheet', 'enemy_spitter_sheet',
   'enemy_splitter_sheet', 'enemy_mini_sheet', 'enemy_exploder_sheet',
+  'enemy_censer_sheet', 'enemy_bulwark_sheet', 'enemy_choirmaster_sheet', 'enemy_flenserling_sheet', 'enemy_broodsac_sheet',
   'boss_bonesaw_sheet', 'boss_gorecrown_sheet', 'boss_knifecrawl_sheet',
   'boss_vealmother_sheet', 'boss_flenser_sheet', 'boss_hookchoir_sheet',
   'boss_platefather_sheet', 'boss_augerprime_sheet', 'boss_scald_sheet',

@@ -7,6 +7,11 @@ const ENEMY_TYPES = {
   splitter: { hp: 30,  spd: 70,  dmg: 1, r: 21, drawSize: 64, xp: 1, sprite: 'enemy_splitter', splits: true },
   mini:     { hp: 6,   spd: 120, dmg: 1, r: 14, drawSize: 48, xp: 1, sprite: 'enemy_mini' },
   exploder: { hp: 14,  spd: 110, dmg: 2, r: 16, drawSize: 64, xp: 2, sprite: 'enemy_exploder', explodes: true },
+  censer: { hp: 34, spd: 45, dmg: 1, r: 19, drawSize: 64, xp: 3, sprite: 'enemy_censer', zoneCaster: true },
+  bulwark: { hp: 60, spd: 38, dmg: 2, r: 23, drawSize: 72, xp: 3, sprite: 'enemy_bulwark', frontalArmor: true },
+  choirmaster: { hp: 40, spd: 50, dmg: 1, r: 19, drawSize: 64, xp: 4, sprite: 'enemy_choirmaster', support: true },
+  flenserling: { hp: 22, spd: 150, dmg: 2, r: 16, drawSize: 64, xp: 3, sprite: 'enemy_flenserling', ambusher: true },
+  broodsac: { hp: 45, spd: 20, dmg: 1, r: 22, drawSize: 72, xp: 4, sprite: 'enemy_broodsac', summoner: true, broodBurst: 4 },
 };
 const MAX_ENEMIES = 72;
 const SPAWN_WARN = 0.5; // seconds a wave-spawned enemy materializes, frozen + harmless
@@ -31,7 +36,9 @@ function makeEnemy(type, x, y, floor, elite) {
     elite: !!elite,
     hitT: 0, flash: 0, hpBarT: 0, burnT: 0, burnDps: 0, bleedT: 0, bleedDps: 0,
     slowT: 0, stunT: 0, rootT: 0,
-    fireT: rand(1, 2.5), fuse: -1, wob: rand(0, TAU),
+    fireT: rand(1, 2.5), castT: rand(1.5, 3), summonT: rand(2.5, 4), supportT: 1,
+    fuse: -1, wob: rand(0, TAU), faceDir: rand(0, TAU), choirT: 0,
+    ambushState: 'stalk', ambushT: rand(1.8, 3.2), phaseT: 0, lungeT: 0, alpha: 1,
     animSeed: rand(0, TAU), animT: rand(0, 1), attackT: 0, actionT: 0,
     spawnT: 0, dead: false,
     warmT: 0,
@@ -43,15 +50,31 @@ function makeEnemy(type, x, y, floor, elite) {
 // pick an enemy type for a floor-scaled wave
 function pickEnemyType(floor) {
   const table = [
-    ['shambler', 40],
-    ['runner', floor >= 1 ? 25 : 0],
-    ['spitter', floor >= 2 ? 18 : 0],
-    ['splitter', floor >= 2 ? 16 : 0],
-    ['exploder', floor >= 3 ? 14 : 0],
+    ['shambler', 30],
+    ['runner', 22],
+    ['spitter', floor >= 2 ? 14 : 0],
+    ['splitter', floor >= 2 ? 12 : 0],
+    ['exploder', floor >= 3 ? 10 : 0],
+    ['censer', floor >= 4 ? 8 : 0],
+    ['bulwark', floor >= 5 ? 8 : 0],
+    ['flenserling', floor >= 5 ? 7 : 0],
+    ['choirmaster', floor >= 6 ? 6 : 0],
+    ['broodsac', floor >= 7 ? 6 : 0],
   ];
   const total = table.reduce((s, t) => s + t[1], 0);
   let r = Math.random() * total;
   for (const [type, w] of table) { r -= w; if (r <= 0) return type; }
+  return 'shambler';
+}
+
+function pickWaveEnemyType(floor) {
+  for (let tries = 0; tries < 12; tries++) {
+    const type = pickEnemyType(floor);
+    if (type === 'choirmaster' && G.enemies.some(e => e.hp > 0 && e.type === 'choirmaster')) continue;
+    if (type === 'broodsac' && G.enemies.filter(e => e.hp > 0 && e.type === 'broodsac').length >= 2) continue;
+    if ((type === 'censer' || type === 'broodsac') && Math.min(G.arena.w, G.arena.h) < 300) continue;
+    return type;
+  }
   return 'shambler';
 }
 
@@ -88,14 +111,32 @@ function spawnPosAwayFromPlayer() {
 function spawnWave(count, floor) {
   for (let i = 0; i < count; i++) {
     if (G.enemies.length >= MAX_ENEMIES) break;
+    const type = pickWaveEnemyType(floor);
     const pos = spawnPosAwayFromPlayer();
-    const elite = chance(Math.min(0.03 + floor * 0.02, 0.2));
-    const e = makeEnemy(pickEnemyType(floor), pos.x, pos.y, floor, elite);
+    const canElite = type !== 'bulwark' && type !== 'broodsac';
+    const elite = canElite && chance(Math.min(0.03 + floor * 0.02, 0.2));
+    const e = makeEnemy(type, pos.x, pos.y, floor, elite);
     e.warmT = SPAWN_WARN; // telegraph the incoming spawn so the player isn't blindsided
     G.enemies.push(e);
     spawnBlood(pos.x, pos.y, rand(0, TAU), 4);
     Sfx.spawn(e);
   }
+}
+
+function spawnBroodMinis(source, count, warm) {
+  const cap = Math.min(MAX_ENEMIES, 40);
+  let spawned = 0;
+  for (let i = 0; i < count && G.enemies.length < cap; i++) {
+    const ang = i / Math.max(1, count) * TAU + rand(-0.2, 0.2);
+    const x = clamp(source.x + Math.cos(ang) * rand(18, 32), G.arena.x0 + 16, G.arena.x1 - 16);
+    const y = clamp(source.y + Math.sin(ang) * rand(18, 32), G.arena.y0 + 16, G.arena.y1 - 16);
+    const m = makeEnemy('mini', x, y, G.floor, false);
+    m.warmT = warm || 0;
+    G.enemies.push(m);
+    spawned++;
+  }
+  if (spawned) Sfx.split(source);
+  return spawned;
 }
 
 // returns true if the enemy died
@@ -112,7 +153,13 @@ function damageEnemy(e, dmg, ang, knockback, opts) {
   if (p && p.stats.executeBonus > 0 && e.maxHp > 0 && e.hp / e.maxHp < 0.30) dmg *= 1 + p.stats.executeBonus;
   // Cauterized Veins: bonus damage to burning enemies
   if (p && p.stats.burnDamageBonus > 0 && e.burnT > 0) dmg *= 1 + p.stats.burnDamageBonus;
-  const mitigated = e.dmgTakenMul !== undefined && e.dmgTakenMul < 1;
+  let mitigated = false;
+  if (e.type === 'bulwark' && !o.ignoreArmor) {
+    const hitFrom = Number.isFinite(ang) ? ang + Math.PI : (p ? angleTo(e.x, e.y, p.x, p.y) : e.faceDir);
+    const delta = Math.abs(Math.atan2(Math.sin(hitFrom - e.faceDir), Math.cos(hitFrom - e.faceDir)));
+    if (delta <= 70 * Math.PI / 180) { dmg *= 0.2; mitigated = true; }
+  }
+  if (e.dmgTakenMul !== undefined && e.dmgTakenMul < 1) mitigated = true;
   dmg *= e.dmgTakenMul === undefined ? 1 : e.dmgTakenMul;
   e.hp -= dmg;
   e.flash = 0.12;
@@ -195,7 +242,7 @@ function procOnHit(e, dmg, ang, opts) {
     e.burnDps = Math.max(e.burnDps || 0, 5 * s.dmgMul);
   }
   if (s.slowOnHit > 0 && chance(clamp(s.slowOnHit * chanceScale, 0, 0.9))) e.slowT = Math.max(e.slowT || 0, 1.5);
-  if (!e.boss && s.stunOnHit > 0 && chance(clamp(s.stunOnHit * chanceScale, 0, 0.75))) e.stunT = Math.max(e.stunT || 0, 0.35);
+  if (!e.boss && e.type !== 'bulwark' && s.stunOnHit > 0 && chance(clamp(s.stunOnHit * chanceScale, 0, 0.75))) e.stunT = Math.max(e.stunT || 0, 0.35);
   if (s.pullOnHit > 0 && !e.boss && chance(clamp(s.pullOnHit * chanceScale, 0, 0.8))) {
     const toward = angleTo(e.x, e.y, p.x, p.y);
     e.vx += Math.cos(toward) * 170; e.vy += Math.sin(toward) * 170;
@@ -327,6 +374,7 @@ function killEnemy(e, ang) {
       G.enemies.push(m);
     }
   }
+  if (ENEMY_TYPES[e.type].broodBurst) spawnBroodMinis(e, ENEMY_TYPES[e.type].broodBurst, 0.2);
   // exploder goes boom
   if (ENEMY_TYPES[e.type].explodes) explodeAt(e.x, e.y, 60, 2, false);
 }
@@ -350,6 +398,7 @@ function updateEnemies(dt) {
     e.spawnT = Math.min((e.spawnT || 0) + dt, 1);
     e.animT = (e.animT || 0) + dt;
     if (e.hpBarT > 0) e.hpBarT = Math.max(0, e.hpBarT - dt);
+    if (e.choirT > 0) e.choirT = Math.max(0, e.choirT - dt);
     if (e.attackT > 0) { e.attackT -= dt; e.actionT += dt; }
 
     // materializing spawns are frozen and harmless until the telegraph ends
@@ -417,13 +466,85 @@ function updateEnemyAI(e, dt) {
   const p = G.player;
   const a = angleTo(e.x, e.y, p.x, p.y);
   const d = dist(e.x, e.y, p.x, p.y);
-  const spd = e.slowT > 0 ? e.spd * 0.45 : e.spd;
+  const buff = e.choirT > 0 ? 1.35 : 1;
+  const spd = (e.slowT > 0 ? e.spd * 0.45 : e.spd) * buff;
   const t = ENEMY_TYPES[e.type];
 
-  if (t.ranged) {
-    // spitter: hold ~230px range and fire
-    if (d > 250) { e.vx += Math.cos(a) * spd * 3 * dt; e.vy += Math.sin(a) * spd * 3 * dt; }
-    else if (d < 190) { e.vx -= Math.cos(a) * spd * 3 * dt; e.vy -= Math.sin(a) * spd * 3 * dt; }
+  if (t.zoneCaster) {
+    // Censer: drift toward room centre while predicting the player's movement.
+    const ca = angleTo(e.x, e.y, G.arena.cx, G.arena.cy);
+    if (dist(e.x, e.y, G.arena.cx, G.arena.cy) > 80) {
+      e.vx += Math.cos(ca) * spd * 2.2 * dt; e.vy += Math.sin(ca) * spd * 2.2 * dt;
+    }
+    if (d < 150) { e.vx -= Math.cos(a) * spd * 2.5 * dt; e.vy -= Math.sin(a) * spd * 2.5 * dt; }
+    e.castT -= dt;
+    if (e.castT <= 0) {
+      e.castT = e.elite ? 2.3 : 3.3;
+      const lead = 75 * (p.moveBlend || 0);
+      const tx = clamp(p.x + Math.cos(p.bodyFacing) * lead, G.arena.x0 + 40, G.arena.x1 - 40);
+      const ty = clamp(p.y + Math.sin(p.bodyFacing) * lead, G.arena.y0 + 40, G.arena.y1 - 40);
+      G.telegraphs.push({ kind: 'pool', owner: e, x: tx, y: ty, r: e.elite ? 48 : 38,
+        t: 0, dur: 0.75, life: e.elite ? 5.5 : 4.2 });
+      e.attackT = 0.5; e.actionT = 0; Sfx.spit(e);
+    }
+  } else if (t.frontalArmor) {
+    // Bulwark: slowly tracks the player; its facing also drives frontal mitigation.
+    e.faceDir = angleLerp(e.faceDir, a, clamp(dt * 1.15, 0, 1));
+    e.vx += Math.cos(e.faceDir) * spd * 3 * dt;
+    e.vy += Math.sin(e.faceDir) * spd * 3 * dt;
+  } else if (t.support) {
+    // Choirmaster: hover behind the pack, accelerating and mending nearby monsters.
+    if (d < 175) { e.vx -= Math.cos(a) * spd * 2.8 * dt; e.vy -= Math.sin(a) * spd * 2.8 * dt; }
+    else if (d > 250) { e.vx += Math.cos(a) * spd * 2.2 * dt; e.vy += Math.sin(a) * spd * 2.2 * dt; }
+    e.supportT -= dt;
+    for (const o of G.enemies) {
+      if (o === e || o.hp <= 0 || o.boss) continue;
+      if (dist2(e.x, e.y, o.x, o.y) <= 180 * 180) {
+        o.choirT = Math.max(o.choirT || 0, 0.18);
+        if (e.supportT <= 0) o.hp = Math.min(o.maxHp, o.hp + Math.max(0.5, o.maxHp * 0.018));
+      }
+    }
+    if (e.supportT <= 0) { e.supportT = 1; e.attackT = 0.28; e.actionT = 0; }
+  } else if (t.ambusher) {
+    // Flenserling: disappear, reposition behind the player's aim, then lunge.
+    if (e.ambushState === 'gone') {
+      e.vx = 0; e.vy = 0; e.phaseT -= dt;
+      if (e.phaseT <= 0) {
+        const behind = p.aim + Math.PI, range = rand(90, 125);
+        e.x = clamp(p.x + Math.cos(behind) * range, G.arena.x0 + e.r, G.arena.x1 - e.r);
+        e.y = clamp(p.y + Math.sin(behind) * range, G.arena.y0 + e.r, G.arena.y1 - e.r);
+        e.phased = false; e.alpha = 1; e.ambushState = 'lunge'; e.lungeT = 0.48;
+        e.faceDir = angleTo(e.x, e.y, p.x, p.y); e.attackT = 0.48; e.actionT = 0;
+      }
+    } else if (e.ambushState === 'lunge') {
+      e.lungeT -= dt;
+      e.vx += Math.cos(e.faceDir) * spd * 6 * dt; e.vy += Math.sin(e.faceDir) * spd * 6 * dt;
+      if (e.lungeT <= 0) { e.ambushState = 'stalk'; e.ambushT = rand(2.2, 3.4); }
+    } else {
+      e.vx += Math.cos(a) * spd * 2.7 * dt; e.vy += Math.sin(a) * spd * 2.7 * dt;
+      e.ambushT -= dt;
+      if (e.ambushT <= 0) {
+        e.ambushState = 'gone'; e.phaseT = 0.55; e.phased = true; e.alpha = 0; e.vx = 0; e.vy = 0;
+        spawnSmoke(e.x, e.y, -Math.PI / 2, 5, '#8d2038');
+      }
+    }
+  } else if (t.summoner) {
+    // Brood Sac: roots near the room centre and continuously seeds minis.
+    const ca = angleTo(e.x, e.y, G.arena.cx, G.arena.cy);
+    if (dist(e.x, e.y, G.arena.cx, G.arena.cy) > 110) {
+      e.vx += Math.cos(ca) * spd * 1.6 * dt; e.vy += Math.sin(ca) * spd * 1.6 * dt;
+    }
+    e.summonT -= dt;
+    if (e.summonT <= 0) {
+      e.summonT = e.elite ? 3 : 4;
+      spawnBroodMinis(e, 2, 0.35);
+      e.attackT = 0.5; e.actionT = 0;
+    }
+  } else if (t.ranged) {
+    const desiredFar = Math.min(250, Math.min(G.arena.w, G.arena.h) * 0.44);
+    const desiredNear = Math.max(90, desiredFar - 60);
+    if (d > desiredFar) { e.vx += Math.cos(a) * spd * 3 * dt; e.vy += Math.sin(a) * spd * 3 * dt; }
+    else if (d < desiredNear) { e.vx -= Math.cos(a) * spd * 3 * dt; e.vy -= Math.sin(a) * spd * 3 * dt; }
     e.fireT -= dt;
     if (e.fireT <= 0 && d < 420) {
       e.fireT = e.elite ? 1.1 : 1.9;
@@ -431,10 +552,8 @@ function updateEnemyAI(e, dt) {
       const n = e.elite ? 3 : 1;
       for (let k = 0; k < n; k++) {
         const fa = a + (n > 1 ? (k - 1) * 0.25 : 0);
-        G.ebullets.push({
-          x: e.x, y: e.y, vx: Math.cos(fa) * 220, vy: Math.sin(fa) * 220,
-          r: 5, dmg: 1, life: 3, t: 0, sprite: 'bullet_gore',
-        });
+        G.ebullets.push({ x: e.x, y: e.y, vx: Math.cos(fa) * 220, vy: Math.sin(fa) * 220,
+          r: 5, dmg: 1, life: 3, t: 0, sprite: 'bullet_gore' });
       }
       Sfx.spit(e);
     }
@@ -447,7 +566,6 @@ function updateEnemyAI(e, dt) {
       if (e.fuse <= 0) { e.hp = 0; explodeAt(e.x, e.y, 70, 2, false); }
     }
   } else {
-    // chaser with a little wobble
     e.wob += dt * 3;
     const wa = a + Math.sin(e.wob) * 0.3;
     e.vx += Math.cos(wa) * spd * 4 * dt; e.vy += Math.sin(wa) * spd * 4 * dt;
@@ -479,7 +597,7 @@ function drawEnemies(ctx) {
       continue;
     }
     const p = G.player;
-    const face = angleTo(e.x, e.y, p.x, p.y);
+    const face = (e.type === 'bulwark' || e.type === 'flenserling') ? e.faceDir : angleTo(e.x, e.y, p.x, p.y);
     const speed = Math.min(Math.hypot(e.vx, e.vy) / Math.max(e.spd, 1), 1);
     let action = speed > 0.12 ? 'move' : 'idle';
     let animTime = e.animT || 0;
@@ -491,9 +609,25 @@ function drawEnemies(ctx) {
     let pulse = 1;
     if (e.type === 'exploder' && e.fuse >= 0) pulse = 1 + (0.5 - e.fuse) * 0.13 + Math.sin(G.time * 28) * 0.04;
     const appear = clamp((e.spawnT || 0) / 0.24, 0.12, 1);
+    if (e.type === 'choirmaster' && e.alpha > 0.05) {
+      ctx.save(); ctx.globalAlpha = 0.28 + Math.sin(G.time * 8) * 0.08;
+      ctx.strokeStyle = '#e22b46'; ctx.lineWidth = 2;
+      for (const o of G.enemies) {
+        if (o === e || o.hp <= 0 || o.boss || o.choirT <= 0) continue;
+        if (dist2(e.x, e.y, o.x, o.y) > 180 * 180) continue;
+        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(o.x, o.y); ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (e.alpha === undefined || e.alpha > 0.05) Sprites.shadow(ctx, e.x, e.y + e.r * 0.55, e.r * 0.9, e.r * 0.34, (e.boss ? 0.5 : 0.34) * (e.alpha === undefined ? 1 : e.alpha));
     Sprites.actor(ctx, e.sprite, e.x, e.y, face, action, animTime,
       e.drawSize || (e.boss ? 128 : 64), e.alpha === undefined ? 1 : e.alpha, appear * pulse, appear * pulse);
+    if (e.type === 'bulwark') {
+      ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.faceDir);
+      ctx.strokeStyle = '#c7a56d'; ctx.globalAlpha = 0.72; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, 0, e.r + 5, -70 * Math.PI / 180, 70 * Math.PI / 180); ctx.stroke();
+      ctx.restore();
+    }
     if (e.plates > 0) {
       ctx.save(); ctx.translate(e.x, e.y); ctx.lineWidth = 4;
       for (let k = 0; k < e.plates; k++) {

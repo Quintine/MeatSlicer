@@ -1327,6 +1327,7 @@ ANIM_ACTIONS = {
 ACTORS = [
     "player",
     "enemy_shambler", "enemy_runner", "enemy_spitter", "enemy_splitter", "enemy_mini", "enemy_exploder",
+    "enemy_censer", "enemy_bulwark", "enemy_choirmaster", "enemy_flenserling", "enemy_broodsac",
     "boss_bonesaw", "boss_gorecrown", "boss_knifecrawl",
     "boss_vealmother", "boss_flenser", "boss_hookchoir",
     "boss_platefather", "boss_augerprime", "boss_scald",

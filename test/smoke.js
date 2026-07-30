@@ -1036,6 +1036,78 @@ console.log('== 500ms wave spawn telegraph ==');
   ctx.startRun(); step(3, 16);
 }
 
+console.log('== five pressure-monster archetypes ==');
+{
+  const newTypes = ['censer', 'bulwark', 'choirmaster', 'flenserling', 'broodsac'];
+  check('enemy roster expanded from six to eleven types', Object.keys(ctx.ENEMY_TYPES).length === 11);
+  check('all five new monster stills and sheets are registered', newTypes.every(type =>
+    ctx.SPRITE_MANIFEST.includes('enemy_' + type) && ctx.SPRITE_MANIFEST.includes('enemy_' + type + '_sheet')));
+  let lockedSafe = true;
+  for (let i = 0; i < 500; i++) if (newTypes.includes(ctx.pickEnemyType(3))) lockedSafe = false;
+  check('new pressure monsters stay locked through floor 3', lockedSafe);
+
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.x = ctx.G.arena.cx; p.y = ctx.G.arena.cy;
+
+  const censer = ctx.makeEnemy('censer', p.x - 180, p.y, 7, false);
+  censer.castT = 0; ctx.G.enemies = [censer]; ctx.G.telegraphs = [];
+  ctx.updateEnemyAI(censer, 0.016);
+  check('Censer predicts and telegraphs a hostile pool', ctx.G.telegraphs.some(t => t.kind === 'pool' && t.owner === censer));
+
+  const front = ctx.makeEnemy('bulwark', 300, 300, 7, false); front.faceDir = 0;
+  const rear = ctx.makeEnemy('bulwark', 300, 300, 7, false); rear.faceDir = 0;
+  const frontBefore = front.hp, rearBefore = rear.hp;
+  ctx.damageEnemy(front, 10, Math.PI, false, { noProc: true, noCrit: true });
+  ctx.damageEnemy(rear, 10, 0, false, { noProc: true, noCrit: true });
+  check('Bulwark frontal armor rewards flanking', frontBefore - front.hp < (rearBefore - rear.hp) * 0.25);
+
+  const choir = ctx.makeEnemy('choirmaster', 300, 300, 7, false);
+  const ally = ctx.makeEnemy('shambler', 330, 300, 7, false); ally.hp = ally.maxHp / 2;
+  const allyHp = ally.hp; choir.supportT = 0; ctx.G.enemies = [choir, ally];
+  ctx.updateEnemyAI(choir, 0.016);
+  check('Choirmaster buffs and repairs nearby monsters', ally.choirT > 0 && ally.hp > allyHp);
+
+  const flenserling = ctx.makeEnemy('flenserling', 260, 260, 7, false);
+  flenserling.ambushT = 0; ctx.G.enemies = [flenserling];
+  ctx.updateEnemyAI(flenserling, 0.016);
+  const phasedHp = flenserling.hp;
+  const phasedHit = ctx.damageEnemy(flenserling, 10, 0, false, { noProc: true, noCrit: true });
+  check('Flenserling phases out and becomes untargetable', flenserling.phased && !phasedHit && flenserling.hp === phasedHp);
+  flenserling.phaseT = 0; ctx.updateEnemyAI(flenserling, 0.016);
+  check('Flenserling reappears behind the player for a lunge', !flenserling.phased && flenserling.ambushState === 'lunge');
+
+  const sac = ctx.makeEnemy('broodsac', 300, 300, 7, false);
+  sac.summonT = 0; ctx.G.enemies = [sac];
+  ctx.updateEnemyAI(sac, 0.016);
+  check('Brood Sac periodically spawns two minis', ctx.G.enemies.filter(e => e.type === 'mini').length === 2);
+  const burstSac = ctx.makeEnemy('broodsac', 400, 300, 7, false);
+  ctx.G.enemies = [burstSac];
+  ctx.damageEnemy(burstSac, 99999, 0, false, { noProc: true, noCrit: true });
+  check('Brood Sac death bursts into four minis', ctx.G.enemies.filter(e => e.type === 'mini').length === 4);
+
+  const cappedChoir = ctx.makeEnemy('choirmaster', 200, 200, 10, false);
+  const cappedSacA = ctx.makeEnemy('broodsac', 240, 200, 10, false);
+  const cappedSacB = ctx.makeEnemy('broodsac', 280, 200, 10, false);
+  ctx.G.enemies = [cappedChoir, cappedSacA, cappedSacB];
+  let capSafe = true;
+  for (let i = 0; i < 300; i++) {
+    const type = ctx.pickWaveEnemyType(10);
+    if (type === 'choirmaster' || type === 'broodsac') capSafe = false;
+  }
+  check('support and summoner per-room caps are enforced', capSafe);
+
+  const thin = ctx.makeRoom(0, 0, 'combat'); thin.shape = 'wide_hall'; thin.doors = {};
+  ctx.G.cur = thin; ctx.setArenaForRoom(thin); ctx.G.enemies = [];
+  let hallSafe = true;
+  for (let i = 0; i < 300; i++) {
+    const type = ctx.pickWaveEnemyType(10);
+    if (type === 'censer' || type === 'broodsac') hallSafe = false;
+  }
+  check('zone denial and summoners stay out of thin halls', hallSafe);
+  ctx.startRun(); step(3, 16);
+}
+
 console.log('== pressure dial scaling ==');
 {
   const GAIN = [-2, -1.6, -1.2, -0.8, -0.4, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.8, 2.6, 3.4, 4.2, 5, 6, 7, 8, 9, 10];
