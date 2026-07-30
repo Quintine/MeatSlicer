@@ -16,7 +16,7 @@ A run looks like this:
 2. **Clear combat rooms.** Doors lock until every wave of enemies in the room is dead.
 3. **Find the item room.** A free passive item (plus a 35% chance of a weapon).
 4. **Kill the floor boss.** The boss room is always the farthest room from the start.
-5. **Take the loot, take the stairs.** Bosses drop an item pedestal, a weapon, and the stairs down. Walk onto the stairs to descend.
+5. **Take the loot, take the stairs.** Bosses drop an item pedestal, a weapon, guaranteed ammo, and the stairs down. Walk onto the stairs to descend.
 6. Repeat, deeper and harder, until you are butchered.
 
 ### Score
@@ -175,7 +175,7 @@ Clearing a combat room drops:
 |---|---|
 | **XP Gem** (small, value 1 / big, value 5) | Grants XP × your `xpMul`. Fills the level bar; each level-up opens the Mutation Draft. |
 | **Heart** | Heals 2 HP. At full HP: +25 score instead. |
-| **Ammo** | Refills carried special weapons (current + holstered) by a fraction of their capacity × `ammoPickupMul`, up to 150% capacity. Overflow becomes score. |
+| **Ammo** | Refills carried special weapons (current + holstered) by their authored `refill` × `ammoPickupMul`, up to 150% of magazine size. Overflow becomes score. |
 | **Weapon** | Equips on walk-over. Your old special weapon drops with its remaining ammo (Bone Popper is never dropped). |
 | **Item** (on pedestal) | Grants/upgrades a passive item. Hovering near a pedestal shows its name. |
 | **Stairs Down** | Appears after every boss kill. Walk over to descend. |
@@ -192,7 +192,7 @@ Clearing a combat room drops:
 |---|---|
 | Normal enemy | XP gems (enemy's XP value) · 5.25% + luck×3% ammo · 2.2% + luck×3% heart |
 | Elite enemy | 3× XP + 3–5 bonus gems · 18% + luck×10% **item** · else 45% + luck×15% ammo |
-| Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + stairs |
+| Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + 1 guaranteed ammo + stairs · the boss room also stocks 1 ammo when you enter |
 
 **Luck** is a player stat (Lucky Coin, Crow Bait, Scavenger perk) that scales most drop chances as shown above.
 

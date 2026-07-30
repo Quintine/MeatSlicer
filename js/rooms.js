@@ -82,6 +82,8 @@ function enterRoom(gx, gy) {
     } else if (room.type === 'boss') {
       const boss = spawnBoss(G.floor);
       room.bossSpawned = true;
+      // boss fights are a pure ammo drain, so stock the room on the way in
+      spawnPickup('ammo', W / 2, H / 2 + 140);
       Music.playBoss(boss.bossKind);
     } else if (room.type === 'item') {
       spawnItemPedestal(W / 2 - 45, H / 2, null, 'room');
@@ -239,14 +241,18 @@ function updateHazards(dt) {
     }
     if (h.kind === 'trap') {
       for (const e of G.enemies) {
-        if (e.boss) continue;
+        if (e.boss || e.hp <= 0) continue;
+        if (h.caught && h.caught.has(e)) continue; // each victim springs it once
         if (dist2(h.x, h.y, e.x, e.y) < (h.r + e.r) * (h.r + e.r)) {
           e.rootT = 2.2;
           damageEnemy(e, h.dmg, rand(0, TAU), false);
           spawnBlood(e.x, e.y, 0, 6);
           Sfx.trapSnap({ x: h.x, y: h.y });
-          G.hazards.splice(i, 1);
-          break;
+          // a trap snaps shut on a few victims before it breaks
+          if (!h.caught) h.caught = new Set();
+          h.caught.add(e);
+          h.charges = (h.charges === undefined ? 1 : h.charges) - 1;
+          if (h.charges <= 0) { G.hazards.splice(i, 1); break; }
         }
       }
     } else if (!h.hostile || h.dps > 0) { // weapon pools hurt enemies; zero-DPS boss pools do not

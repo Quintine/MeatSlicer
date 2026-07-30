@@ -151,7 +151,9 @@ function drawHelpArsenal(ctx, px, py) {
     if (row % 2 === 0) { ctx.fillStyle = 'rgba(255,220,200,0.03)'; ctx.fillRect(x - 4, ty - 11, HELP_PANEL.w - 72, 15); }
     const dps = Math.round(w.dmg / Math.max(0.01, w.interval) * (w.pellets || 1));
     const vals = [w.name.toUpperCase(), w.tier < 0 ? 'SIDE' : 'T' + w.tier, String(w.dmg),
-      w.interval.toFixed(2) + 's', w.ammo === Infinity ? '∞' : String(w.ammo), String(dps), w.behavior.toUpperCase()];
+      w.interval.toFixed(2) + 's',
+      w.ammo === Infinity ? '∞' : (w.drain ? w.ammo + '·' + w.drain + '/s' : String(w.ammo)),
+      String(dps), w.behavior.toUpperCase()];
     ctx.fillStyle = '#c9b8ae';
     for (let c = 0; c < cols.length; c++) ctx.fillText(vals[c], x + cols[c], ty);
     ty += 15;

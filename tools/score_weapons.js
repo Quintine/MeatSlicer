@@ -56,6 +56,7 @@ function accuracy(w) {
 // Total damage in one ammo load (with the same behavior multipliers as DPS).
 function damagePool(w) {
   if (w.ammo === Infinity) return Infinity;
+  if (w.drain) return effectiveDps(w) * (w.ammo / w.drain); // time-denominated magazine
   const perShot = effectiveDps(w) * w.interval;
   return perShot * w.ammo;
 }

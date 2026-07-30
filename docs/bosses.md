@@ -40,6 +40,7 @@ Killing a boss grants **500 + floor × 100** score, clears all hostile bullets/t
 
 - **1 item pedestal** (left of room center)
 - **1 weapon drop** rolled at **floor + 2** (right of center)
+- **1 ammo pickup** (above center) — the boss room also stocks one when you walk in, so you can afford to spend the magazine on the fight
 - **Stairs Down** (below center)
 
 > *"[NAME] DESTROYED — take the meat, take the stairs"*

@@ -12,7 +12,9 @@ Weapons have **no upgrade levels** — their stats are fixed. All scaling comes 
 - Press **R** to swap between them. Holstered weapons keep their remaining ammo.
 - Picking up a new special weapon drops your current one (with its remaining ammo) so you can swap back.
 - When a special weapon runs dry, you automatically fall back to the Bone Popper.
-- Special weapons consume ammo per shot: `1 / ammoEff` units per shot (so Brass Magazine's additive `ammoEff` stretches every magazine).
+- Most special weapons consume ammo per shot: `1 / ammoEff` units per shot (so Brass Magazine's additive `ammoEff` stretches every magazine).
+- **Stream weapons** (Bile Blunderbuss, The Cauterizer, Red Right Hand) instead drain ammo per second while held: `drain / ammoEff` units per second. Their magazines are measured in seconds of fire.
+- Each special has two ammo numbers: **`ammo`** (magazine size — how long a fresh weapon lasts) and **`refill`** (units returned per ammo pickup — tuned so one pickup funds roughly ten kills). Pickups can overfill up to 150% of the magazine; overflow converts to score.
 
 ### Where weapons come from
 
@@ -75,7 +77,7 @@ Your eternal fallback. Never runs dry, never holstered — swapping with R alway
 | Projectile speed | 560 |
 | Spread | 0.10 rad |
 | Range | 0.42 s |
-| Ammo | 140 |
+| Ammo | 84 (refill 42 per pickup) |
 | Recoil | 0.18 |
 
 Rapid-fire bullet hose. Low per-shot damage, excellent proc-per-second carrier for on-hit item effects.
@@ -92,7 +94,7 @@ Rapid-fire bullet hose. Low per-shot damage, excellent proc-per-second carrier f
 | Projectile speed | 500 |
 | Spread | 0.55 rad (wide) |
 | Range | 0.38 s (short) |
-| Ammo | 42 |
+| Ammo | 20 (refill 6 per pickup) |
 | Recoil | 0.92 (heavy) |
 
 Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but the short lifetime makes it strictly close-range.
@@ -111,7 +113,7 @@ Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but
 | Fire interval | 0.38 s |
 | Projectile speed | 400 (returns at up to 520) |
 | Range | 1.10 s |
-| Ammo | 34 |
+| Ammo | 26 (refill 10 per pickup) |
 | Recoil | 0.42 |
 
 Boomerang: flies out while decelerating for 0.45 s, then accelerates back to you (caught within 20 px). **Always pierces** — it can hit enemies on both the outbound and return trip.
@@ -125,12 +127,12 @@ Boomerang: flies out while decelerating for 0.45 s, then accelerates back to you
 | Damage | 13 |
 | Fire interval | 0.34 s |
 | Projectile speed | 360 |
-| Wall bounces | 5 (plus bounces from Ricochet Ribs) |
+| Bounces | 5, shared between walls and enemies (plus bounces from Ricochet Ribs) |
 | Range | 0.60 s |
-| Ammo | 26 |
+| Ammo | 24 (refill 9 per pickup) |
 | Recoil | 0.45 |
 
-Spinning ricochet blades. Deadly in cramped rooms where blades ping off walls into packs.
+Spinning ricochet blades. Each enemy hit spends one bounce and the blade tears through; at zero bounces it dies on the next enemy (or wall). Deadly in cramped rooms where blades ping off walls into packs.
 
 ### Hemophage
 
@@ -143,7 +145,7 @@ Spinning ricochet blades. Deadly in cramped rooms where blades ping off walls in
 | Projectile speed | 480 |
 | Range | 0.45 s |
 | Lifesteal | 12.5% chance per hit to heal 1 HP |
-| Ammo | 44 |
+| Ammo | 70 (refill 42 per pickup) |
 | Recoil | 0.35 |
 
 The only weapon with built-in lifesteal. Healing only procs while you're below max HP.
@@ -159,7 +161,7 @@ The only weapon with built-in lifesteal. Healing only procs while you're below m
 | Projectile speed | 320 |
 | Range | 0.62 s |
 | Homing | 6 + homing × 0.7 (strongest base homing) |
-| Ammo | 32 |
+| Ammo | 42 (refill 21 per pickup) |
 | Recoil | 0.40 |
 
 Aggressively seeking projectiles. Aim roughly, let the eyes do the rest.
@@ -181,10 +183,10 @@ Aggressively seeking projectiles. Aim roughly, let the eyes do the rest.
 | Spread | 0.32 rad |
 | Range | 0.36 s |
 | Pierce | 2 (+ item pierce) |
-| Ammo | 70 |
+| Ammo | 80 (refill 21 per pickup), **drains 8/sec while held** |
 | Recoil | 0.34 |
 
-Corrosive cone spray. On hit: **slows for 1.6 s** and 45% chance to leave an **acid pool** (radius 24 × sizeMul, 3.5 s life, DPS = bullet damage × 1.5). Projectiles that expire mid-flight have a separate 35% chance to drop a pool.
+Corrosive cone spray. On hit: **slows for 1.6 s** and 45% chance to leave an **acid pool** (radius 24 × sizeMul, 2.5 s life, DPS = bullet damage × 0.8). Projectiles that expire mid-flight have a separate 35% chance to drop a pool. Ammo is time-denominated: a full tank is 10 seconds of spray.
 
 ### Gut Hook
 
@@ -196,7 +198,7 @@ Corrosive cone spray. On hit: **slows for 1.6 s** and 45% chance to leave an **a
 | Fire interval | 0.85 s (slow) |
 | Projectile speed | 720 (fastest projectile) |
 | Range | 0.60 s |
-| Ammo | 14 |
+| Ammo | 11 (refill 5 per pickup) |
 | Recoil | 0.95 |
 
 Harpoon that pierces everything and **drags the first non-boss enemy it hits** along its flight path. When the projectile expires, the dragged enemy takes 50% of the bullet's damage again. Excellent for yanking a priority target out of a pack.
@@ -211,10 +213,10 @@ Harpoon that pierces everything and **drags the first non-boss enemy it hits** a
 | Fire interval | 0.75 s |
 | Behavior | Lobbed to cursor, explodes on arrival |
 | Blast radius | 85 × rangeMul × √sizeMul |
-| Ammo | 14 |
+| Ammo | 14 (refill 4 per pickup) |
 | Recoil | 0.90 |
 
-Grenade lobber. Flight time auto-computed from distance (clamped 0.12–0.8 s). The blast damages and knocks back everything in radius. Arcs over the chaos — no line of sight needed.
+Grenade lobber. Flight time auto-computed from distance (clamped 0.12–0.8 s). The blast damages and knocks back everything in radius. Arcs over the chaos — no line of sight needed, and lobbed shots pass over enemies mid-flight to detonate at the target point.
 
 ### Trap Queen
 
@@ -227,10 +229,11 @@ Grenade lobber. Flight time auto-computed from distance (clamped 0.12–0.8 s). 
 | Behavior | Lobbed; leaves a trap where it lands |
 | Trap life | 12 s × rangeMul |
 | Trap radius | 16 × sizeMul |
-| Ammo | 12 (refills at 75% rate — `ammoWeight: 0.75`) |
+| Trap charges | 3 victims per trap |
+| Ammo | 26 (refill 13 per pickup) |
 | Recoil | 0.65 |
 
-Area denial. Traps persist on the floor and damage any enemy that steps on them — pre-lay them along doorways and kiting paths.
+Area denial. Traps persist on the floor and snap shut on up to **three** victims each (damage + 2.2 s root per victim) before breaking — pre-lay them along doorways and kiting paths.
 
 ### Red Right Hand
 
@@ -242,7 +245,7 @@ Area denial. Traps persist on the floor and damage any enemy that steps on them 
 | Damage interval | 0.10 s |
 | Reach | 30 × rangeMul × √shotSpeedMul from player |
 | Arc radius | 34 × √sizeMul |
-| Ammo | 160 (drains 18/sec while held, ÷ ammoEff) |
+| Ammo | 150 (refill 72 per pickup; drains 18/sec while held, ÷ ammoEff) |
 | Recoil | 0.38 |
 
 Continuous melee chainsaw — hold LMB and walk into things. Damage scales with `dmgMul × rateMul`, plus the same +6%-per-pierce/bounce/homing inert bonus as the Tenderizer. Sparks fly, ammo drains.
@@ -264,10 +267,10 @@ Continuous melee chainsaw — hold LMB and walk into things. Damage scales with 
 | Spread | 0.34 rad |
 | Range | 0.36 s (very short) |
 | Pierce | 2 (+ item pierce) |
-| Ammo | 110 |
+| Ammo | 110 (refill 21 per pickup), **drains 12/sec while held** |
 | Recoil | 0.32 |
 
-Flamethrower. Hits **ignite for 2.2 s** with burn DPS = bullet damage × 2 (9 DPS base). Melt hordes that get close; useless at range.
+Flamethrower. Hits **ignite for 1.5 s** with burn DPS = bullet damage × 0.8 (3.6 DPS base). Melt hordes that get close; useless at range. Ammo is time-denominated: a full tank is ~9 seconds of flame.
 
 ### The Tenderizer
 
@@ -279,7 +282,7 @@ Flamethrower. Hits **ignite for 2.2 s** with burn DPS = bullet damage × 2 (9 DP
 | Fire interval | 0.58 s |
 | Range | 46 × rangeMul × √shotSpeedMul from player |
 | Blast radius | 70 × rangeMul × √sizeMul |
-| Ammo | 26 |
+| Ammo | 10 (refill 5 per pickup) |
 | Recoil | 1.00 (max), screen shake 5 |
 
 Point-blank slam — no projectile, an instant circular blast in front of you. Bonus "inert" damage scaling: +6% per point of pierce + bounce + homing you own.
@@ -294,7 +297,7 @@ Point-blank slam — no projectile, an instant circular blast in front of you. B
 | Charge time | 0.85 s (minimum 40% charge = 0.34 s to fire) |
 | Beam length | 900 × rangeMul |
 | Beam width | 14 × √sizeMul |
-| Ammo | 9 |
+| Ammo | 7 (refill 4 per pickup) |
 | Recoil | 1.00, screen shake 8 |
 
 **Hold LMB to charge, release to fire** an instant hitscan beam that deletes everything in a line. Damage scales `0.4 + 0.6 × charge fraction` — full charge is 2.5× a hasty snap shot. A ring around your character shows charge state (blue = full). Charge rate scales with `rateMul × √shotSpeedMul`.
@@ -310,10 +313,10 @@ Point-blank slam — no projectile, an instant circular blast in front of you. B
 | Maggots per jar | 6 (+ split + fan bonuses) |
 | Maggot speed / life | 260 / 2.2 s × rangeMul |
 | Maggot homing | 8 + homing × 0.7 (strongest in game) |
-| Ammo | 7 (refills at 80% rate — `ammoWeight: 0.8`) |
+| Ammo | 12 (refill 6 per pickup) |
 | Recoil | 0.70 |
 
-Lobs a jar that shatters into a pack of homing maggots. Maggots **inherit your pierce and bounce stats** and relentlessly chase enemies for their full lifetime. Throw and forget.
+Lobs a jar that shatters into a pack of homing maggots where it lands. The jar arcs over enemies mid-flight, so aim at the pack — not through it. Maggots **inherit your pierce and bounce stats** and relentlessly chase enemies for their full lifetime. Throw and forget.
 
 ---
 
@@ -324,7 +327,8 @@ bullet damage  = weapon dmg × dmgMul × (critMul if crit)
 fire interval  = weapon interval / (rateMul × frenzyMul)
 proj speed     = weapon spd × shotSpeedMul
 proj lifetime  = weapon range × rangeMul
-ammo per shot  = 1 / ammoEff
+ammo per shot  = 1 / ammoEff        (stream weapons: drain / ammoEff per second)
+ammo refill    = weapon refill × ammoPickupMul per pickup (cap 150% of magazine)
 knockback      = 90 × knockbackMul
 ```
 

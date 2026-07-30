@@ -16,17 +16,9 @@ function spawnGems(x, y, value) {
 }
 
 
-// Ammo drops preserve useful trigger time: low-damage rapid weapons receive
-// a larger share, while heavy multi-pellet shots receive fewer rounds.
-function ammoRefillFraction(w) {
-  const effectiveDamage = Math.max(1, (w.dmg || 1) * (w.pellets || 1));
-  const interval = Math.max(0.05, w.interval ?? 0.3);
-  const damageWeight = Math.log2(effectiveDamage / 8);
-  const rateWeight = Math.log2(interval / 0.3);
-  // Heavy, slow attacks push the fraction down; light, rapid attacks push it up.
-  const heaviness = clamp((damageWeight + rateWeight) / 4, -1, 1);
-  return clamp(0.62 - heaviness * 0.28, 0.30, 0.88) * (w.ammoWeight || 1) * AMMO_REFILL_SCALE;
-}
+// Ammo pickups hand back each weapon's authored `refill` (see WEAPONS), tuned
+// so one pickup funds roughly ten kills. Magazine size (`ammo`) is a separate
+// feel dial; the economy dial lives on `refill`.
 
 // room-clear reward burst (weapons come from bosses / item rooms, not room clears)
 function spawnRoomReward(x, y, floor) {
@@ -87,7 +79,7 @@ function collectPickup(k) {
       for (const inst of carried) {
         const def = WEAPONS[inst.id];
         const cap = def.ammo * 1.5;
-        const wanted = Math.max(1, Math.ceil(def.ammo * ammoRefillFraction(def) * p.stats.ammoPickupMul));
+        const wanted = Math.max(1, Math.ceil((def.refill || 1) * p.stats.ammoPickupMul));
         const add = Math.max(0, Math.min(wanted, cap - inst.ammo));
         inst.ammo += add;
         total += add;

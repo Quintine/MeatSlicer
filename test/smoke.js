@@ -733,14 +733,10 @@ console.log('== generic ammo drops ==');
   step(2, 16);
   check('ammo reaches holstered weapon while sidearm is selected', p.holstered.ammo > holsteredAmmo);
 
-  const repeaterRefill = Math.ceil(ctx.WEAPONS.repeater.ammo * ctx.ammoRefillFraction(ctx.WEAPONS.repeater));
-  const spinalRefill = Math.ceil(ctx.WEAPONS.spinaltap.ammo * ctx.ammoRefillFraction(ctx.WEAPONS.spinaltap));
-  check('rapid low-damage weapons receive more rounds than heavy weapons', repeaterRefill > spinalRefill * 10);
-  const sameDamageFast = ctx.ammoRefillFraction({ dmg: 8, interval: 0.1, ammo: 50 });
-  const sameDamageSlow = ctx.ammoRefillFraction({ dmg: 8, interval: 1.0, ammo: 50 });
-  check('fire rate explicitly increases ammo refill share', sameDamageFast > sameDamageSlow);
-  check('persistent utility weapon overrides dampen refill size',
-    ctx.WEAPONS.trapqueen.ammoWeight < 1 && ctx.WEAPONS.swarmjar.ammoWeight < 1);
+  check('rapid low-damage weapons receive more rounds than heavy weapons',
+    ctx.WEAPONS.repeater.refill > ctx.WEAPONS.spinaltap.refill * 10);
+  check('stream weapons are time-denominated (drain, not per-shot)',
+    ctx.WEAPONS.bile.drain > 0 && ctx.WEAPONS.cauterizer.drain > 0 && ctx.WEAPONS.redhand.drain > 0);
 
   const repeaterCap = ctx.WEAPONS.repeater.ammo * 1.5;
   p.weapon = { id: 'repeater', ammo: repeaterCap - 1 };
@@ -754,6 +750,24 @@ console.log('== generic ammo drops ==');
   p.weapon = { id: 'bonepopper', ammo: Infinity };
   p.holstered = null;
   ctx.G.pickups.length = 0;
+}
+
+console.log('== ammo economy structure ==');
+{
+  // Kills-per-refill is calibrated empirically by tools/ammo_sim.js (target
+  // band ~8-13). Here we guard the structural rules that keep it meaningful.
+  const bad = [];
+  for (const w of Object.values(ctx.WEAPONS)) {
+    if (w.ammo === Infinity) continue;
+    if (!Number.isInteger(w.refill) || w.refill < 1) bad.push(w.id + ':refill-missing');
+    else if (w.refill > w.ammo) bad.push(w.id + ':refill-exceeds-magazine');
+    // a full magazine must stay a usable burst: not a 1s sneeze, not endless
+    const seconds = w.drain ? w.ammo / w.drain
+      : w.ammo * (w.behavior === 'beam' ? (w.chargeTime + w.interval) : w.interval);
+    if (seconds < 3 || seconds > 20) bad.push(w.id + ':magazine-' + seconds.toFixed(1) + 's');
+  }
+  check('every special weapon has a sane authored refill + magazine', bad.length === 0);
+  if (bad.length) console.log('   BAD-AMMO: ' + bad.join(', '));
 }
 
 console.log('== drop economy: weapons are rare, elites feed you ==');

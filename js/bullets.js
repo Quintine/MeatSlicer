@@ -87,7 +87,7 @@ function updateBullets(dt) {
       dead = true;
       // bile congeals into acid pools
       if (b.behavior === 'cone' && chance(0.35)) {
-        G.hazards.push({ kind: 'acid', x: b.x, y: b.y, r: 24 * (b.sizeMul || 1), life: 3.5, t: 0, dps: b.dmg * 1.5 });
+        G.hazards.push({ kind: 'acid', x: b.x, y: b.y, r: 24 * (b.sizeMul || 1), life: 2.5, t: 0, dps: b.dmg * 0.8 });
       }
       // Sawbone Coil: bullets split into 2 shards on expiry
       if (p.stats.sawboneCoil > 0 && !b.shard && b.behavior !== 'lob' && b.behavior !== 'lob_trap' && b.behavior !== 'lob_swarm') {
@@ -111,8 +111,9 @@ function updateBullets(dt) {
       lobTrigger(b);
     }
 
-    // enemy collision
-    if (!dead) {
+    // enemy collision (lobbed projectiles arc overhead and only trigger at
+    // their target point — or on a wall — never mid-flight)
+    if (!dead && !b.lobbed) {
       for (const e of G.enemies) {
         if (e.hp <= 0 || e.phased || (b.hit && b.hit.has(e))) continue;
         if (e === b.dragTarget) continue;
@@ -122,10 +123,10 @@ function updateBullets(dt) {
           if (!b.hit) b.hit = new Set();
           b.hit.add(e);
           spawnBlood(b.x, b.y, a, 3);
-          if (b.behavior === 'flame') { e.burnT = Math.max(e.burnT, 2.2); e.burnDps = Math.max(e.burnDps || 0, b.dmg * 2); }
+          if (b.behavior === 'flame') { e.burnT = Math.max(e.burnT, 1.5); e.burnDps = Math.max(e.burnDps || 0, b.dmg * 0.8); }
           if (b.behavior === 'cone') {
             e.slowT = Math.max(e.slowT, 1.6);
-            if (G.hazards.length < 80 && chance(0.45)) G.hazards.push({ kind: 'acid', x: b.x, y: b.y, r: 24 * (b.sizeMul || 1), life: 3.5, t: 0, dps: b.dmg * 1.5 });
+            if (G.hazards.length < 80 && chance(0.45)) G.hazards.push({ kind: 'acid', x: b.x, y: b.y, r: 24 * (b.sizeMul || 1), life: 2.5, t: 0, dps: b.dmg * 0.8 });
           }
           // Hemophage remains an on-hit drain, naturally limited by its fire interval.
           if (b.lifesteal && p.hp < p.stats.maxHp && chance(b.lifesteal * 0.25)) lifestealPlayer(1);
@@ -134,6 +135,12 @@ function updateBullets(dt) {
           }
           if (b.pierce > 0) { b.pierce--; }
           else if (b.behavior === 'boomerang' || b.behavior === 'pierce_drag') { /* pass through */ }
+          // Sawblades ricochet through meat the same way they ricochet off
+          // walls: each enemy hit spends one bounce, shared with wall bounces.
+          else if (b.behavior === 'bounce' && ((b.bounces || 0) + (b.bounce || 0)) > 0) {
+            if (b.bounces > 0) b.bounces--; else b.bounce--;
+            spawnSpark(b.x, b.y, a + Math.PI);
+          }
           else {
             dead = true; break;
           }
@@ -217,7 +224,7 @@ function lobTrigger(b) {
     spawnBlood(b.x, b.y, 0, 16, true);
     Sfx.explode({ x: b.x, y: b.y });
   } else if (b.behavior === 'lob_trap') { // Trap Queen
-    G.hazards.push({ kind: 'trap', x: b.x, y: b.y, r: 16 * (b.sizeMul || 1), life: 12 * (b.rangeMul || 1), t: 0, dmg: b.dmg });
+    G.hazards.push({ kind: 'trap', x: b.x, y: b.y, r: 16 * (b.sizeMul || 1), life: 12 * (b.rangeMul || 1), t: 0, dmg: b.dmg, charges: 3 });
     Sfx.trapSet({ x: b.x, y: b.y });
   } else if (b.behavior === 'lob_swarm') { // Swarm Jar: homing maggots
     const st = G.player.stats;

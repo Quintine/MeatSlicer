@@ -111,9 +111,24 @@ function updatePlayer(dt) {
   if (w.behavior === 'saw') {
     if (Input.mdown && p.weapon.ammo > 0) {
       sawTick(p, w, p.weapon, dt);
+      if (!(p.marrowDraughtT > 0)) p.weapon.ammo -= dt * (w.drain || 18) / st.ammoEff;
       p.muzzleT = 0.04; p.recoil = 0.18 + Math.sin(G.time * 45) * 0.05;
       if (p.attackT <= 0) p.actionT = 0;
       p.attackT = 0.2;
+    }
+    else p.fireT = 0;
+  } else if (w.drain) {
+    // cone / flame streams: projectiles are free, ammo is time-denominated
+    if (Input.mdown && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
+      if (p.fireT <= 0) {
+        fireWeapon(p, w);
+        p.recoil = Math.min(1, p.recoil + 0.45);
+        p.muzzleT = 0.07;
+        p.attackT = 0.4; p.actionT = 0;
+        p.fireT = rate;
+        Sfx.shoot(w);
+      }
+      if (!(p.marrowDraughtT > 0)) p.weapon.ammo -= dt * w.drain / st.ammoEff;
     }
     else p.fireT = 0;
   } else if (w.behavior === 'beam') {

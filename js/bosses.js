@@ -592,8 +592,9 @@ function onBossDeath(e) {
   }
   addScore(500 + G.floor * 100);
   addShake(12);
-  // boss reward: item pedestal + a real weapon drop + stairs down
+  // boss reward: item pedestal + a real weapon drop + ammo + stairs down
   spawnItemPedestal(W / 2 - 90, H / 2, null, 'boss');
+  spawnPickup('ammo', W / 2, H / 2 - 40);
   // 30% chance of a bonus active pedestal (additive — never replaces the passive)
   if (chance(0.30)) spawnActivePedestal(W / 2 - 160, H / 2 + 60);
   const bw = rollWeaponDrop(G.floor + 2); // bosses drop the good stuff
