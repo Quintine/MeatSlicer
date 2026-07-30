@@ -202,7 +202,7 @@ Clearing a combat room drops:
 |---|---|
 | Normal enemy | XP gems (enemy's XP value) · 5.25% + luck×3% ammo · 2.2% + luck×3% heart |
 | Elite enemy | 3× XP + 3–5 bonus gems · 18% + luck×10% **item** · else 45% + luck×15% ammo |
-| Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + 1 guaranteed ammo + stairs · the boss room also stocks 1 ammo when you enter |
+| Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + 1 guaranteed ammo + stairs · the boss room also stocks 1 ammo when you enter · the stair hatch stays sealed for 3 seconds after the kill |
 
 **Luck** is a player stat (Lucky Coin, Crow Bait, Scavenger perk) that scales most drop chances as shown above.
 

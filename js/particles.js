@@ -13,7 +13,7 @@ function addParticle(p, important) {
   return true;
 }
 
-function spawnBlood(x, y, ang, n, big) {
+function spawnBlood(x, y, ang, n, big, important) {
   for (let i = 0; i < n; i++) {
     const a = ang + rand(-0.9, 0.9);
     const sp = rand(40, big ? 260 : 160);
@@ -23,7 +23,7 @@ function spawnBlood(x, y, ang, n, big) {
       life: rand(0.3, 0.7), t: 0,
       r: rand(1.5, big ? 4.5 : 3),
       mist: i % 4 === 0, shade: i % 3,
-    });
+    }, important);
   }
   // persistent floor decal
   if (G.cur && chance(0.55)) {
@@ -147,7 +147,7 @@ function spawnExplosionFx(x, y, r) {
 function spawnPlayerGore(x, y) {
   spawnExplosionFx(x, y, 110);
   spawnShockwave(x, y, 138, '#ff2947', 0.95, true);
-  for (let i = 0; i < 4; i++) spawnBlood(x, y, i * TAU / 4, 10, true);
+  for (let i = 0; i < 4; i++) spawnBlood(x, y, i * TAU / 4, 10, true, true);
   spawnGibs(x, y, 26, true, true);
   for (let i = 0; i < 18; i++) {
     const a = rand(0, TAU), sp = rand(90, 350);

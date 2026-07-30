@@ -1346,6 +1346,7 @@ for (let g2 = 0; g2 < 400 && ctx.G.boss; g2++) {
 check('boss dead', !ctx.G.boss);
 check('boss death clears remaining minions', ctx.G.enemies.length === 0);
 check('stairs spawned', ctx.G.pickups.some(p => p.type === 'stairs') || ctx.G.mode !== 'play');
+check('boss stairs begin with a three-second safety seal', ctx.G.pickups.some(p => p.type === 'stairs' && p.delay > 0 && p.delay <= 3));
 check('boss drops a weapon', ctx.G.pickups.some(p => p.type === 'weapon'));
 check('boss reward pedestal', ctx.G.pickups.some(p => p.type === 'item'));
 
@@ -1370,6 +1371,8 @@ const stairs = ctx.G.pickups.find(p => p.type === 'stairs');
 if (stairs) {
   ctx.G.player.x = stairs.x; ctx.G.player.y = stairs.y;
   step(5, 16);
+  check('sealed boss stairs cannot advance the floor', ctx.G.floor === 2);
+  step(190, 16);
   check('floor advanced', ctx.G.floor === 3);
 }
 
@@ -1576,6 +1579,25 @@ step(190, 16);
 tap('r');
 step(5, 16);
 check('restart works', ctx.G.mode === 'play' && ctx.G.floor === 1);
+
+console.log('== confirmed destructive actions ==');
+{
+  let fired = 0;
+  ctx.confirmAction('probe', () => fired++);
+  check('first destructive action arms confirmation without firing', ctx.G.confirmAction === 'probe' && ctx.G.confirmT > 2.9 && fired === 0);
+  ctx.confirmAction('probe', () => fired++);
+  check('second matching action confirms and clears state', fired === 1 && ctx.G.confirmAction === null && ctx.G.confirmT === 0);
+  ctx.confirmAction('expire', () => fired++);
+  ctx.G.mode = 'inspect';
+  ctx.update(3.1);
+  check('confirmation expires without firing', fired === 1 && ctx.G.confirmAction === null && ctx.G.confirmT === 0);
+  ctx.startRun(); step(3, 16);
+  ctx.G.score = 999; ctx.G.mode = 'pause'; ctx.G.deathLockT = 2;
+  ctx.confirmAction('menu', ctx.returnToMenu);
+  ctx.confirmAction('menu', ctx.returnToMenu);
+  check('confirmed return to menu fully resets the abandoned run', ctx.G.mode === 'menu' && ctx.G.score === 0 && ctx.G.deathLockT === 0);
+  ctx.startRun(); step(3, 16);
+}
 
 console.log('== pause / mute ==');
 tap('p');

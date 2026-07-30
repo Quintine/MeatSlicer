@@ -215,13 +215,24 @@ function drawPickups(ctx) {
       ctx.restore();
       Sprites.draw(ctx, 'a_' + k.aid, k.x, k.y - 28 + bob, 0, 64);
     } else if (k.type === 'stairs') {
-      Sprites.draw(ctx, 'stairs', k.x, k.y, 0, 64);
-      ctx.save();
-      ctx.globalAlpha = 0.5 + Math.sin(k.t * 3) * 0.25;
-      ctx.strokeStyle = '#d8b84e'; ctx.lineWidth = 2;
-      const inset = 3 + Math.sin(k.t * 3) * 2;
-      ctx.strokeRect(k.x - 31 + inset, k.y - 31 + inset, 62 - inset * 2, 62 - inset * 2);
-      ctx.restore();
+      if (k.delay > 0) {
+        ctx.save(); ctx.translate(k.x, k.y);
+        ctx.fillStyle = '#171116'; ctx.fillRect(-31, -31, 62, 62);
+        ctx.strokeStyle = '#75525a'; ctx.lineWidth = 3; ctx.strokeRect(-29, -29, 58, 58);
+        ctx.fillStyle = '#38242a';
+        for (let sy = -20; sy <= 20; sy += 10) ctx.fillRect(-25, sy, 50, 5);
+        ctx.fillStyle = '#d8b84e'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('SEALED ' + k.delay.toFixed(1), 0, 3);
+        ctx.restore();
+      } else {
+        Sprites.draw(ctx, 'stairs', k.x, k.y, 0, 64);
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.sin(k.t * 3) * 0.25;
+        ctx.strokeStyle = '#d8b84e'; ctx.lineWidth = 2;
+        const inset = 3 + Math.sin(k.t * 3) * 2;
+        ctx.strokeRect(k.x - 31 + inset, k.y - 31 + inset, 62 - inset * 2, 62 - inset * 2);
+        ctx.restore();
+      }
     }
 
     // hover nameplates when close
@@ -229,7 +240,7 @@ function drawPickups(ctx) {
       if (k.type === 'weapon') drawPickupLabel(ctx, WEAPONS[k.wid].name, k.x, k.y - 44, '#ffd060');
       else if (k.type === 'item') drawPickupLabel(ctx, ITEMS[k.iid].name, k.x, k.y - 66, ITEM_RARITY[ITEMS[k.iid].rarity].color);
       else if (k.type === 'active') drawPickupLabel(ctx, ACTIVES[k.aid].name, k.x, k.y - 66, '#55f5dc');
-      else if (k.type === 'stairs') drawPickupLabel(ctx, 'STAIRS DOWN', k.x, k.y - 52, '#e8e0d0');
+      else if (k.type === 'stairs') drawPickupLabel(ctx, k.delay > 0 ? 'HATCH SEALED' : 'STAIRS DOWN', k.x, k.y - 52, k.delay > 0 ? '#b89c46' : '#e8e0d0');
       else if (k.type === 'ammo') drawPickupLabel(ctx, 'AMMO', k.x, k.y - 26, '#d0b060');
     }
   }

@@ -521,6 +521,7 @@ function updateEnemyAI(e, dt) {
       e.vx += Math.cos(e.faceDir) * spd * 6 * dt; e.vy += Math.sin(e.faceDir) * spd * 6 * dt;
       if (e.lungeT <= 0) { e.ambushState = 'stalk'; e.ambushT = rand(2.2, 3.4); }
     } else {
+      e.faceDir = angleLerp(e.faceDir, a, clamp(dt * 8, 0, 1));
       e.vx += Math.cos(a) * spd * 2.7 * dt; e.vy += Math.sin(a) * spd * 2.7 * dt;
       e.ambushT -= dt;
       if (e.ambushT <= 0) {

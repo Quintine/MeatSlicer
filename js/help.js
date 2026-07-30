@@ -250,9 +250,13 @@ function drawHelpBestiary(ctx, px, py) {
   let ty = py + HELP_BODY;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#d7a934'; ctx.font = hfont(9, true);
-  ctx.fillText('6 ENEMY TYPES · ELITES: ×2.6 HP, +1 DMG, 3× XP, GOLD RING, ITEM DROPS', x, ty);
+  ctx.fillText(Object.keys(ENEMY_TYPES).length + ' ENEMY TYPES · ELITES: ×2.6 HP, +1 DMG, 3× XP, GOLD RING, ITEM DROPS', x, ty);
   ty += 20;
-  const notes = { shambler: 'CHASER', runner: 'FAST CHASER', spitter: 'RANGED KITER', splitter: 'SPLITS INTO 2 MINIS', mini: 'SWARMER', exploder: 'FUSED SUICIDE ×2 DMG' };
+  const notes = {
+    shambler: 'CHASER', runner: 'FAST CHASER', spitter: 'RANGED KITER', splitter: 'SPLITS INTO 2 MINIS',
+    mini: 'SWARMER', exploder: 'FUSED SUICIDE ×2 DMG', censer: 'HOSTILE ACID ZONES', bulwark: 'FLANK ITS FRONT ARMOR',
+    choirmaster: 'SPEED + REPAIR AURA', flenserling: 'PHASE AMBUSHER', broodsac: 'SPAWNS MINIS',
+  };
   ctx.font = hfont(8, false);
   let row = 0;
   for (const [type, t] of Object.entries(ENEMY_TYPES)) {

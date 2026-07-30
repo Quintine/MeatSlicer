@@ -98,6 +98,7 @@ function resetRun() {
   G.parts = []; G.corpses = []; G.toasts = []; G.pendingLevelups = 0; G.perkChoices = null;
   G.pauseHelp = false; G.helpPage = 0;
   G.confirmAction = null; G.confirmT = 0;
+  G.deathLockT = 0;
   G.pressure = 1; G.streak = 0; G.roomDamaged = false; G.roomEnterT = 0; G.recentHits = [];
   G.shake = 0; G.flash = 0;
   initPlayer();

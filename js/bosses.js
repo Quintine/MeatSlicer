@@ -599,7 +599,7 @@ function onBossDeath(e) {
   if (chance(0.30)) spawnActivePedestal(G.arena.cx - 160, G.arena.cy + 60);
   const bw = rollWeaponDrop(G.floor + 2); // bosses drop the good stuff
   spawnPickup('weapon', G.arena.cx + 90, G.arena.cy, { wid: bw.id });
-  spawnPickup('stairs', G.arena.cx, G.arena.cy + 80);
+  spawnPickup('stairs', G.arena.cx, G.arena.cy + 80, { delay: 3 });
   addToast(e.name + ' DESTROYED', 'take the meat, take the stairs');
   Music.requestFloorMusic();
 }
