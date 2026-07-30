@@ -11,6 +11,7 @@ Weapons have **no upgrade levels** — their stats are fixed. All scaling comes 
 - You always carry the **Bone Popper** (infinite ammo sidearm) plus **one special weapon** in a holster slot.
 - Press **R** to swap between them. Holstered weapons keep their remaining ammo.
 - Picking up a new special weapon drops your current one (with its remaining ammo) so you can swap back.
+- Picking up a weapon that matches either your active or holstered special acts like an ammo pickup for that matching weapon instead of replacing it. Refill uses the weapon's authored `refill`, respects the 150% cap, and converts overflow to score.
 - When a special weapon runs dry, you automatically fall back to the Bone Popper.
 - Most special weapons consume ammo per shot: `1 / ammoEff` units per shot (so Brass Magazine's additive `ammoEff` stretches every magazine).
 - **Stream weapons** (Bile Blunderbuss, The Cauterizer, Red Right Hand) instead drain ammo per second while held: `drain / ammoEff` units per second. Their magazines are measured in seconds of fire.

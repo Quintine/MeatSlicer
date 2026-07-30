@@ -93,6 +93,25 @@ function collectPickup(k) {
     }
     case 'weapon': {
       const w = WEAPONS[k.wid];
+      const match = p.weapon && p.weapon.id === w.id ? p.weapon :
+        (p.holstered && p.holstered.id === w.id ? p.holstered : null);
+      if (match) {
+        // A duplicate becomes an ammo box for the matching carried instance;
+        // it never replaces the weapon or creates a drop loop.
+        if (match.ammo === Infinity || w.ammo === Infinity) {
+          addScore(15);
+          spawnText(p.x, p.y, 'AMMO FULL', '#d0b060');
+        } else {
+          const cap = w.ammo * 1.5;
+          const wanted = Math.max(1, Math.ceil((w.refill || 1) * p.stats.ammoPickupMul));
+          const add = Math.max(0, Math.min(wanted, cap - match.ammo));
+          match.ammo += add;
+          if (wanted > add) addScore(Math.round((wanted - add) * 2));
+          spawnText(p.x, p.y, add > 0 ? '+' + add + ' ' + w.name.toUpperCase() + ' AMMO' : 'AMMO FULL', '#d0b060');
+        }
+        Sfx.ammo();
+        break;
+      }
       // drop the old special with its remaining ammo so it's never wasted
       const old = p.weapon.id !== 'bonepopper' ? p.weapon : p.holstered;
       if (old) {

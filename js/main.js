@@ -4,8 +4,8 @@ let canvas, ctx, lastT = 0;
 
 const PRESSURE_SLIDER_RECT = { x: 300, y: 470, w: 360, h: 46 };
 const MENU_EXIT_BUTTON = { x: W - 208, y: H - 48, w: 180, h: 28 };
-const PAUSE_MENU_BUTTON = { x: W / 2 - 122, y: 522, w: 116, h: 28 };
-const PAUSE_EXIT_BUTTON = { x: W / 2 + 6, y: 522, w: 116, h: 28 };
+const PAUSE_MENU_BUTTON = { x: W / 2 - 75, y: 526, w: 150, h: 28 };
+const PAUSE_EXIT_BUTTON = { x: W / 2 + 87, y: 526, w: 150, h: 28 };
 const CONFIRM_WINDOW = 3;
 
 function pauseBars() {
@@ -480,14 +480,15 @@ function drawPause(ctx) {
     ctx.textAlign = 'left';
   }
 
-  drawPixelTag(ctx, '[P] RESUME', W / 2 - 250, 502, { width: 112, height: 28, color: '#f0e5d7', accent: '#b5243a' });
-  drawPixelTag(ctx, '[R] SWAP', W / 2 - 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
-  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), W / 2, 502, { width: 112, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
-  drawPixelTag(ctx, '[M] MUTE', W / 2 + 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
+  const gridX = [W / 2 - 237, W / 2 - 75, W / 2 + 87];
+  drawPixelTag(ctx, '[P] RESUME', gridX[0], 492, { width: 150, height: 28, color: '#f0e5d7', accent: '#b5243a' });
+  drawPixelTag(ctx, '[R] SWAP WEAPON', gridX[1], 492, { width: 150, height: 28, color: '#bba9a1', accent: '#6e3843' });
+  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), gridX[2], 492, { width: 150, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
   const menuHover = inRect(Input.mx, Input.my, PAUSE_MENU_BUTTON);
   const exitHover = inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
   const menuConfirm = G.confirmAction === 'menu';
   const exitConfirm = G.confirmAction === 'desktop';
+  drawPixelTag(ctx, '[M] MUTE AUDIO', gridX[0], 526, { width: 150, height: 28, color: '#bba9a1', accent: '#6e3843' });
   drawPixelTag(ctx, menuConfirm ? '[Q] CONFIRM MENU' : '[Q] MAIN MENU', PAUSE_MENU_BUTTON.x, PAUSE_MENU_BUTTON.y, {
     width: PAUSE_MENU_BUTTON.w, height: PAUSE_MENU_BUTTON.h,
     color: menuConfirm ? '#ffd36a' : (menuHover ? '#f5e9d6' : '#bba9a1'),
