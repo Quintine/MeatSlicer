@@ -188,7 +188,7 @@ function update(dt) {
       if (keyPressed('arrowright', 'd', '=', '+')) setPressureDial(G.pressureDial + 1);
       if (Input.mpressed && inRect(Input.mx, Input.my, sl)) G.menuDialDrag = true;
       if (G.menuDialDrag && Input.mdown) {
-        setPressureDial(Math.round(((Input.mx - sl.x) / sl.w) * 10) - 5);
+        setPressureDial(Math.round(((Input.mx - sl.x) / sl.w) * 20) - 10);
       }
       if (!Input.mdown) G.menuDialDrag = false;
       if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl) && !exitClick)) startRun();
@@ -403,26 +403,28 @@ function drawPressureDial(ctx) {
   drawPixelPanel(ctx, sl.x, sl.y, sl.w, sl.h, {
     cut: 6, shadow: false, accent, fill: 'rgba(12,5,8,0.92)', border: '#63303a',
   });
-  const name = d <= -4 ? 'MERCIFUL' : d <= -2 ? 'EASED' : d <= 0 ? 'STANDARD' : d <= 2 ? 'TENSE' : d <= 4 ? 'SAVAGE' : 'RELENTLESS';
+  const name = d <= -9 ? 'FORGIVING' : d <= -6 ? 'MERCIFUL' : d <= -3 ? 'EASED' : d <= 0 ? 'STANDARD' :
+    d <= 3 ? 'TENSE' : d <= 5 ? 'SAVAGE' : d <= 7 ? 'RELENTLESS' : d <= 9 ? 'ATROCIOUS' : 'MEAT GRINDER';
   ctx.textAlign = 'left'; ctx.fillStyle = '#9e857a'; ctx.font = 'bold 8px monospace';
   ctx.fillText('PRESSURE DIAL', sl.x + 10, sl.y + 12);
   ctx.textAlign = 'right'; ctx.fillStyle = accent; ctx.font = 'bold 9px monospace';
   ctx.fillText((d > 0 ? '+' : '') + d + ' ' + name, sl.x + sl.w - 10, sl.y + 12);
-  // track with 10 steps / 11 notches
+  // track with 20 steps / 21 notches
   const bx = sl.x + 34, bw = sl.w - 68, by = sl.y + 20, bh = 10;
-  drawPixelBar(ctx, bx, by, bw, bh, (d + 5) / 10, {
-    fill: accent, glint: '#f4d86d', border: '#5d3c43', segments: 10,
+  drawPixelBar(ctx, bx, by, bw, bh, (d + 10) / 20, {
+    fill: accent, glint: '#f4d86d', border: '#5d3c43', segments: 20,
   });
   // bright notch marker
-  const nx = bx + Math.round((d + 5) / 10 * bw);
+  const nx = bx + Math.round((d + 10) / 20 * bw);
   ctx.fillStyle = '#f5e9d6';
   ctx.fillRect(nx - 1, by - 2, 2, bh + 4);
   // end labels
   ctx.fillStyle = '#7d6262'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-  ctx.fillText('-5', bx - 16, by + 9); ctx.fillText('+5', bx + bw + 16, by + 9);
+  ctx.fillText('-10', bx - 18, by + 9); ctx.fillText('+10', bx + bw + 18, by + 9);
   // derived readout
   ctx.fillStyle = '#8f7770'; ctx.font = '8px monospace';
-  ctx.fillText('RISE +' + gain.toFixed(1) + '/5 · RELIEF ' + drop.toFixed(1) + '/5 · SCORE ×LIVE PRESSURE', sl.x + sl.w / 2, sl.y + sl.h - 7);
+  const rise = (gain >= 0 ? '+' : '') + gain.toFixed(1);
+  ctx.fillText('RISE ' + rise + '/10 · RELIEF ' + drop.toFixed(1) + '/10 · SCORE ×LIVE PRESSURE', sl.x + sl.w / 2, sl.y + sl.h - 7);
 }
 
 function drawPause(ctx) {

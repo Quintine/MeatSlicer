@@ -51,17 +51,28 @@ const G = {
 const PERK_POWER_WEIGHT = 0.5;
 // ammo economy: global dial for drop frequency (refill size is per-weapon)
 const AMMO_DROP_SCALE = 0.75;
-const PRESSURE_MIN = 0.75, PRESSURE_MAX = 1.60;
+const PRESSURE_MIN = 0.60, PRESSURE_MAX = 2.00;
 const PRESSURE_UNIT = 0.01;          // one "point" on the dial scale
 const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
 const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
 const DEATH_LOCK = 3;
-const PRESSURE_DIAL_MIN = -5, PRESSURE_DIAL_MAX = 5;
+const PRESSURE_DIAL_MIN = -10, PRESSURE_DIAL_MAX = 10;
 
-// -5 -> 0 units, 0 -> 1 unit, +5 -> 5 units (piecewise linear)
-function pressureGainUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 1 + d * 0.2 : 1 + d * 0.8; }
-// -5 -> 5 units, 0 -> 3 units, +5 -> 0 units (piecewise linear)
-function pressureDropUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 3 - d * 0.4 : 3 - d * 0.6; }
+// Preserve the old -5 / 0 / +5 balance while adding genuinely wider extremes.
+function pressureGainUnits(dial) {
+  const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
+  if (d <= -5) return (d + 5) * 0.4;     // -10 -> -2, -5 -> 0
+  if (d <= 0) return 1 + d * 0.2;        // -5 -> 0, 0 -> 1
+  if (d <= 5) return 1 + d * 0.8;        // 0 -> 1, +5 -> 5
+  return 5 + (d - 5);                    // +5 -> 5, +10 -> 10
+}
+function pressureDropUnits(dial) {
+  const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
+  if (d <= -5) return 5 - (d + 5) * 0.6; // -10 -> 8, -5 -> 5
+  if (d <= 0) return 3 - d * 0.4;        // -5 -> 5, 0 -> 3
+  if (d <= 5) return 3 - d * 0.6;        // 0 -> 3, +5 -> 0
+  return 0;
+}
 function pressureGain()      { const base = pressureGainUnits(G.pressureDial) * PRESSURE_UNIT; return base * (G.player && G.player.stats.abattoirEngine > 0 ? 2 : 1); }
 function pressureDropScale() { return pressureDropUnits(G.pressureDial) / PRESSURE_DROP_BASE; }
 

@@ -292,9 +292,9 @@ function drawHelpPressure(ctx, px, py) {
   const gain = pressureGainUnits(d), drop = pressureDropUnits(d), scale = pressureDropScale();
   helpLines(ctx, px, py + HELP_BODY, [
     { head: 'ADAPTIVE PRESSURE (HUD, BOTTOM-RIGHT)', lines: [
-      'MULTIPLIES ENEMY AND BOSS HP + SPEED AT SPAWN TIME · RANGE 0.75× – 1.60×',
+      'MULTIPLIES ENEMY AND BOSS HP + SPEED AT SPAWN TIME · RANGE ' + PRESSURE_MIN.toFixed(2) + '× – ' + PRESSURE_MAX.toFixed(2) + '×',
       'ALL SCORE IS MULTIPLIED BY LIVE PRESSURE',
-      'DIAL ' + (d > 0 ? '+' : '') + d + ' — RISE ' + gain.toFixed(1) + '/5 PER CLEAN ROOM · RELIEF ' + drop.toFixed(1) + '/5 ON HIT',
+      'DIAL ' + (d > 0 ? '+' : '') + d + ' — RISE ' + gain.toFixed(1) + '/10 PER CLEAN ROOM · RELIEF ' + drop.toFixed(1) + '/10 ON HIT',
       '+' + pressureGain().toFixed(3) + ' FOR EVERY ROOM CLEARED WITHOUT TAKING ANY DAMAGE',
       'RELIEF ON HIT = ' + (0.03 * scale).toFixed(3) + ' × SEVERITY × DESPERATION × CHURN',
       '  SEVERITY = HIT / (MAX HP × 0.25), CLAMPED 0.4 – 2',

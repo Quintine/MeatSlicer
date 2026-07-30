@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -968,12 +968,12 @@ console.log('== adaptive clean-room pressure ==');
   check('fully shielded hits preserve a clean-room streak', ctx.G.pressure === 1.2 && ctx.G.streak === 4 && !ctx.G.roomDamaged);
   p.shieldHp = 0;
 
-  ctx.G.pressure = 0.751; ctx.G.recentHits = []; p.hp = 3; p.invT = 0; ctx.G.mode = 'play';
+  ctx.G.pressure = 0.601; ctx.G.recentHits = []; p.hp = 3; p.invT = 0; ctx.G.mode = 'play';
   ctx.hurtPlayer(1, 0);
-  check('pressure relief is floored at 75%', ctx.G.pressure === 0.75);
+  check('pressure relief is floored at 60%', ctx.G.pressure === 0.60);
 
   ctx.G.pressure = 9; ctx.G.roomDamaged = false; ctx.recordRoomClear({ type: 'combat' });
-  check('pressure is capped at 160%', ctx.G.pressure === 1.6);
+  check('pressure is capped at 200%', ctx.G.pressure === 2.0);
   ctx.startRun(); step(3, 16);
   check('new runs reset pressure and streak', ctx.G.pressure === 1 && ctx.G.streak === 0);
 }
@@ -1038,15 +1038,19 @@ console.log('== 500ms wave spawn telegraph ==');
 
 console.log('== pressure dial scaling ==');
 {
-  const GAIN = { '-5': 0, '-4': 0.2, '-3': 0.4, '-2': 0.6, '-1': 0.8, '0': 1, '1': 1.8, '2': 2.6, '3': 3.4, '4': 4.2, '5': 5 };
-  const DROP = { '-5': 5, '-4': 4.6, '-3': 4.2, '-2': 3.8, '-1': 3.4, '0': 3, '1': 2.4, '2': 1.8, '3': 1.2, '4': 0.6, '5': 0 };
+  const GAIN = [-2, -1.6, -1.2, -0.8, -0.4, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.8, 2.6, 3.4, 4.2, 5, 6, 7, 8, 9, 10];
+  const DROP = [8, 7.4, 6.8, 6.2, 5.6, 5, 4.6, 4.2, 3.8, 3.4, 3, 2.4, 1.8, 1.2, 0.6, 0, 0, 0, 0, 0, 0];
   let gainOK = true, dropOK = true;
-  for (let d = -5; d <= 5; d++) {
-    if (Math.abs(ctx.pressureGainUnits(d) - GAIN[d]) > 1e-6) gainOK = false;
-    if (Math.abs(ctx.pressureDropUnits(d) - DROP[d]) > 1e-6) dropOK = false;
+  for (let d = -10; d <= 10; d++) {
+    if (Math.abs(ctx.pressureGainUnits(d) - GAIN[d + 10]) > 1e-6) gainOK = false;
+    if (Math.abs(ctx.pressureDropUnits(d) - DROP[d + 10]) > 1e-6) dropOK = false;
   }
-  check('gain units match all 11 notches', gainOK);
-  check('drop units match all 11 notches', dropOK);
+  check('gain units match all 21 notches', gainOK);
+  check('drop units match all 21 notches', dropOK);
+  ctx.G.pressureDial = 10;
+  ctx.G.pressure = 1; ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('dial +10 clean room adds 10%', Math.abs(ctx.G.pressure - 1.10) < 1e-4);
   // dial +5: gain 0.05/clean room, zero relief on hit
   ctx.G.pressureDial = 5;
   ctx.G.pressure = 1; ctx.G.roomDamaged = false;
@@ -1061,6 +1065,13 @@ console.log('== pressure dial scaling ==');
   ctx.G.pressure = 1; ctx.G.roomDamaged = false;
   ctx.recordRoomClear({ type: 'combat' });
   check('dial -5 clean room adds nothing', Math.abs(ctx.G.pressure - 1) < 1e-6);
+  ctx.G.pressureDial = -10;
+  ctx.G.pressure = 1; ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('dial -10 clean room bleeds 2% pressure', Math.abs(ctx.G.pressure - 0.98) < 1e-6);
+  ctx.G.pressure = 0.605; ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('negative clean-room gain respects the 60% floor', ctx.G.pressure === 0.60);
   const mkHit = (dial) => {
     ctx.G.pressureDial = dial;
     ctx.G.pressure = 1.2; ctx.G.recentHits = [];
@@ -1069,9 +1080,11 @@ console.log('== pressure dial scaling ==');
     return 1.2 - ctx.G.pressure;
   };
   const reliefNeg = mkHit(-5);
+  const reliefExtreme = mkHit(-10);
   const reliefZero = mkHit(0);
   check('dial -5 relief beats dial 0 (' + reliefNeg.toFixed(4) + ' vs ' + reliefZero.toFixed(4) + ')',
     reliefNeg > reliefZero && Math.abs(reliefNeg - reliefZero * (5 / 3)) < 1e-4);
+  check('dial -10 relief is 8/3 of dial 0', reliefExtreme > reliefNeg && Math.abs(reliefExtreme - reliefZero * (8 / 3)) < 1e-4);
   // score multiplier
   ctx.G.pressureDial = 0;
   ctx.G.pressure = 1.5;

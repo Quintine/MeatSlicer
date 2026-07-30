@@ -215,7 +215,7 @@ function updateRoom(dt) {
 function recordRoomClear(room) {
   if (!G.roomDamaged) {
     G.streak++;
-    G.pressure = Math.min(PRESSURE_MAX, G.pressure + pressureGain());
+    G.pressure = clamp(G.pressure + pressureGain(), PRESSURE_MIN, PRESSURE_MAX);
   } else {
     G.streak = 0;
   }
