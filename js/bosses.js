@@ -14,8 +14,8 @@ const BOSS_DEFS = [
 
 function bossIndexForFloor(floor) { return (floor - 1) % BOSS_DEFS.length; }
 
-function spawnBoss(floor) {
-  const def = BOSS_DEFS[bossIndexForFloor(floor)];
+function spawnBoss(floor, forcedIndex) {
+  const def = BOSS_DEFS[forcedIndex === undefined ? bossIndexForFloor(floor) : forcedIndex];
   const cycle = Math.floor((floor - 1) / 3);
   const tier = Math.max(0, cycle - def.debutCycle);
   const up = powerScore();

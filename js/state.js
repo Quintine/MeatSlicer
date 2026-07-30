@@ -38,6 +38,13 @@ const G = {
   muted: false,
   pauseHelp: false,
   helpPage: 0,
+  // debug console state (see js/debug.js); devMode is set in init()
+  debugUsed: false,
+  debugFlags: {},
+  debugPage: 0,
+  debugPin: false,
+  debugTimescale: 1,
+  debugFrameStep: false,
   sfxVol: 0.45,
   musicVol: 0.55,
   hudAlpha: 1,
@@ -96,4 +103,12 @@ function addScore(n) {
   if (!n) return;
   const scaled = Math.round(n * (G.pressure || 1));
   G.score += n > 0 ? Math.max(1, scaled) : scaled;
+}
+
+// Single mutation point for G.pressure. Three sites (hurt relief, room decay,
+// room-clear gain) route here so the debug pressure-lock can freeze difficulty
+// in one place. Each site already clamped to the same bounds.
+function applyPressureDelta(d) {
+  if (G.debugFlags && G.debugFlags.pressureLock) return;
+  G.pressure = clamp(G.pressure + d, PRESSURE_MIN, PRESSURE_MAX);
 }

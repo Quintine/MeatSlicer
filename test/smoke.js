@@ -54,14 +54,14 @@ vm.createContext(sandbox);
 
 // load game scripts in index.html order
 const files = ['utils', 'state', 'input', 'sfx', 'sfxbank', 'audio', 'sprites', 'particles', 'weapons',
-  'bullets', 'pickups', 'items', 'perks', 'enemies', 'bosses', 'rooms', 'player', 'hud', 'help', 'main'];
+  'bullets', 'pickups', 'items', 'perks', 'enemies', 'bosses', 'rooms', 'player', 'hud', 'help', 'debug', 'main'];
 for (const f of files) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8');
   vm.runInContext(code, sandbox, { filename: f + '.js' });
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -1655,6 +1655,120 @@ step(5, 16);
 check('auto plays a playlist track', ctx.Music.PLAYLIST.includes(ctx.Music.current.name));
 
 step(120, 16); // idle soak
+
+console.log('== debug console ==');
+// gating: backtick is inert in the web harness (no dev flag)
+const modeBeforeDebug = ctx.G.mode;
+ctx.G.devMode = false;
+tap('`');
+check('debug console stays closed without dev flag', ctx.G.mode === modeBeforeDebug);
+// enable dev, open, navigate tabs, close
+ctx.G.devMode = true;
+ctx.G.mode = 'play';
+tap('`');
+check('debug console opens on backtick when dev', ctx.G.mode === 'debug');
+const pageBefore = ctx.G.debugPage;
+tap('arrowright');
+check('tab advances', ctx.G.debugPage === (pageBefore + 1) % ctx.DEBUG_PAGES.length);
+tap('`');
+check('debug console closes back to play', ctx.G.mode === 'play');
+
+// defaultPlayerStats is a clean, self-contained snapshot of the starting stats
+(function () {
+  const def = ctx.defaultPlayerStats();
+  const def2 = ctx.defaultPlayerStats();
+  check('defaultPlayerStats returns independent copies', def !== def2 && def.maxHp === 6 && def.dmgMul === 1 && def.critMul === 2);
+  // a freshly-initialised player always matches the factory output
+  const saved = ctx.G.player;
+  ctx.initPlayer();
+  const fresh = ctx.G.player.stats;
+  check('defaultPlayerStats matches initPlayer stats', Object.keys(def).every(k => def[k] === fresh[k]) && Object.keys(fresh).length === Object.keys(def).length);
+  check('initPlayer seeds empty perk tracking', Array.isArray(ctx.G.player.perks) && ctx.G.player.perks.length === 0);
+  ctx.G.player = saved;
+})();
+
+// stat rebuild reproduces a build, then removal strips its contribution
+(function () {
+  ctx.G.player.items = {};
+  ctx.G.player.perks = [];
+  ctx.G.player.stats = ctx.defaultPlayerStats();
+  const baseDmg = ctx.G.player.stats.dmgMul;
+  ctx.giveItem('marrowglut');           // dmgMul *= 1.20
+  ctx.grantPerk(ctx.PERKS.find(p => p.id === 'critbone')); // crit += 0.02
+  const afterDmg = ctx.G.player.stats.dmgMul;
+  const afterCrit = ctx.G.player.stats.crit;
+  check('item + perk apply', Math.abs(afterDmg - baseDmg * 1.20) < 1e-9 && Math.abs(afterCrit - 0.07) < 1e-9);
+  ctx.debugRebuildStats();
+  check('rebuild reproduces stats', Math.abs(ctx.G.player.stats.dmgMul - afterDmg) < 1e-9 && Math.abs(ctx.G.player.stats.crit - afterCrit) < 1e-9);
+  delete ctx.G.player.items['marrowglut'];
+  ctx.debugRebuildStats();
+  check('item removal strips its stat', Math.abs(ctx.G.player.stats.dmgMul - baseDmg) < 1e-9);
+  check('perk survives item removal', Math.abs(ctx.G.player.stats.crit - afterCrit) < 1e-9);
+})();
+
+// pressure delta helper: respects bounds and the freeze lock
+(function () {
+  ctx.G.pressure = 1; ctx.G.debugFlags = {};
+  ctx.applyPressureDelta(5); check('pressure clamps to max', ctx.G.pressure === ctx.PRESSURE_MAX);
+  ctx.applyPressureDelta(-99); check('pressure clamps to min', ctx.G.pressure === ctx.PRESSURE_MIN);
+  ctx.G.pressure = 1; ctx.G.debugFlags.pressureLock = true;
+  ctx.applyPressureDelta(0.5); check('freeze locks pressure', ctx.G.pressure === 1);
+  ctx.G.debugFlags = {};
+})();
+
+// taint blocks best-score persistence
+(function () {
+  ctx.G.debugUsed = true;
+  ctx.G.best = 100;
+  ctx.G.score = 500;
+  const old = ctx.G.player.hp;
+  ctx.G.player.hp = 1;
+  ctx.gameOver();
+  check('debug-tainted run does not save best', ctx.G.best === 100);
+  ctx.G.debugUsed = false; ctx.G.mode = 'play';
+  ctx.G.player.hp = old;
+})();
+
+// god mode and OHKO guards
+(function () {
+  ctx.G.debugFlags.god = true;
+  const hp = ctx.G.player.hp;
+  ctx.hurtPlayer(5, 0, null);
+  check('god mode blocks damage', ctx.G.player.hp === hp);
+  ctx.G.debugFlags.god = false;
+  ctx.G.enemies = [];
+  const victim = ctx.makeEnemy('shambler', 100, 100, 1, false);
+  ctx.G.enemies.push(victim);
+  ctx.G.debugFlags.ohko = true;
+  ctx.damageEnemy(victim, 1, 0, false);
+  check('ohko kills a full-health enemy', victim.hp <= 0);
+  ctx.G.debugFlags.ohko = false;
+  ctx.G.enemies = [];
+})();
+
+// pinned debug console = live sim (player can be hurt); un-pinned = protected
+(function () {
+  ctx.G.player.invT = 0;
+  const hp = ctx.G.player.hp;
+  ctx.G.mode = 'debug'; ctx.G.debugPin = true;
+  ctx.hurtPlayer(1, 0, null);
+  check('pinned debug keeps the player hittable', ctx.G.player.hp === hp - 1);
+  ctx.G.debugPin = false; ctx.G.player.invT = 0; const hp2 = ctx.G.player.hp;
+  ctx.hurtPlayer(1, 0, null);
+  check('un-pinned debug protects the player', ctx.G.player.hp === hp2);
+  ctx.G.mode = 'play';
+})();
+
+// useActive(force) fires from the debug console; without force it stays gated
+(function () {
+  ctx.G.mode = 'debug';
+  ctx.G.player.active = { iid: 'bonenova', charges: 2 };
+  ctx.useActive(); // not forced: no-op in debug mode
+  check('useActive is mode-gated without force', ctx.G.player.active.charges === 2);
+  ctx.useActive(true); // debug FIRE button path
+  check('useActive(force) fires in debug mode', ctx.G.player.active.charges === 0);
+  ctx.G.mode = 'play';
+})();
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : '\n' + failures + ' CHECKS FAILED');
 process.exit(failures === 0 ? 0 : 1);

@@ -144,6 +144,7 @@ function damageEnemy(e, dmg, ang, knockback, opts) {
   if (e.hp <= 0) return true;
   if (e.phased) return false;
   if (!(dmg > 0)) return false; // NaN / zero / negative damage does nothing
+  if (G.debugFlags && G.debugFlags.ohko) dmg = 1e9; // debug: one-shot-kill, still respects plates
   // crit roll
   const p = G.player;
   const o = opts || {};

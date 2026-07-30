@@ -157,7 +157,7 @@ function updateRoom(dt) {
     const stalled = G.time - G.roomEnterT > 90;
     if (lowHealth || stalled) {
       const decay = lowHealth ? 0.02 : 0.008;
-      G.pressure = Math.max(PRESSURE_MIN, G.pressure - decay * dt * pressureDropScale());
+      applyPressureDelta(-decay * dt * pressureDropScale());
     }
   }
   G.recentHits = (G.recentHits || []).filter(t => G.time - t < 12);
@@ -215,7 +215,7 @@ function updateRoom(dt) {
 function recordRoomClear(room) {
   if (!G.roomDamaged) {
     G.streak++;
-    G.pressure = clamp(G.pressure + pressureGain(), PRESSURE_MIN, PRESSURE_MAX);
+    applyPressureDelta(pressureGain());
   } else {
     G.streak = 0;
   }

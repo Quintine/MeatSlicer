@@ -137,7 +137,8 @@ const Sfx = {
     const gain = this.ctx.createGain();
     const p = G.player;
     let pan = 0, distanceGain = 1;
-    if (pos && p) {
+    // guard against non-finite coords (e.g. a caller passing { bossKind } with no x/y)
+    if (pos && p && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
       pan = clamp((pos.x - p.x) / (W / 2), -1, 1) * 0.75;
       const maxD = Math.hypot(W, H);
       distanceGain = 1 - 0.35 * clamp(dist(pos.x, pos.y, p.x, p.y) / maxD, 0, 1);

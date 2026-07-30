@@ -243,9 +243,9 @@ const ACTIVES = {
   } },
 };
 
-function useActive() {
+function useActive(force) {
   const p = G.player;
-  if (!p.active || G.mode !== 'play') return;
+  if (!p.active || (G.mode !== 'play' && !force)) return;
   const a = ACTIVES[p.active.iid];
   if (!a) return;
   if (p.active.charges < a.cost) {

@@ -1,5 +1,27 @@
 // ---- the butcher (player) ----
 
+function defaultPlayerStats() {
+  return {
+    dmgMul: 1, rateMul: 1, speedMul: 1, shotSpeedMul: 1, rangeMul: 1,
+    pierce: 0, bounce: 0, homing: 0, split: 0, fan: 0, rear: 0, splinter: 0,
+    orbitals: 0, lifestealChance: 0, explodeOnKill: 0,
+    armor: 0, luck: 0, magnet: 1, magnetPull: 1, xpMul: 1, crit: 0.05, critMul: 2, bloodlust: 0,
+    bleed: 0, igniteChance: 0, slowOnHit: 0, stunOnHit: 0, acidOnHit: 0, pullOnHit: 0,
+    chain: 0, knockbackMul: 1, invBonus: 0, ammoEff: 1, ammoPickupMul: 1,
+    roomHeal: 0, roomHealChance: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
+    orbSpeedMul: 1, orbDmgMul: 1, overShield: 0,
+    rerolls: 0, rerollPerLevel: 0,
+    // phase-3 conditional / hook passives
+    dmgLiveMul: 1, executeBonus: 0, burnDamageBonus: 0, choirEvery: 0, sawboneCoil: 0,
+    gluttonGut: 0, slaughterRhythm: 0, painEngine: 0, thresherPlate: 0, bloodMoat: 0,
+    ironLung: 0, meatHook: 0, bloodDebt: 0,
+    // phase-4 legendaries
+    secondSkin: 0, twinSidearm: 0, crimsonMetronome: 0, abattoirEngine: 0,
+    goreCrown: 0, thousandTeeth: 0, hollowFather: 0, theLastCut: 0, meatGrinder: 0,
+    maxHp: 6,
+  };
+}
+
 function initPlayer() {
   G.player = {
     x: W / 2, y: H / 2, r: 20,
@@ -11,27 +33,10 @@ function initPlayer() {
     holstered: null,   // a special weapon set aside while the pistol is out
     level: 1, xp: 0,
     items: {},         // iid -> quality tier (1..3)
+    perks: [],         // perk ids drafted this run, in grant order
     active: null,      // { iid, charges } — active item, room-clear charged
     orbAng: 0,
-    stats: {
-      dmgMul: 1, rateMul: 1, speedMul: 1, shotSpeedMul: 1, rangeMul: 1,
-      pierce: 0, bounce: 0, homing: 0, split: 0, fan: 0, rear: 0, splinter: 0,
-      orbitals: 0, lifestealChance: 0, explodeOnKill: 0,
-      armor: 0, luck: 0, magnet: 1, magnetPull: 1, xpMul: 1, crit: 0.05, critMul: 2, bloodlust: 0,
-      bleed: 0, igniteChance: 0, slowOnHit: 0, stunOnHit: 0, acidOnHit: 0, pullOnHit: 0,
-      chain: 0, knockbackMul: 1, invBonus: 0, ammoEff: 1, ammoPickupMul: 1,
-      roomHeal: 0, roomHealChance: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
-      orbSpeedMul: 1, orbDmgMul: 1, overShield: 0,
-      rerolls: 0, rerollPerLevel: 0,
-      // phase-3 conditional / hook passives
-      dmgLiveMul: 1, executeBonus: 0, burnDamageBonus: 0, choirEvery: 0, sawboneCoil: 0,
-      gluttonGut: 0, slaughterRhythm: 0, painEngine: 0, thresherPlate: 0, bloodMoat: 0,
-      ironLung: 0, meatHook: 0, bloodDebt: 0,
-      // phase-4 legendaries
-      secondSkin: 0, twinSidearm: 0, crimsonMetronome: 0, abattoirEngine: 0,
-      goreCrown: 0, thousandTeeth: 0, hollowFather: 0, theLastCut: 0, meatGrinder: 0,
-      maxHp: 6,
-    },
+    stats: defaultPlayerStats(),
   };
 }
 
@@ -282,8 +287,11 @@ function pressureRelief(dmgTaken) {
 }
 
 function hurtPlayer(dmg, ang, attacker) {
+  if (G.debugFlags && G.debugFlags.god) return;
   const p = G.player;
-  if (p.invT > 0 || p.hp <= 0 || G.mode !== 'play') return;
+  // live sim = play mode, or the pinned debug console running the world
+  const live = G.mode === 'play' || (G.mode === 'debug' && G.debugPin);
+  if (p.invT > 0 || p.hp <= 0 || !live) return;
   // Iron Lung: the first hit each room is blocked
   if (p.ironLungReady) {
     p.ironLungReady = false;
@@ -322,7 +330,7 @@ function hurtPlayer(dmg, ang, attacker) {
     G.roomDamaged = true;
     G.recentHits = (G.recentHits || []).filter(t => G.time - t < 12);
     G.recentHits.push(G.time);
-    G.pressure = clamp(G.pressure - pressureRelief(reduced), PRESSURE_MIN, PRESSURE_MAX);
+    applyPressureDelta(-pressureRelief(reduced));
     G.streak = 0;
   }
   if (attacker && attacker.hp > 0 && p.stats.thorns > 0) {

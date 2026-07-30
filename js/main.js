@@ -21,6 +21,7 @@ function init() {
   canvas = document.getElementById('game');
   ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
+  G.devMode = debugEnabled();
   initInput(canvas);
   Sprites.load();
   fitCanvas();
@@ -101,6 +102,7 @@ function resetRun() {
   G.deathLockT = 0;
   G.pressure = 1; G.streak = 0; G.roomDamaged = false; G.roomEnterT = 0; G.recentHits = [];
   G.shake = 0; G.flash = 0;
+  G.debugUsed = false; G.debugFlags = {}; G.debugTimescale = 1; G.debugFrameStep = false;
   initPlayer();
   genFloor(1);
   enterRoom(0, 0);
@@ -145,7 +147,7 @@ function gameOver() {
   G.deathLockT = DEATH_LOCK;
   spawnPlayerGore(G.player.x, G.player.y);
   Sfx.playerDeath();
-  if (G.score > (G.best || 0)) {
+  if (!G.debugUsed && G.score > (G.best || 0)) {
     G.best = G.score;
     try { localStorage.setItem('meatslicer_best', String(G.best)); } catch (e) {}
   }
@@ -153,8 +155,13 @@ function gameOver() {
 }
 
 function loop(now) {
-  const dt = Math.min((now - lastT) / 1000 || 0.016, 0.05);
+  let dt = Math.min((now - lastT) / 1000 || 0.016, 0.05);
   lastT = now;
+  dt *= (G.debugTimescale || 1);
+  if (G.debugFlags.freeze) {
+    if (G.debugFrameStep) { G.debugFrameStep = false; dt = 1 / 60; }
+    else dt = 0;
+  }
   update(dt);
   draw();
   clearInputEdges();
@@ -196,6 +203,7 @@ function update(dt) {
     }
     case 'play':
       G.time += dt;
+      if (G.devMode && keyPressed('`', '~')) { G.debugReturn = 'play'; G.mode = 'debug'; Sfx.menu(); break; }
       if (keyPressed('p', 'escape')) { G.mode = 'pause'; G.confirmAction = null; G.confirmT = 0; Sfx.stopAllLoops(); Sfx.menu(); break; }
       if (keyPressed('n')) Music.cycle(1);
       if (keyPressed('r')) swapWeapon();
@@ -215,8 +223,26 @@ function update(dt) {
       updateLevelup();
       updateParticles(dt);
       break;
+    case 'debug':
+      updateDebug();
+      // pinned mode lets the world keep running behind the panel
+      if (G.debugPin) {
+        G.time += dt;
+        // mask trigger input so clicking panel buttons doesn't fire the weapon
+        const md = Input.mdown, mp = Input.mpressed, mr = Input.mreleased;
+        Input.mdown = Input.mpressed = Input.mreleased = false;
+        updatePlayer(dt);
+        Input.mdown = md; Input.mpressed = mp; Input.mreleased = mr;
+        updateRoom(dt); updateEnemies(dt); updateTelegraphs(dt);
+        updateBullets(dt); updateHazards(dt); updatePickups(dt); updateParticles(dt);
+        drawToastsUpdate(dt);
+      } else {
+        updateParticles(dt);
+      }
+      break;
     case 'pause': {
       if (G.pauseHelp) { updatePauseHelp(); break; }
+      if (G.devMode && keyPressed('`', '~')) { G.debugReturn = 'pause'; G.mode = 'debug'; Sfx.menu(); break; }
       const menuClick = Input.mpressed && inRect(Input.mx, Input.my, PAUSE_MENU_BUTTON);
       const exitClick = Input.mpressed && inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
       if (keyPressed('q') || menuClick) { confirmAction('menu', returnToMenu); break; }
@@ -313,6 +339,8 @@ function draw() {
   if (G.mode === 'levelup') drawLevelup(ctx);
   else if (G.mode === 'pause') { drawPause(ctx); if (G.pauseHelp) drawPauseHelp(ctx); }
   else if (G.mode === 'gameover') drawGameOver(ctx);
+  else if (G.mode === 'debug') drawDebug(ctx);
+  if (G.devMode) { drawDebugOverlays(ctx); if (G.debugPin && G.mode !== 'debug') drawDebugPin(ctx); }
 }
 
 function drawMenu(ctx) {
@@ -536,7 +564,9 @@ function drawGameOver(ctx) {
     ctx.fillStyle = i === 2 ? '#e2b742' : '#eee0d3'; ctx.font = 'bold 18px monospace';
     ctx.fillText(String(stats[i][1]).padStart(i === 2 ? 6 : 2, '0'), x, 329);
   }
-  if (G.score >= (G.best || 0) && G.score > 0) {
+  if (G.debugUsed) {
+    drawPixelTag(ctx, '[ DEBUG RUN — SCORE NOT RECORDED ]', W / 2 - 128, 367, { width: 256, height: 26, color: '#e02945', accent: '#77202c' });
+  } else if (G.score >= (G.best || 0) && G.score > 0) {
     drawPixelTag(ctx, 'NEW BEST CUT', W / 2 - 68, 367, { width: 136, height: 26, color: '#f1cb53', accent: '#b38b2e' });
   }
   drawPixelPanel(ctx, W / 2 - 140, 414, 280, 50, {

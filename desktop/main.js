@@ -39,6 +39,8 @@ function installProtocol() {
   });
 }
 
+const DEV = process.argv.includes('--dev');
+
 function createWindow() {
   const win = new BrowserWindow({
     fullscreen: true,           // borderless windowed fullscreen on Windows
@@ -50,6 +52,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // forward --dev into the preload's process.argv (custom app flags aren't
+      // guaranteed to appear there otherwise); enables the hidden debug console
+      additionalArguments: DEV ? ['--ms-dev'] : [],
     },
   });
   Menu.setApplicationMenu(null);

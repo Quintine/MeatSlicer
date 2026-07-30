@@ -67,6 +67,7 @@ function openPerkDraft() {
 
 function grantPerk(perk) {
   perk.apply(G.player.stats, G.player);
+  if (G.player.perks) G.player.perks.push(perk.id);
   addToast(perk.name, perk.desc);
   Sfx.perk();
 }

@@ -16,6 +16,7 @@ function drawHUD(ctx) {
   ctx.textAlign = 'left';
   ctx.fillStyle = '#d9c9bc'; ctx.font = 'bold 10px monospace';
   ctx.fillText('BUTCHER // VITALS', 18, 23);
+  if (G.debugUsed) { ctx.fillStyle = '#e02945'; ctx.textAlign = 'left'; ctx.fillText('[DEBUG]', 128, 23); }
   ctx.fillStyle = '#d7a934'; ctx.textAlign = 'right';
   ctx.fillText('LV ' + String(p.level).padStart(2, '0'), 300, 23);
 
