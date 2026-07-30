@@ -4,13 +4,16 @@
 
 const HELP_BUTTON = { x: W - 104, y: 24, w: 80, h: 26 };
 
+// Implant pages are generated from the live ITEMS roster so the manual never
+// drifts from the game data; the count and page count are dynamic.
+const HELP_ITEM_PAGE_SIZE = 23;
+const HELP_ITEM_PAGE_COUNT = Math.ceil(Object.keys(ITEMS).length / HELP_ITEM_PAGE_SIZE);
 const HELP_PAGES = [
   { title: 'CONTROLS' },
   { title: 'THE LOOP' },
   { title: 'ARSENAL' },
   { title: 'MUTATIONS' },
-  { title: 'IMPLANTS I' },
-  { title: 'IMPLANTS II' },
+  ...Array.from({ length: HELP_ITEM_PAGE_COUNT }, (_, i) => ({ title: 'IMPLANTS ' + ['I', 'II', 'III', 'IV', 'V', 'VI'][i] || ('P' + (i + 1)) })),
   { title: 'BESTIARY' },
   { title: 'PRESSURE' },
 ];
@@ -181,31 +184,35 @@ function drawHelpPerkList(ctx, px, py) {
   }
 }
 
-function drawHelpItemList(ctx, px, py, half) {
+function drawHelpItemList(ctx, px, py, page) {
   const x = px + 40;
   let ty = py + HELP_BODY;
   ctx.textAlign = 'left';
+  const total = Object.keys(ITEMS).length;
   ctx.fillStyle = '#d7a934'; ctx.font = hfont(9, true);
-  ctx.fillText('46 IMPLANTS · STACK TO TIER IX · DUPLICATE ROLLS FAVORED · TIER IX → +150 SCORE', x, ty);
+  ctx.fillText(total + ' IMPLANTS · PER-ITEM TIER CAPS · RARITY-WEIGHTED POOLS · DUPLICATE ROLLS FAVORED', x, ty);
   ty += 11;
   ctx.fillStyle = '#7d6a68'; ctx.font = hfont(8, false);
-  ctx.fillText('STICKINESS RAMPS 10% PER DISTINCT UPGRADABLE ITEM OWNED (CAP 50%) · PAGE ' + (half + 1) + ' OF 2', x, ty + 11);
+  ctx.fillText('ELITES FAVOUR COMMON · ITEM ROOMS FAVOUR UNCOMMON · BOSSES FAVOUR RARE/LEGENDARY · PAGE ' + (page + 1) + ' OF ' + HELP_ITEM_PAGE_COUNT, x, ty + 11);
   ty += 34;
   const entries = Object.entries(ITEMS);
-  const halfEntries = entries.slice(half * 23, half * 23 + 23);
+  const pageEntries = entries.slice(page * HELP_ITEM_PAGE_SIZE, page * HELP_ITEM_PAGE_SIZE + HELP_ITEM_PAGE_SIZE);
   const colW = (HELP_PANEL.w - 80) / 2;
-  for (let i = 0; i < halfEntries.length; i++) {
+  for (let i = 0; i < pageEntries.length; i++) {
     const col = Math.floor(i / 12), r = i % 12;
     const lx = x + col * colW, ly = ty + r * 20;
-    ctx.fillStyle = '#e3b746'; ctx.font = hfont(8, true);
-    ctx.fillText(halfEntries[i][1].name.toUpperCase(), lx, ly);
+    const [iid, item] = pageEntries[i];
+    const rar = ITEM_RARITY[item.rarity];
+    ctx.fillStyle = rar.color; ctx.font = hfont(8, true);
+    ctx.fillText(item.name.toUpperCase(), lx, ly);
+    ctx.fillStyle = '#5f4d4d'; ctx.font = hfont(7, true);
+    ctx.fillText(item.rarity.toUpperCase().slice(0, 3) + '·' + item.cap, lx, ly + 12);
     ctx.fillStyle = '#a08d84'; ctx.font = hfont(8, false);
-    ctx.fillText(fit(halfEntries[i][1].desc.toUpperCase(), 40), lx, ly + 12);
+    ctx.fillText(fit(item.desc.toUpperCase(), 34), lx + 52, ly + 12);
   }
 }
 
-function drawHelpItemList1(ctx, px, py) { drawHelpItemList(ctx, px, py, 0); }
-function drawHelpItemList2(ctx, px, py) { drawHelpItemList(ctx, px, py, 1); }
+const HELP_ITEM_RENDERERS = Array.from({ length: HELP_ITEM_PAGE_COUNT }, (_, i) => (c, x, y) => drawHelpItemList(c, x, y, i));
 
 function drawHelpBestiary(ctx, px, py) {
   const x = px + 40;
@@ -276,7 +283,7 @@ function drawHelpPressure(ctx, px, py) {
   ], HELP_PANEL.w - 80);
 }
 
-const HELP_RENDERERS = [drawHelpControls, drawHelpLoop, drawHelpArsenal, drawHelpPerkList, drawHelpItemList1, drawHelpItemList2, drawHelpBestiary, drawHelpPressure];
+const HELP_RENDERERS = [drawHelpControls, drawHelpLoop, drawHelpArsenal, drawHelpPerkList, ...HELP_ITEM_RENDERERS, drawHelpBestiary, drawHelpPressure];
 
 function drawPauseHelp(ctx) {
   ctx.fillStyle = 'rgba(4,2,3,0.84)';

@@ -51,7 +51,7 @@ function updatePickups(dt) {
     // gems & small pickups fly to the player inside magnet radius
     if ((k.type === 'gem' || k.type === 'heart' || k.type === 'ammo') && d < magR) {
       const a = angleTo(k.x, k.y, p.x, p.y);
-      const sp = lerp(320, 60, d / magR);
+      const sp = lerp(320, 60, d / magR) * p.stats.magnetPull;
       k.x += Math.cos(a) * sp * dt; k.y += Math.sin(a) * sp * dt;
     }
 
@@ -164,12 +164,13 @@ function drawPickups(ctx) {
     } else if (k.type === 'itemspot') {
       Sprites.draw(ctx, 'pedestal', k.x, k.y, 0, 64);
     } else if (k.type === 'item') {
+      const rarColor = ITEM_RARITY[ITEMS[k.iid].rarity].color;
       ctx.save();
       ctx.globalAlpha = 0.2 + Math.sin(k.t * 3) * 0.07;
-      ctx.fillStyle = '#ffe075';
+      ctx.fillStyle = rarColor;
       ctx.beginPath(); ctx.arc(k.x, k.y - 28, 30, 0, TAU); ctx.fill();
       ctx.globalAlpha = 0.35;
-      ctx.strokeStyle = '#ffe9a6'; ctx.lineWidth = 1;
+      ctx.strokeStyle = rarColor; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(k.x, k.y - 28, 25 + Math.sin(k.t * 4) * 3, 0, TAU); ctx.stroke();
       ctx.restore();
       Sprites.draw(ctx, 'i_' + k.iid, k.x, k.y - 28 + bob, 0, 64);
@@ -186,7 +187,7 @@ function drawPickups(ctx) {
     // hover nameplates when close
     if (dist2(k.x, k.y, p.x, p.y) < 90 * 90) {
       if (k.type === 'weapon') drawPickupLabel(ctx, WEAPONS[k.wid].name, k.x, k.y - 44, '#ffd060');
-      else if (k.type === 'item') drawPickupLabel(ctx, ITEMS[k.iid].name, k.x, k.y - 66, '#c9a227');
+      else if (k.type === 'item') drawPickupLabel(ctx, ITEMS[k.iid].name, k.x, k.y - 66, ITEM_RARITY[ITEMS[k.iid].rarity].color);
       else if (k.type === 'stairs') drawPickupLabel(ctx, 'STAIRS DOWN', k.x, k.y - 52, '#e8e0d0');
       else if (k.type === 'ammo') drawPickupLabel(ctx, 'AMMO', k.x, k.y - 26, '#d0b060');
     }

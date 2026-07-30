@@ -265,6 +265,20 @@ ITEMS = {
     "crowbait": "a black feather bundle tied around a shining skull coin",
     "gorgingleech": "a fat crimson leech engorged around a glowing blue crystal",
     "rerollrib": "a curved rib carved with dice pips and a circular arrow",
+    "chillgland": "a pale frost-rimed gland with blue ice crystals and a steel staple",
+    "hookedsinew": "a taut red sinew cord pulled around a rusted butcher hook",
+    "gyroscopicribs": "a rib cage spun into a gyroscope ring around a spinning bone core",
+    "marrowpiston": "a hydraulic steel piston packed with dark marrow and bone seals",
+    "splitcortex": "a bisected brain with a clean mirrored split and two wired halves",
+    "gristlecord": "a thick braided gristle cord with steel clasps and dried blood",
+    "renderedfat": "a folded slab of rendered tallow fat with a crackled browned edge",
+    "whipcordtendon": "a long whip-like tendon cord coiled with a barbed tip",
+    "rusteddiadem": "a corroded iron diadem crown with orbital notches and rust flaking",
+    "gorgedtick": "a swollen blood-engorged tick clutching a tiny blue crystal",
+    "bonemealpowder": "a small burlap pouch spilling white bone-meal powder and bone chips",
+    "rimedfang": "a long predatory fang crusted with white frost and a steel collar",
+    "butcherstwine": "a spool of blood-stained butcher twine with a frayed loose end",
+    "cindersump": "a smouldering iron sump grate with orange cinders and green acid drips",
 }
 for iid, subject in ITEMS.items():
     SPECS["i_" + iid] = Spec(subject + ", isolated inventory object, strong top-left light, no medallion, no icon background", 32)

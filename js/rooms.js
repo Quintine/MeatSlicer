@@ -82,7 +82,7 @@ function enterRoom(gx, gy) {
       room.bossSpawned = true;
       Music.playBoss(boss.bossKind);
     } else if (room.type === 'item') {
-      spawnItemPedestal(W / 2 - 45, H / 2);
+      spawnItemPedestal(W / 2 - 45, H / 2, null, 'room');
       // item rooms sometimes also stock a weapon
       if (chance(0.35)) {
         const w = rollWeaponDrop(G.floor);

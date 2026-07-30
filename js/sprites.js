@@ -36,6 +36,9 @@ const SPRITE_MANIFEST = [
   'i_deadmanswitch', 'i_orbitcrown', 'i_tannedhide', 'i_deadmansclock', 'i_hollowbones', 'i_boneplate',
   'i_wormgut', 'i_spinecage', 'i_secondstomach', 'i_spitewell', 'i_twinhearts', 'i_brassmagazine',
   'i_crowbait', 'i_gorgingleech', 'i_rerollrib',
+  'i_chillgland', 'i_hookedsinew', 'i_gyroscopicribs', 'i_marrowpiston', 'i_splitcortex',
+  'i_gristlecord', 'i_renderedfat', 'i_whipcordtendon', 'i_rusteddiadem', 'i_gorgedtick',
+  'i_bonemealpowder', 'i_rimedfang', 'i_butcherstwine', 'i_cindersump',
   // full 64px/128px eight-direction action atlases
   'player_sheet', 'player_legs_sheet',
   'enemy_shambler_sheet', 'enemy_runner_sheet', 'enemy_spitter_sheet',
@@ -73,7 +76,7 @@ const Sprites = {
       const img = new Image();
       img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
       img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=37';
+      img.src = 'assets/' + name + '.png?v=38';
     }
   },
 

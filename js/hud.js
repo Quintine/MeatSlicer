@@ -109,7 +109,9 @@ function drawHUD(ctx) {
     ctx.fillText(holsterEmpty ? 'NEEDS AMMO' : Math.ceil(p.holstered.ammo) + ' AMMO', 289, 125 + vOff);
   }
 
-  const allItemEntries = Object.entries(p.items);
+  const rarityRank = { legendary: 0, rare: 1, uncommon: 2, common: 3 };
+  const allItemEntries = Object.entries(p.items).sort((a, b) =>
+    (rarityRank[ITEMS[a[0]].rarity] - rarityRank[ITEMS[b[0]].rarity]) || (b[1] - a[1]));
   const maxVisibleItems = allItemEntries.length > 24 ? 23 : 24;
   const itemEntries = allItemEntries.slice(0, maxVisibleItems);
   if (itemEntries.length) {

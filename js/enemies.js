@@ -255,7 +255,7 @@ function killEnemy(e, ang) {
     gemVal += irand(3, 5);
     spawnGems(e.x, e.y, gemVal);
     if (chance(0.18 + luck * 0.1)) {
-      spawnPickup('item', e.x, e.y, { iid: randomItemId() });
+      spawnPickup('item', e.x, e.y, { iid: rollItemId('elite', G.floor) });
     } else if (chance(0.6 + luck * 0.2)) {
       spawnPickup('ammo', e.x, e.y);
     }

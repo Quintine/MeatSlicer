@@ -58,13 +58,13 @@ function pressureDropUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRES
 function pressureGain()      { return pressureGainUnits(G.pressureDial) * PRESSURE_UNIT; }
 function pressureDropScale() { return pressureDropUnits(G.pressureDial) / PRESSURE_DROP_BASE; }
 
-// total player power: perks drafted (level - 1) + item tiers owned.
+// total player power: perks drafted (level - 1) + item tiers owned, weighted by rarity.
 // monsters scale against this so difficulty tracks the build.
 function powerScore() {
   const p = G.player;
   if (!p) return 0;
   let n = (p.level - 1) * PERK_POWER_WEIGHT;
-  for (const iid in p.items) n += p.items[iid];
+  for (const iid in p.items) n += p.items[iid] * ITEM_RARITY[ITEMS[iid].rarity].power;
   return Math.max(0, n);
 }
 

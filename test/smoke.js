@@ -318,9 +318,9 @@ step(30, 16);
 
 console.log('== expanded perk and item rosters ==');
 {
-  check('27 new items added', Object.keys(ctx.ITEMS).length === 46);
+  check('41 new items added (14 phase-2 passives)', Object.keys(ctx.ITEMS).length === 60);
   const newPerks = ['critbone', 'critmeat', 'flensing', 'ember', 'frostbile', 'heavyhand', 'thickhide', 'secondwind', 'scrapfeed', 'boneknit', 'spiteflesh', 'carrion', 'sinew'];
-  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib'];
+  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib', 'chillgland', 'hookedsinew', 'gyroscopicribs', 'marrowpiston', 'splitcortex', 'gristlecord', 'renderedfat', 'whipcordtendon', 'rusteddiadem', 'gorgedtick', 'bonemealpowder', 'rimedfang', 'butcherstwine', 'cindersump'];
   check('all new perks have manifest icons or fallbacks', newPerks.every(id => ctx.SPRITE_MANIFEST.includes('perk_' + id)));
   check('all new items have manifest icons or fallbacks', newItems.every(id => ctx.SPRITE_MANIFEST.includes('i_' + id)));
   check('new roster entries all have names, descriptions and effects',
@@ -329,7 +329,7 @@ console.log('== expanded perk and item rosters ==');
   const livePlayer = ctx.G.player;
   ctx.initPlayer();
   const probe = ctx.G.player;
-  for (const id of newItems) for (let tier = 0; tier < 9; tier++) ctx.ITEMS[id].apply(probe.stats, probe);
+  for (const id of newItems) for (let tier = 0; tier < (ctx.ITEMS[id].cap ?? 9); tier++) ctx.ITEMS[id].apply(probe.stats, probe);
   for (const id of newPerks) for (let tier = 0; tier < 3; tier++) ctx.PERKS.find(k => k.id === id).apply(probe.stats, probe);
   check('all new effects execute repeatedly without non-finite stats',
     Object.values(probe.stats).every(v => typeof v !== 'number' || Number.isFinite(v)) && Number.isFinite(probe.hp) && Number.isFinite(probe.shieldHp));
@@ -412,7 +412,7 @@ console.log('== continuous saw frame-rate independence ==');
   p.stats = savedStats; ctx.G.enemies.length = 0;
 }
 
-console.log('== item upgrades (9 quality tiers) ==');
+console.log('== item upgrades (per-item tier caps) ==');
 {
   const p = ctx.G.player;
   const dmgBefore = p.stats.dmgMul;
@@ -420,14 +420,45 @@ console.log('== item upgrades (9 quality tiers) ==');
   check('duplicate upgrades to tier II', p.items.hollowpoints === 2);
   check('upgrade re-applies the effect', Math.abs(p.stats.dmgMul - dmgBefore * 1.25) < 0.001);
   for (let i = 0; i < 7; i++) ctx.giveItem('hollowpoints');
-  check('nine copies reach tier IX', p.items.hollowpoints === 9);
-  check('full linear scaling to IX', Math.abs(p.stats.dmgMul - dmgBefore * Math.pow(1.25, 8)) < 0.01);
+  check('six copies reach the Hollow Points cap (VI)', p.items.hollowpoints === 6);
+  check('scaling stops at the cap', Math.abs(p.stats.dmgMul - dmgBefore * Math.pow(1.25, 5)) < 0.01);
   const scoreBefore = ctx.G.score;
   const dmgAtCap = p.stats.dmgMul;
   ctx.giveItem('hollowpoints');
-  check('tenth copy capped, converts to score', p.items.hollowpoints === 9 && ctx.G.score > scoreBefore);
+  check('seventh copy capped, converts to score', p.items.hollowpoints === 6 && ctx.G.score > scoreBefore);
   check('capped copy gives no extra effect', p.stats.dmgMul === dmgAtCap);
   check('still one icon in the item list', Object.keys(p.items).filter(k => k === 'hollowpoints').length === 1);
+}
+
+console.log('== rarity pools and per-item caps ==');
+{
+  const p = ctx.G.player;
+  p.items = {};
+  // legendaries never come from elite or item-room pools
+  let sawLegendary = false;
+  for (let i = 0; i < 400; i++) {
+    const eid = ctx.rollItemId('elite', 1), rid = ctx.rollItemId('room', 1);
+    if (ctx.ITEMS[eid].rarity === 'legendary' || ctx.ITEMS[rid].rarity === 'legendary') sawLegendary = true;
+  }
+  check('elite and room pools never roll legendaries', !sawLegendary);
+  // boss pool can roll rare (and would roll legendary when any exist)
+  let bossRares = 0;
+  for (let i = 0; i < 200; i++) if (ctx.ITEMS[ctx.rollItemId('boss', 3)].rarity === 'rare') bossRares++;
+  check('boss pool favours rare items (' + bossRares + '/200)', bossRares > 40);
+  // capped items are excluded from fresh rolls
+  p.items = { splittongue: 3 }; // rare cap 3
+  let reoffered = false;
+  for (let i = 0; i < 300; i++) if (ctx.rollItemId('room', 1) === 'splittongue') reoffered = true;
+  check('capped items are not re-offered by pools', !reoffered);
+  // stickiness still favours owned upgradable items
+  p.items = { hollowpoints: 1 };
+  let owned = 0;
+  for (let i = 0; i < 600; i++) if (ctx.rollItemId('room', 1) === 'hollowpoints') owned++;
+  const frac = owned / 600;
+  check('stickiness ramps toward owned items (' + owned + '/600)', frac > 0.04 && frac < 0.20);
+  // legacy alias still resolves
+  check('randomItemId legacy alias works', typeof ctx.randomItemId() === 'string');
+  p.items = {};
 }
 
 console.log('== tier-scaled items + duplicate favoring ==');
@@ -464,7 +495,7 @@ console.log('== tier-scaled items + duplicate favoring ==');
   for (let i = 0; i < 200; i++) {
     if (p.items[ctx.randomItemId()]) ownedHits++;
   }
-  check('item rolls favor owned items (' + ownedHits + '/200)', ownedHits >= 60);
+  check('item rolls favor owned items (' + ownedHits + '/200)', ownedHits >= 40);
 }
 
 console.log('== all weapons fire without crashing ==');
@@ -742,16 +773,16 @@ console.log('== monsters scale with player upgrades ==');
   p.level = 1; p.items = {};
   const base = ctx.makeEnemy('shambler', 500, 300, 1, false);
   check('no upgrades = base hp', Math.abs(base.hp - 26) < 0.01);
-  // Weighted power: 4 perks × 0.5 + 2 item tiers = 4 power.
+  // Rarity-weighted power: 4 perks × 0.5 + 2 common tiers × 0.5 = 3 power.
   p.level = 5; p.items = { hollowpoints: 2 };
   const e6 = ctx.makeEnemy('shambler', 500, 300, 1, false);
-  check('weaker perks count half as much as item tiers', Math.abs(ctx.powerScore() - 4) < 0.001);
-  check('weighted power gives +20% hp', Math.abs(e6.hp - 26 * 1.2) < 0.01);
-  check('weighted power gives ~+4% speed', e6.spd >= 55 * 1.04 * 0.9 && e6.spd <= 55 * 1.04 * 1.1);
+  check('common item tiers weigh 0.5 power each', Math.abs(ctx.powerScore() - 3) < 0.001);
+  check('weighted power gives +15% hp', Math.abs(e6.hp - 26 * 1.15) < 0.01);
+  check('weighted power gives ~+3% speed', e6.spd >= 55 * 1.03 * 0.9 && e6.spd <= 55 * 1.03 * 1.1);
   const e64 = ctx.makeEnemy('shambler', 500, 300, 4, false);
-  check('floor + weighted scaling stack', Math.abs(e64.hp - 26 * 1.66 * 1.2) < 0.02);
+  check('floor + weighted scaling stack', Math.abs(e64.hp - 26 * 1.66 * 1.15) < 0.02);
   const b = ctx.spawnBoss(1);
-  check('boss hp scales with weighted upgrades', Math.abs(b.hp - 520 * 1.2) < 0.01);
+  check('boss hp scales with weighted upgrades', Math.abs(b.hp - 520 * 1.15) < 0.01);
   ctx.G.enemies.length = 0; ctx.G.boss = null; ctx.G.cur.cleared = true;
   ctx.startRun(); step(5, 16);
 }
@@ -893,21 +924,21 @@ console.log('== item stickiness ramps with owned count ==');
   let owned1 = 0;
   for (let i = 0; i < 600; i++) if (ctx.randomItemId() === 'hollowpoints') owned1++;
   const frac1 = owned1 / 600;
-  check('1 owned item sticks ~10% (' + owned1 + '/600)', frac1 > 0.05 && frac1 < 0.20);
-  // 5+ upgradable items -> capped 50% stick
+  check('1 owned item sticks ~7% (' + owned1 + '/600)', frac1 > 0.03 && frac1 < 0.16);
+  // 5+ upgradable items -> 50% stick × 0.7 room multiplier ≈ 35%
   p.items = { hollowpoints: 1, twitch: 1, scalpel: 1, leadmarrow: 1, piercegaze: 1 };
   let owned5 = 0;
   for (let i = 0; i < 600; i++) if (p.items[ctx.randomItemId()]) owned5++;
   const frac5 = owned5 / 600;
-  check('5+ owned items stick ~50% (' + owned5 + '/600)', frac5 > 0.38 && frac5 < 0.62);
+  check('5+ owned items stick ~35% (' + owned5 + '/600)', frac5 > 0.25 && frac5 < 0.48);
   p.items = {};
   ctx.startRun(); step(3, 16);
 }
 
-console.log('== help manual is 8 pages (implants split) ==');
+console.log('== help manual grows with the implant roster ==');
 {
-  check('8 help pages', ctx.HELP_PAGES.length === 8);
-  check('8 help renderers', ctx.HELP_RENDERERS.length === 8);
+  check('9 help pages (3 implant pages for 60 items)', ctx.HELP_PAGES.length === 9);
+  check('9 help renderers', ctx.HELP_RENDERERS.length === 9);
   ctx.G.player = ctx.G.player || {};
   const fctx = fakeCtx();
   let renderOK = true;

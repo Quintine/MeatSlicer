@@ -593,7 +593,7 @@ function onBossDeath(e) {
   addScore(500 + G.floor * 100);
   addShake(12);
   // boss reward: item pedestal + a real weapon drop + stairs down
-  spawnItemPedestal(W / 2 - 90, H / 2);
+  spawnItemPedestal(W / 2 - 90, H / 2, null, 'boss');
   const bw = rollWeaponDrop(G.floor + 2); // bosses drop the good stuff
   spawnPickup('weapon', W / 2 + 90, H / 2, { wid: bw.id });
   spawnPickup('stairs', W / 2, H / 2 + 80);
