@@ -12,7 +12,7 @@ MeatSlicer is an endless top-down arena roguelite. You are the Butcher, descendi
 | [Weapons](weapons.md) | All 16 weapons with exact stats, drop tiers, and damage math |
 | [Items](items.md) | All 46 passive items, stacking/tier rules, proc numbers, synergies |
 | [Perks](perks.md) | All 23 Mutation Draft perks, XP curve, draft mechanics |
-| [Enemies](enemies.md) | All 6 enemy types, elites, drops, wave and scaling formulas |
+| [Enemies](enemies.md) | All 11 enemy types, elites, drops, wave and scaling formulas |
 | [Bosses](bosses.md) | All 9 bosses: rotation, scaling, full attack patterns, counters |
 
 ### Quick numbers
@@ -20,7 +20,7 @@ MeatSlicer is an endless top-down arena roguelite. You are the Butcher, descendi
 - **16 weapons** (1 infinite-ammo sidearm + 15 special weapons across 4 tiers)
 - **46 passive items** (stacking, tier cap IX)
 - **23 perks** (draft 1 of 3 per level-up)
-- **6 enemy types** (+ elite variants)
+- **11 enemy types** (+ elite variants)
 - **9 bosses** (fixed rotation, one per floor)
 - **∞ floors** (permadeath, endless descent, high-score chase)
 

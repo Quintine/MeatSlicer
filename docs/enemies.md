@@ -1,6 +1,6 @@
 # Enemies
 
-All **6 enemy types** in MeatSlicer, plus elites, drops, and the exact difficulty-scaling formulas. Pulled from `js/enemies.js` and `js/rooms.js`.
+All **11 enemy types** in MeatSlicer, plus elites, drops, and the exact difficulty-scaling formulas. Pulled from `js/enemies.js` and `js/rooms.js`.
 
 ---
 
@@ -88,15 +88,32 @@ Suicide bomber. Charges at you; within 56 px its **0.5 s fuse** lights (it flash
 
 ## Spawn weights
 
-| Enemy | Floor 1 | Floor 2 | Floor 3+ |
-|---|---|---|---|
-| Shambler | 40 | 40 | 40 |
-| Runner | 25 | 25 | 25 |
-| Spitter | — | 18 | 18 |
-| Splitter | — | 16 | 16 |
-| Exploder | — | — | 14 |
+| Enemy | First floor | Weight |
+|---|---:|---:|
+| Shambler | 1 | 30 |
+| Runner | 1 | 22 |
+| Spitter | 2 | 14 |
+| Splitter | 2 | 12 |
+| Exploder | 3 | 10 |
+| Censer | 4 | 8 |
+| Bulwark | 5 | 8 |
+| Flenserling | 5 | 7 |
+| Choirmaster | 6 | 6 |
+| Brood Sac | 7 | 6 |
 
 Weights stay flat once unlocked; floors get harder through stat scaling and wave size, not new mixes.
+
+## New enemy types
+
+**Censer** — 34 HP, speed 45, damage 1, radius 19, XP 3; floor 4, weight 8. A zone caster that every ~3.3s predicts player movement and telegraphs a hostile acid pool (radius 38, 0.75s warning, ~4.2s life). Excluded from wave picks when the arena's minimum dimension is below 300px.
+
+**Bulwark** — 60 HP, speed 38, damage 2, radius 23, XP 3; floor 5, weight 8. Slowly faces the player; hits within ±70° of its front deal 20%, flank/rear hits full. Resists on-hit stun and cannot be elite.
+
+**Flenserling** — 22 HP, speed 150, damage 2, radius 16, XP 3; floor 5, weight 7. Periodically phases untargetable, appears behind the aim vector, and lunges.
+
+**Choirmaster** — 40 HP, speed 50, damage 1, radius 19, XP 4; floor 6, weight 6. Its 180px aura grants +35% speed and heals nearby non-boss monsters ~1.8% max HP per second (minimum 0.5). At most one is selected by a normal wave.
+
+**Brood Sac** — 45 HP, speed 20, damage 1, radius 22, XP 4; floor 7, weight 6. Spawns 2 Minis every 4s and 4 on death. At most two are wave-selected; the brood population cap is 40. Cannot be elite and is excluded from thin halls.
 
 ## Elites
 
@@ -104,6 +121,7 @@ Any wave-spawned enemy can roll as an **elite** (gold ring, HP bar pip):
 
 - Chance: `min(0.03 + floor × 0.02, 0.20)` — 5% on floor 1, capping at 20% from floor 9.
 - **HP ×2.6**, speed ×0.9, contact damage **+1**, radius ×1.45, XP ×3.
+- Bulwark and Brood Sac are excluded from elite rolls.
 - Drops: 3× XP plus 3–5 bonus gems, **18% + luck×10% chance of an item pedestal drop**, otherwise 60% + luck×20% chance of ammo.
 
 ## Drops
@@ -135,7 +153,7 @@ base speed × (1 + 0.04 × (floor − 1) + 0.01 × power) × (elite ? 0.9 : 1) �
 
 **Contact damage:** flat per type (elites +1) — it **never scales with floor**. What kills you late-game is volume, speed, and HP pools, not bigger hit numbers.
 
-**Pressure** (see [gameplay.md](gameplay.md#pressure-dynamic-difficulty)) ranges 0.75–1.60 and multiplies both HP and speed. Playing flawlessly pushes it up; getting hit pulls it down. The title-screen **Pressure Dial** (−5…+5) tunes how fast it rises per clean room and how much relief each hit grants — and every point of score is multiplied by the live pressure value.
+**Pressure** (see [gameplay.md](gameplay.md#pressure-dynamic-difficulty)) ranges 0.60–2.00 and multiplies both HP and speed. Playing flawlessly pushes it up; getting hit pulls it down. The title-screen **Pressure Dial** (−10…+10) tunes how fast it rises per clean room and how much relief each hit grants — and every point of score is multiplied by the live pressure value.
 
 ### Wave spawn telegraph
 

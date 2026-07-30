@@ -76,13 +76,17 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 | **[ / ]** or **Left / Right arrows** | Previous / next music track |
 | **Click arrows** | Cycle music tracks |
 | **Drag sliders** | SFX / Music / HUD opacity bars are click-and-drag |
-| **H / [?] button** | Open the Field Manual (8 pages: controls, loop, arsenal, mutations, implants I, implants II, bestiary, pressure) |
+| **H / [?] button** | Open the 12-page Field Manual |
 
 ### Menus
 
 | Input | Action |
 |---|---|
 | **Enter / Space / Click** | Start run (title), restart after death |
+
+The title screen has **[X] Exit to Desktop**. Pause has **[Q] Main Menu** and **[X] Exit**.
+The first matching press arms a 3-second confirmation; press it again to confirm. `P` or
+`Escape` resumes. Electron quits directly; the browser fallback asks you to close the tab.
 
 Right-click is disabled (context menu suppressed). There is **no dash, no interact key** — pickups are collected by walking over them.
 
@@ -139,6 +143,12 @@ Right-click is disabled (context menu suppressed). There is **no dash, no intera
 | **Boss** | Floor boss | Boss dies |
 
 Doors in combat and boss rooms **lock** until the room is cleared. Re-entering an uncleared room restarts its remaining waves.
+
+The canvas is fixed at **960 × 640**. Playable bounds are inset into five room shapes: full
+hall, wide horizontal hall (224px playable height), tall vertical hall (224px playable width),
+compact chamber, and inset pit. Start and boss rooms force full halls; item rooms force
+chambers; combat rooms mix the shapes. There is no camera or larger-than-screen room. Visual
+tiles recombine into four themes: **abattoir**, **plant**, **oxide**, and **flesh**.
 
 ### Waves per combat room
 
@@ -211,7 +221,7 @@ Clearing a combat room drops:
 
 The **PRESSURE** meter on the HUD is a run-long adaptive difficulty multiplier applied to enemy and boss **HP and speed at spawn time**. It also **multiplies every point of score you earn** — the higher the pressure, the more each kill, room, and floor is worth.
 
-- Range: **0.75 – 1.60** (starts at 1.00).
+- Range: **0.60 – 2.00** (starts at 1.00).
 - Gains for rooms cleared **without taking damage** (flawless streak).
 - Taking damage **relieves** pressure, scaled by how big the hit was, how low your HP is, and how many recent hits you've taken.
 - Decays passively while below 35% HP, or if you stall in a room for 90+ seconds.
@@ -219,15 +229,17 @@ The **PRESSURE** meter on the HUD is a run-long adaptive difficulty multiplier a
 
 ### The Pressure Dial
 
-The title screen has a **PRESSURE DIAL** (−5 … +5) that tunes how pressure responds. It sets two curves — how fast pressure **rises** per clean room, and how much **relief** each hit grants (which also scales the passive decay). The midpoint (0) is the standard tuning; the dial persists between sessions.
+The title screen has a **PRESSURE DIAL** (−10 … +10) that tunes how pressure responds. It sets two curves — how fast pressure **rises** per clean room, and how much **relief** each hit grants (which also scales the passive decay). The midpoint (0) is the standard tuning; the dial persists between sessions.
 
 | Dial | Rise / clean room | Relief on hit (base) | Behaviour |
 |---|---|---|---|
-| **−5** | 0 | 0.050 (max) | Mercy — pressure can only ever fall; score capped at 1.00× |
+| **−10** | −0.020 | 0.080 | Strong mercy; negative rise respects the 0.60 floor |
+| **−5** | 0 | 0.050 | Mercy — pressure does not rise from clean rooms |
 | **0** | +0.010 | 0.030 | Standard — today's balance |
 | **+5** | +0.050 | 0 (none) | Ratchet — pressure can only ever rise; score floored at 1.00× |
+| **+10** | +0.100 | 0 | Maximum ratchet; pressure respects the 2.00 ceiling |
 
-Values between the ends interpolate linearly (rise: 0→1→5 units; relief: 5→3→0 units, 1 unit = 0.01). At −5 pressure never rises so your score multiplier stays ≤ 1.00×; at +5 it never falls, so pressure climbs to the 1.60× cap and your score climbs with it. **Cranking the dial up is how you chase the BEST CUT.**
+Values between the anchors interpolate linearly. Negative rise respects the 0.60 floor and positive rise respects the 2.00 ceiling. **Cranking the dial up is how you chase the BEST CUT.**
 
 ### Streak
 
@@ -263,7 +275,7 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 
 | Screen | What it offers |
 |---|---|
-| **Title** | INITIATE DESCENT, PRESSURE DIAL (−5…+5), control reference, best score |
+| **Title** | INITIATE DESCENT, PRESSURE DIAL (−10…+10), control reference, best score, confirmed desktop exit |
 | **Pause** | Jukebox (track cycling), SFX/music volume + HUD opacity sliders, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
 | **Mutation Draft** | 3 perk cards, random cut, reroll, auto-draft |
 | **Game Over ("BUTCHERED")** | Floor, kills, score, NEW BEST CUT tag, restart |
@@ -278,7 +290,14 @@ Stored in `localStorage` between sessions:
 - `meatslicer_sfx_volume` (default 0.45)
 - `meatslicer_music_volume` (default 0.55)
 - `meatslicer_autoperk` — auto-draft toggle
-- `meatslicer_pressure_dial` — Pressure Dial setting (−5…+5, default 0)
+- `meatslicer_pressure_dial` — Pressure Dial setting (−10…+10, default 0)
 - `meatslicer_hud_alpha` — HUD opacity (default 1.0)
 
 Nothing else carries over: no unlocks, no meta-currency, no saved runs. Every descent starts fresh with a Bone Popper and 6 HP.
+
+### Death and restart
+
+When HP reaches zero, simulation freezes. Input is locked for 3 seconds, then **R**, **Enter**,
+or a click restarts the run. During the lock the player plays a derived gore animation with
+particles. Normal damaged monsters show mini HP pips for 2.5 seconds; elite and boss bars stay
+persistent.
