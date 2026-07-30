@@ -376,6 +376,8 @@ const Sfx = {
   ammo() { this.ui('ammo', () => { this.click(.14, 1600, 'ui'); this.blip(520, .08, 'square', .12, -80, 'ui'); }); },
   weapon() { this.ui('weapon', () => { this.thump(120, .14, .4, 50, 'ui'); this.blip(300, .1, 'square', .25, 200, 'ui'); this.blip(450, .12, 'square', .2, 250, 'ui'); }); },
   item() { this.ui('item', () => { this.thump(100, .2, .4, 45, 'ui'); this.blip(350, .15, 'triangle', .3, 150, 'ui'); this.blip(525, .2, 'triangle', .25, 200, 'ui'); }); },
+  active() { this.thump(140, .22, .5, 60, 'ui'); this.blip(700, .12, 'sawtooth', .28, 500, 'ui'); this.noise(.1, .14, 2400, 'ui', null, true); },
+  activeEmpty() { this.blip(220, .12, 'square', .18, -90, 'ui'); },
   levelup() { this.ui('levelup', () => { this.blip(400, .12, 'square', .25, 200, 'ui'); setTimeout(() => this.blip(600, .12, 'square', .25, 200, 'ui'), 100); setTimeout(() => this.blip(800, .2, 'square', .25, 200, 'ui'), 200); }); },
   perk() { this.ui('perk', () => this.blip(500, .1, 'square', .25, 300, 'ui')); },
   menu() { this.ui('menu', () => this.blip(620, .055, 'square', .11, 120, 'ui')); },

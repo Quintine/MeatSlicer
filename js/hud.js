@@ -8,7 +8,7 @@ function drawHUD(ctx) {
   // vitals use a 2-row grid; a second row pushes the rest of the panel down
   const totalVitalIcons = Math.ceil(p.stats.maxHp / 2) + Math.ceil(p.shieldHp / 2);
   const vOff = totalVitalIcons > 12 ? 22 : 0;
-  const panelH = (p.holstered ? 140 : 112) + vOff;
+  const panelH = (p.holstered ? 140 : 112) + (p.active ? 24 : 0) + vOff;
   drawPixelPanel(ctx, 8, 8, 304, panelH, {
     accent: '#cf2942', border: 'rgba(115,43,56,0.95)', blood: true,
     seed: G.floor, bloodAlpha: 0.34,
@@ -109,6 +109,22 @@ function drawHUD(ctx) {
     ctx.fillText(holsterEmpty ? 'NEEDS AMMO' : Math.ceil(p.holstered.ammo) + ' AMMO', 289, 125 + vOff);
   }
 
+  // active item slot: icon, name, charge pips, READY state
+  if (p.active) {
+    const ad = ACTIVES[p.active.iid];
+    const ay = 112 + vOff + (p.holstered ? 20 : 0);
+    const ready = p.active.charges >= ad.cost;
+    ctx.fillStyle = ready ? 'rgba(34,90,84,0.5)' : 'rgba(30,60,66,0.35)';
+    ctx.fillRect(15, ay, 281, 20);
+    Sprites.draw(ctx, 'a_' + p.active.iid, 29, ay + 10, 0, 28, false, ready ? A : 0.6 * A);
+    ctx.fillStyle = ready ? '#8df0e0' : '#7d9a9c'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left';
+    ctx.fillText((ready ? '[SPACE] ' : '') + ad.name.toUpperCase(), 47, ay + 13);
+    for (let i = 0; i < ad.cost; i++) {
+      ctx.fillStyle = i < p.active.charges ? '#55f5dc' : 'rgba(85,245,220,0.18)';
+      ctx.fillRect(289 - (ad.cost - 1 - i) * 12 - 8, ay + 6, 8, 8);
+    }
+  }
+
   const rarityRank = { legendary: 0, rare: 1, uncommon: 2, common: 3 };
   const allItemEntries = Object.entries(p.items).sort((a, b) =>
     (rarityRank[ITEMS[a[0]].rarity] - rarityRank[ITEMS[b[0]].rarity]) || (b[1] - a[1]));
@@ -186,7 +202,14 @@ function drawHUD(ctx) {
     const y = 22 + i * 48;
     ctx.globalAlpha = a;
     ctx.font = 'bold 13px monospace';
-    const tw = Math.max(ctx.measureText(t.text).width + 48, 190);
+    const titleW = ctx.measureText(t.text.toUpperCase()).width;
+    let subW = 0;
+    if (t.sub) {
+      ctx.font = '9px monospace';
+      subW = ctx.measureText(t.sub.toUpperCase()).width;
+    }
+    // panel must fit the wider of the two lines (and never leave the screen)
+    const tw = Math.min(Math.max(Math.max(titleW, subW) + 48, 190), W - 24);
     drawPixelPanel(ctx, W / 2 - tw / 2, y, tw, t.sub ? 40 : 28, {
       cut: 5, shadow: false, accent: '#c59231', blood: true,
       seed: i + G.floor, bloodAlpha: 0.2,

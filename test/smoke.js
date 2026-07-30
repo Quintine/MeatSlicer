@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -528,6 +528,46 @@ console.log('== phase-4 boss-exclusive legendaries ==');
   ctx.hurtPlayer(9999, 0);
   check('Second Skin only works once per floor', ctx.G.mode === 'gameover');
   ctx.startRun(); step(3, 16);
+}
+
+console.log('== active items (room-clear charged) ==');
+{
+  const p = ctx.G.player;
+  p.active = null;
+  // pickup grants a full-charge active
+  ctx.spawnPickup('active', p.x, p.y, { aid: 'bonenova' });
+  step(2, 16);
+  check('active pickup equips fully charged', p.active && p.active.iid === 'bonenova' && p.active.charges === ctx.ACTIVES.bonenova.cost);
+  // swap: picking up a second active drops the first
+  ctx.spawnPickup('active', p.x, p.y, { aid: 'offalbomb' });
+  step(2, 16);
+  check('second active equips and drops the old one', p.active.iid === 'offalbomb' && ctx.G.pickups.some(k => k.type === 'active' && k.aid === 'bonenova'));
+  // use: charges spend, effect fires
+  const powerBefore = ctx.powerScore();
+  check('holding an active adds flat power', powerBefore > 0);
+  ctx.useActive();
+  check('using an active spends all charges', p.active.charges === 0);
+  // charge accrues from room clears
+  ctx.recordRoomClear({ type: 'combat' });
+  check('combat clear grants +1 charge', p.active.charges === 1);
+  ctx.recordRoomClear({ type: 'boss' });
+  check('boss clear grants +2 charges', p.active.charges === ctx.ACTIVES.offalbomb.cost);
+  // under-charged use is blocked
+  p.active.charges = 0;
+  const enemiesBefore = ctx.G.enemies.length;
+  ctx.useActive();
+  check('under-charged active does not fire', p.active.charges === 0 && ctx.G.enemies.length === enemiesBefore);
+  // panic room blocks firing
+  p.active = { iid: 'panicroom', charges: ctx.ACTIVES.panicroom.cost };
+  ctx.useActive();
+  check('panic room grants invulnerability', p.invT >= 2.4 && p.panicRoomT > 0);
+  p.weapon = { id: 'bonepopper', ammo: Infinity };
+  p.fireT = 0;
+  ctx.Input.mdown = true; step(3, 16); ctx.Input.mdown = false;
+  check('panic room prevents firing', ctx.G.bullets.length === 0);
+  p.panicRoomT = 0; p.invT = 1;
+  p.active = null;
+  ctx.G.pickups.length = 0;
 }
 
 console.log('== phase-3 hook passives ==');
@@ -1016,8 +1056,8 @@ console.log('== item stickiness ramps with owned count ==');
 
 console.log('== help manual grows with the implant roster ==');
 {
-  check('11 help pages (5 implant pages for 82 items)', ctx.HELP_PAGES.length === 11);
-  check('11 help renderers', ctx.HELP_RENDERERS.length === 11);
+  check('12 help pages (5 implants + actives)', ctx.HELP_PAGES.length === 12);
+  check('12 help renderers', ctx.HELP_RENDERERS.length === 12);
   check('help tabs never overflow the panel', (() => {
     const last = ctx.helpTabRect(ctx.HELP_PAGES.length - 1);
     const first = ctx.helpTabRect(0);

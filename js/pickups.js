@@ -121,6 +121,21 @@ function collectPickup(k) {
       for (const q of G.pickups) if (q.type === 'itemspot') q.dead = true; // remove pedestal base
       break;
     }
+    case 'active': {
+      // picking up a new active drops the old one with its remaining charges
+      if (p.active) {
+        const a = rand(0, TAU);
+        spawnPickup('active', p.x + Math.cos(a) * 34, p.y + Math.sin(a) * 34,
+          { aid: p.active.iid, charges: p.active.charges, delay: 0.6 });
+      }
+      const def = ACTIVES[k.aid];
+      p.active = { iid: k.aid, charges: k.charges !== undefined ? k.charges : def.cost };
+      addToast(def.name, def.desc + ' — [SPACE] when charged');
+      spawnText(p.x, p.y - 14, def.name.toUpperCase(), '#55f5dc');
+      Sfx.item();
+      for (const q of G.pickups) if (q.type === 'itemspot') q.dead = true; // remove pedestal base
+      break;
+    }
     case 'stairs':
       nextFloor();
       break;
@@ -177,6 +192,17 @@ function drawPickups(ctx) {
       ctx.beginPath(); ctx.arc(k.x, k.y - 28, 25 + Math.sin(k.t * 4) * 3, 0, TAU); ctx.stroke();
       ctx.restore();
       Sprites.draw(ctx, 'i_' + k.iid, k.x, k.y - 28 + bob, 0, 64);
+    } else if (k.type === 'active') {
+      ctx.save();
+      ctx.globalAlpha = 0.22 + Math.sin(k.t * 3) * 0.08;
+      ctx.fillStyle = '#55f5dc';
+      ctx.beginPath(); ctx.arc(k.x, k.y - 28, 30, 0, TAU); ctx.fill();
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = '#a5f5e8'; ctx.lineWidth = 2;
+      const ringR = 25 + Math.sin(k.t * 4) * 3;
+      ctx.beginPath(); ctx.arc(k.x, k.y - 28, ringR, -Math.PI / 2, -Math.PI / 2 + TAU * ((k.charges || 0) / Math.max(1, ACTIVES[k.aid].cost))); ctx.stroke();
+      ctx.restore();
+      Sprites.draw(ctx, 'a_' + k.aid, k.x, k.y - 28 + bob, 0, 64);
     } else if (k.type === 'stairs') {
       Sprites.draw(ctx, 'stairs', k.x, k.y, 0, 64);
       ctx.save();
@@ -191,6 +217,7 @@ function drawPickups(ctx) {
     if (dist2(k.x, k.y, p.x, p.y) < 90 * 90) {
       if (k.type === 'weapon') drawPickupLabel(ctx, WEAPONS[k.wid].name, k.x, k.y - 44, '#ffd060');
       else if (k.type === 'item') drawPickupLabel(ctx, ITEMS[k.iid].name, k.x, k.y - 66, ITEM_RARITY[ITEMS[k.iid].rarity].color);
+      else if (k.type === 'active') drawPickupLabel(ctx, ACTIVES[k.aid].name, k.x, k.y - 66, '#55f5dc');
       else if (k.type === 'stairs') drawPickupLabel(ctx, 'STAIRS DOWN', k.x, k.y - 52, '#e8e0d0');
       else if (k.type === 'ammo') drawPickupLabel(ctx, 'AMMO', k.x, k.y - 26, '#d0b060');
     }

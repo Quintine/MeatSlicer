@@ -235,6 +235,25 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | 81 | Thousand Teeth | Legendary | I | Shot modifier |
 | 82 | Twin Sidearm | Legendary | I | Shot modifier |
 
+## Active items
+
+Actives live in their own slot (separate from the passive tray) and are **charged by clearing rooms**: **+1 charge per combat room, +2 per boss**. Using an active spends all charges. Picking up a new active drops the old one with its remaining charges. Sources: 30% chance of a bonus pedestal on boss kills, 15% in item rooms. Use with **SPACE**.
+
+| Active | Cost | Effect |
+|---|---|---|
+| Bone Nova | 2 | Damage ring + hard knockback around you |
+| Offal Bomb | 1 | Lobs a gore bomb at the cursor |
+| Blood Transfusion | 2 | Heal 2 hearts, lose 25% of current XP |
+| Cleaver Storm | 2 | 12 orbiting cleavers shred on contact for 6 s |
+| Butcher's Bell | 2 | Pull every enemy in and stun for 1 s |
+| Marrow Draught | 3 | +100% fire rate and free ammo for 5 s |
+| Slaughter Time | 3 | All enemies slowed to 25% speed for 5 s |
+| Panic Room | 3 | 2.5 s invulnerable — but you can't fire |
+| Skinner's Coin | 3 | Clear every enemy bullet into XP gems |
+| Gut Reroll | 1 | Reroll the item pedestal you're standing on |
+
+Holding an active contributes a flat **+2** to power score.
+
 ## Synergy notes
 
 - **Second Stomach** turns *every* healing source into shield generation: Worm Gut, Bone Knit, Vampire Dentures, Hemophage, and hearts at full HP.

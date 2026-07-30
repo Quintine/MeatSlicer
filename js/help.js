@@ -14,6 +14,7 @@ const HELP_PAGES = [
   { title: 'ARSENAL' },
   { title: 'MUTATIONS' },
   ...Array.from({ length: HELP_ITEM_PAGE_COUNT }, (_, i) => ({ title: 'IMPLANTS ' + ['I', 'II', 'III', 'IV', 'V', 'VI'][i] || ('P' + (i + 1)) })),
+  { title: 'ACTIVES' },
   { title: 'BESTIARY' },
   { title: 'PRESSURE' },
 ];
@@ -86,6 +87,7 @@ function drawHelpControls(ctx, px, py) {
     { head: 'IN THE FIELD', lines: [
       'WASD / ARROWS — MOVE      MOUSE — AIM      LMB (HOLD) — FIRE',
       'LMB RELEASE — FIRE CHARGED BEAM (SPINAL TAP ONLY)',
+      'SPACE — USE ACTIVE ITEM (CHARGED BY CLEARING ROOMS)',
       'R — SWAP BONE POPPER ↔ HOLSTERED SPECIAL (EMPTY SPECIALS LOCKED)',
       'P / ESC — PAUSE · M — MUTE · N — NEXT TRACK · T — AUTO-DRAFT',
       'DESKTOP APP: F11 — FULLSCREEN · F12 — DEVTOOLS · CTRL+R — RELOAD',
@@ -216,6 +218,31 @@ function drawHelpItemList(ctx, px, py, page) {
 
 const HELP_ITEM_RENDERERS = Array.from({ length: HELP_ITEM_PAGE_COUNT }, (_, i) => (c, x, y) => drawHelpItemList(c, x, y, i));
 
+function drawHelpActives(ctx, px, py) {
+  const x = px + 40;
+  let ty = py + HELP_BODY;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#d7a934'; ctx.font = hfont(9, true);
+  ctx.fillText(Object.keys(ACTIVES).length + ' ACTIVE ITEMS · SPACE TO USE · CHARGED BY CLEARING ROOMS', x, ty);
+  ty += 11;
+  ctx.fillStyle = '#7d6a68'; ctx.font = hfont(8, false);
+  ctx.fillText('+1 CHARGE PER COMBAT ROOM · +2 PER BOSS · PICKING UP A NEW ACTIVE DROPS THE OLD ONE', x, ty + 11);
+  ty += 34;
+  const colW = (HELP_PANEL.w - 80) / 2;
+  const entries = Object.entries(ACTIVES);
+  for (let i = 0; i < entries.length; i++) {
+    const col = Math.floor(i / 5), r = i % 5;
+    const lx = x + col * colW, ly = ty + r * 62;
+    const [, a] = entries[i];
+    ctx.fillStyle = '#55f5dc'; ctx.font = hfont(8, true);
+    ctx.fillText(a.name.toUpperCase(), lx, ly);
+    ctx.fillStyle = '#5f4d4d'; ctx.font = hfont(7, true);
+    ctx.fillText('COST ' + a.cost + ' CHARGE' + (a.cost > 1 ? 'S' : ''), lx, ly + 13);
+    ctx.fillStyle = '#a08d84'; ctx.font = hfont(8, false);
+    ctx.fillText(fit(a.desc.toUpperCase(), 30), lx + 100, ly + 13);
+  }
+}
+
 function drawHelpBestiary(ctx, px, py) {
   const x = px + 40;
   let ty = py + HELP_BODY;
@@ -285,7 +312,7 @@ function drawHelpPressure(ctx, px, py) {
   ], HELP_PANEL.w - 80);
 }
 
-const HELP_RENDERERS = [drawHelpControls, drawHelpLoop, drawHelpArsenal, drawHelpPerkList, ...HELP_ITEM_RENDERERS, drawHelpBestiary, drawHelpPressure];
+const HELP_RENDERERS = [drawHelpControls, drawHelpLoop, drawHelpArsenal, drawHelpPerkList, ...HELP_ITEM_RENDERERS, drawHelpActives, drawHelpBestiary, drawHelpPressure];
 
 function drawPauseHelp(ctx) {
   ctx.fillStyle = 'rgba(4,2,3,0.84)';

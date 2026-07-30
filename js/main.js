@@ -151,6 +151,7 @@ function update(dt) {
       if (keyPressed('p', 'escape')) { G.mode = 'pause'; Sfx.stopAllLoops(); Sfx.menu(); break; }
       if (keyPressed('n')) Music.cycle(1);
       if (keyPressed('r')) swapWeapon();
+      if (keyPressed(' ')) useActive();
       if (keyPressed('t')) setAutoPerk(!G.autoPerk);
       updatePlayer(dt);
       updateRoom(dt);

@@ -187,3 +187,80 @@ function spawnItemPedestal(x, y, iid, source) {
   spawnPickup('itemspot', x, y);
   spawnPickup('item', x, y, { iid: iid || rollItemId(source || 'room', G.floor) });
 }
+
+// ---- active items: room-clear charged, dedicated pedestal pickups ----
+// Actives live in their own table so p.items (tier math + powerScore) stays clean.
+// charges are granted by recordRoomClear: +1 per combat room, +2 per boss.
+const ACTIVES = {
+  bonenova:        { name: 'Bone Nova',        desc: 'Damage ring + hard knockback', cost: 2, use(p) {
+    areaDamage(p.x, p.y, 150, 30 * p.stats.dmgMul, true, { source: 'player' });
+    for (const e of G.enemies) { const a = angleTo(p.x, p.y, e.x, e.y); e.vx += Math.cos(a) * 500; e.vy += Math.sin(a) * 500; }
+    spawnShockwave(p.x, p.y, 150, '#e8dcc2', 0.8); addShake(8);
+  } },
+  offalbomb:       { name: 'Offal Bomb',       desc: 'Gore bomb at the cursor',    cost: 1, use(p) {
+    explodeAt(Input.mx, Input.my, 95, 25 * p.stats.dmgMul, true);
+  } },
+  bloodtransfusion:{ name: 'Blood Transfusion', desc: 'Heal 2 hearts, lose 25% current XP', cost: 2, use(p) {
+    p.xp = Math.floor(p.xp * 0.75);
+    healPlayer(4); spawnText(p.x, p.y - 16, '+2 HEARTS', '#d92038');
+  } },
+  cleaverstorm:    { name: 'Cleaver Storm',    desc: '12 orbiting cleavers for 6s', cost: 2, use(p) {
+    p.cleaverStormT = 6;
+  } },
+  butchersbell:    { name: "Butcher's Bell",   desc: 'Pull every enemy in and stun 1s', cost: 2, use(p) {
+    for (const e of G.enemies) {
+      if (e.boss) continue;
+      const a = angleTo(e.x, e.y, p.x, p.y);
+      e.vx += Math.cos(a) * 700; e.vy += Math.sin(a) * 700;
+      e.stunT = Math.max(e.stunT || 0, 1);
+    }
+    spawnShockwave(p.x, p.y, 320, '#c9a227', 0.7); addShake(6);
+  } },
+  marrowdraught:   { name: 'Marrow Draught',   desc: '+100% fire rate and free ammo for 5s', cost: 3, use(p) {
+    p.marrowDraughtT = 5;
+  } },
+  slaughtertime:   { name: 'Slaughter Time',   desc: 'Enemies at 25% speed for 5s', cost: 3, use(p) {
+    for (const e of G.enemies) e.slowT = Math.max(e.slowT || 0, 5);
+  } },
+  panicroom:       { name: 'Panic Room',       desc: '2.5s invulnerable, can\'t fire', cost: 3, use(p) {
+    p.panicRoomT = 2.5;
+    p.invT = Math.max(p.invT, 2.5);
+  } },
+  skinnerscoin:    { name: "Skinner's Coin",   desc: 'Clear all enemy bullets into gems', cost: 3, use(p) {
+    for (const b of G.ebullets) spawnPickup('gem', b.x, b.y, { v: 1 });
+    G.ebullets = [];
+    spawnShockwave(p.x, p.y, 480, '#55f5dc', 0.5);
+  } },
+  gutreroll:       { name: 'Gut Reroll',       desc: 'Reroll the pedestal you\'re standing on', cost: 1, use(p) {
+    for (const k of G.pickups) {
+      if (k.type === 'item' && dist2(k.x, k.y, p.x, p.y) < 120 * 120) {
+        k.iid = rollItemId('room', G.floor);
+        spawnText(k.x, k.y - 40, 'REROLLED', '#e2472f');
+        return;
+      }
+    }
+    addToast('NO PEDESTAL', 'stand on an item pedestal to reroll it');
+  } },
+};
+
+function useActive() {
+  const p = G.player;
+  if (!p.active || G.mode !== 'play') return;
+  const a = ACTIVES[p.active.iid];
+  if (!a) return;
+  if (p.active.charges < a.cost) {
+    addToast(a.name, 'not ready — clear ' + (a.cost - p.active.charges) + ' more room' + (a.cost - p.active.charges > 1 ? 's' : ''));
+    Sfx.activeEmpty();
+    return;
+  }
+  p.active.charges = 0;
+  a.use(p);
+  spawnText(p.x, p.y - 22, a.name.toUpperCase(), '#e2472f');
+  Sfx.active();
+}
+
+// spawn an active pedestal (boss / item-room bonus drops)
+function spawnActivePedestal(x, y) {
+  spawnPickup('itemspot', x, y);
+  spawnPickup('active', x, y, { aid: choice(Object.keys(ACTIVES)) });
+}

@@ -305,6 +305,21 @@ ITEMS = {
 for iid, subject in ITEMS.items():
     SPECS["i_" + iid] = Spec(subject + ", isolated inventory object, strong top-left light, no medallion, no icon background", 32)
 
+ACTIVES = {
+    "bonenova": "a radial burst of sharp bone shards erupting from a central skull",
+    "offalbomb": "a fused bomb made of packed offal with a lit intestine fuse",
+    "bloodtransfusion": "a blood bag on a steel hook with a transfusion tube and needle",
+    "cleaverstorm": "a whirlwind spiral of twelve small orbiting meat cleavers",
+    "butchersbell": "a huge rusted slaughterhouse dinner bell with a bone clapper",
+    "marrowdraught": "a frothing tankard of dark marrow with a bone straw",
+    "slaughtertime": "a cracked hourglass with blood instead of sand, frozen mid-drop",
+    "panicroom": "a small riveted iron bunker door with a spinning lock wheel",
+    "skinnerscoin": "a gleaming gold coin stamped with a skinning knife",
+    "gutreroll": "a loop of intestine twisted into a circular arrow with dice pips",
+}
+for aid, subject in ACTIVES.items():
+    SPECS["a_" + aid] = Spec(subject + ", isolated inventory object, strong top-left light, no medallion, no icon background", 32)
+
 
 # Reference-derived industrial ramps. All generated images are mapped onto this
 # palette so independent API calls remain visually coherent.

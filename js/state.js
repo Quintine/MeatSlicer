@@ -65,6 +65,7 @@ function powerScore() {
   if (!p) return 0;
   let n = (p.level - 1) * PERK_POWER_WEIGHT;
   for (const iid in p.items) n += p.items[iid] * ITEM_RARITY[ITEMS[iid].rarity].power;
+  if (p.active) n += 2; // holding an active item is a flat power contribution
   return Math.max(0, n);
 }
 

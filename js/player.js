@@ -11,6 +11,7 @@ function initPlayer() {
     holstered: null,   // a special weapon set aside while the pistol is out
     level: 1, xp: 0,
     items: {},         // iid -> quality tier (1..3)
+    active: null,      // { iid, charges } — active item, room-clear charged
     orbAng: 0,
     stats: {
       dmgMul: 1, rateMul: 1, speedMul: 1, shotSpeedMul: 1, rangeMul: 1,
@@ -107,7 +108,8 @@ function updatePlayer(dt) {
   Sfx.syncWeaponLoop(w, sustained && Input.mdown && p.weapon.ammo > 0);
   if (p.fireT > 0) p.fireT -= dt;
   const frenzyMul = p.frenzyT > 0 ? 1 + st.frenzy : 1;
-  const effectiveRate = st.rateMul * (1 + (st.rhythmRateBonus || 0)) * frenzyMul;
+  const draughtMul = p.marrowDraughtT > 0 ? 2 : 1;
+  const effectiveRate = st.rateMul * (1 + (st.rhythmRateBonus || 0)) * frenzyMul * draughtMul;
   const rate = w.interval / effectiveRate;
 
   if (w.behavior === 'saw') {
@@ -128,7 +130,7 @@ function updatePlayer(dt) {
       p.charge = Math.max(0, p.charge - dt * 2);
     }
   } else {
-    if (Input.mdown && p.fireT <= 0 && p.weapon.ammo > 0) {
+    if (Input.mdown && p.fireT <= 0 && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
       fireWeapon(p, w);
       // Twin Sidearm: the Bone Popper double-taps
       if (st.twinSidearm > 0 && p.weapon.id === 'bonepopper') fireWeapon(p, w);
@@ -146,7 +148,7 @@ function updatePlayer(dt) {
       p.muzzleT = 0.07;
       p.attackT = 0.4; p.actionT = 0;
       p.fireT = rate;
-      if (p.weapon.ammo !== Infinity) p.weapon.ammo -= (st.twinSidearm > 0 ? 2 : 1) / st.ammoEff;
+      if (p.weapon.ammo !== Infinity && !(p.marrowDraughtT > 0)) p.weapon.ammo -= (st.twinSidearm > 0 ? 2 : 1) / st.ammoEff;
       Sfx.shoot(w);
       if (w.behavior === 'slam') addShake(5);
     }
@@ -208,6 +210,34 @@ function updatePlayer(dt) {
         }
       }
     }
+  }
+
+  // ---- active-item timed effects ----
+  // Marrow Draught: +100% fire rate and free ammo while active
+  if (p.marrowDraughtT > 0) p.marrowDraughtT -= dt;
+  // Panic Room: invulnerable but cannot fire
+  if (p.panicRoomT > 0) p.panicRoomT -= dt;
+  // Cleaver Storm: 12 orbiting cleavers shred on contact
+  if (p.cleaverStormT > 0) {
+    p.cleaverStormT -= dt;
+    p.cleaverStormAng = (p.cleaverStormAng || 0) + dt * 6;
+    p.cleaverStormTick = (p.cleaverStormTick || 0) - dt;
+    const doTick = p.cleaverStormTick <= 0;
+    if (doTick) p.cleaverStormTick = 0.25;
+    for (let i = 0; i < 12; i++) {
+      const a = p.cleaverStormAng + (i / 12) * TAU;
+      const cx = p.x + Math.cos(a) * 90, cy = p.y + Math.sin(a) * 90;
+      if (!doTick) continue;
+      for (const e of G.enemies) {
+        if (e.hp <= 0 || e.stormHitT > 0) continue;
+        if (dist2(cx, cy, e.x, e.y) < (14 + e.r) * (14 + e.r)) {
+          e.stormHitT = 0.3;
+          damageEnemy(e, 10 * st.dmgMul * st.dmgLiveMul, a + Math.PI / 2, true, { source: 'player' });
+          spawnBlood(e.x, e.y, a, 3);
+        }
+      }
+    }
+    for (const e of G.enemies) if (e.stormHitT > 0) e.stormHitT -= dt;
   }
 
   // Thresher Plate: passive contact-damage aura (no need to be hit)
@@ -356,6 +386,13 @@ function drawPlayer(ctx) {
     for (let i = 0; i < st.orbitals; i++) {
       const a = p.orbAng + (i / st.orbitals) * TAU;
       Sprites.draw(ctx, 'bullet_cleaver', p.x + Math.cos(a) * 58, p.y + Math.sin(a) * 58, a + Math.PI / 2, 24);
+    }
+  }
+  // Cleaver Storm active: 12 orbiting cleavers
+  if (p.cleaverStormT > 0) {
+    for (let i = 0; i < 12; i++) {
+      const a = (p.cleaverStormAng || 0) + (i / 12) * TAU;
+      Sprites.draw(ctx, 'bullet_cleaver', p.x + Math.cos(a) * 90, p.y + Math.sin(a) * 90, a + Math.PI / 2, 22);
     }
   }
 

@@ -99,7 +99,8 @@ def finish_sprite(img, name):
     # Passive items are presented as filthy relic medallions rather than
     # ungrounded clip-art silhouettes. The object remains unique; the shared
     # iron/bone mount makes the complete inventory read as one designed set.
-    if name.startswith("i_"):
+    if name.startswith(("i_", "a_")):
+        is_active = name.startswith("a_")
         plate = Image.new("RGBA", graded.size, (0, 0, 0, 0))
         pd = ImageDraw.Draw(plate)
         w, h = graded.size
@@ -107,9 +108,14 @@ def finish_sprite(img, name):
                (w * 0.91, h * 0.76), (w * 0.62, h - 2), (w * 0.25, h * 0.91),
                (2, h * 0.63), (w * 0.08, h * 0.24)]
         rim = [(round(x), round(y)) for x, y in rim]
-        pd.polygon(rim, fill=(14, 5, 9, 248), outline=(104, 55, 45, 255), width=3)
-        pd.ellipse([7, 7, w - 8, h - 8], fill=(31, 11, 19, 235), outline=(150, 92, 57, 255), width=2)
-        pd.arc([11, 11, w - 12, h - 12], 205, 330, fill=(225, 186, 113, 210), width=2)
+        # actives get a teal-copper mount so they read as usable, not passive
+        rim_outline = (45, 104, 98, 255) if is_active else (104, 55, 45, 255)
+        plate_fill = (9, 24, 26, 235) if is_active else (31, 11, 19, 235)
+        ring = (92, 202, 190, 255) if is_active else (150, 92, 57, 255)
+        arc = (120, 240, 224, 210) if is_active else (225, 186, 113, 210)
+        pd.polygon(rim, fill=(14, 5, 9, 248), outline=rim_outline, width=3)
+        pd.ellipse([7, 7, w - 8, h - 8], fill=plate_fill, outline=ring, width=2)
+        pd.arc([11, 11, w - 12, h - 12], 205, 330, fill=arc, width=2)
         for rx, ry in ((9, 16), (w - 11, 17), (13, h - 13), (w - 14, h - 12)):
             pd.ellipse([rx - 2, ry - 2, rx + 2, ry + 2], fill=(83, 91, 91, 255), outline=OUTL, width=1)
         plate.alpha_composite(graded)
@@ -118,7 +124,7 @@ def finish_sprite(img, name):
     px = graded.load()
     rng = random.Random(sum(ord(c) for c in name) * 97)
     area = graded.width * graded.height
-    is_icon = name.startswith(("w_", "wt_", "i_"))
+    is_icon = name.startswith(("w_", "wt_", "i_", "a_"))
     is_tile = name.startswith(("tile_", "door_", "pedestal", "stairs"))
     grit = area // (82 if is_tile else (62 if is_icon else 150))
     for _ in range(max(10, grit)):

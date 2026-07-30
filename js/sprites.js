@@ -44,6 +44,9 @@ const SPRITE_MANIFEST = [
   'i_meathook', 'i_blooddebt',
   'i_butchersoath', 'i_secondskin', 'i_twinsidearm', 'i_crimsonmetronome', 'i_abattoirengine',
   'i_gorecrown', 'i_thousandteeth', 'i_hollowfather', 'i_thelastcut', 'i_meatgrinder',
+  // active items
+  'a_bonenova', 'a_offalbomb', 'a_bloodtransfusion', 'a_cleaverstorm', 'a_butchersbell',
+  'a_marrowdraught', 'a_slaughtertime', 'a_panicroom', 'a_skinnerscoin', 'a_gutreroll',
   // full 64px/128px eight-direction action atlases
   'player_sheet', 'player_legs_sheet',
   'enemy_shambler_sheet', 'enemy_runner_sheet', 'enemy_spitter_sheet',
@@ -81,7 +84,7 @@ const Sprites = {
       const img = new Image();
       img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
       img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=39';
+      img.src = 'assets/' + name + '.png?v=40';
     }
   },
 
@@ -286,6 +289,12 @@ const Sprites = {
     } else if (name.startsWith('w_')) {
       ctx.fillStyle = C('#b8a888'); ctx.fillRect(-8, -3, 16, 6);
       ctx.fillStyle = C('#6b5333'); ctx.fillRect(-4, 3, 5, 6);
+    } else if (name.startsWith('a_')) {
+      ctx.fillStyle = C('#2fa898');
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill();
+      ctx.fillStyle = C('#0d2a26');
+      ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('!', 0, 0);
     } else if (name.startsWith('i_') || name.startsWith('perk_')) {
       ctx.fillStyle = C('#c9a227');
       ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill();

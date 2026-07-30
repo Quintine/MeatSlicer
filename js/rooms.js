@@ -90,6 +90,8 @@ function enterRoom(gx, gy) {
         const w = rollWeaponDrop(G.floor);
         spawnPickup('weapon', W / 2 + 55, H / 2, { wid: w.id });
       }
+      // and occasionally a bonus active pedestal
+      if (chance(0.15)) spawnActivePedestal(W / 2 + 130, H / 2 + 55);
       room.cleared = true;
     }
   } else if (room.type === 'combat' && !room.cleared && room.wavesLeft > 0) {
@@ -176,6 +178,18 @@ function recordRoomClear(room) {
     G.pressure = Math.min(PRESSURE_MAX, G.pressure + pressureGain());
   } else {
     G.streak = 0;
+  }
+  // active items charge on room clears: +1 per combat room, +2 per boss
+  const p = G.player;
+  if (p && p.active) {
+    const a = ACTIVES[p.active.iid];
+    if (a) {
+      const gain = room.type === 'boss' ? 2 : (room.type === 'combat' ? 1 : 0);
+      if (gain > 0 && p.active.charges < a.cost) {
+        p.active.charges = Math.min(a.cost, p.active.charges + gain);
+        if (p.active.charges >= a.cost) spawnText(p.x, p.y - 30, a.name.toUpperCase() + ' READY', '#e2472f');
+      }
+    }
   }
   if (room.type === 'combat' && G.player.stats.roomHeal > 0 && G.player.hp < G.player.stats.maxHp) {
     const before = G.player.hp;
