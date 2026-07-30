@@ -1014,8 +1014,13 @@ console.log('== item stickiness ramps with owned count ==');
 
 console.log('== help manual grows with the implant roster ==');
 {
-  check('10 help pages (4 implant pages for 82 items)', ctx.HELP_PAGES.length === 10);
-  check('10 help renderers', ctx.HELP_RENDERERS.length === 10);
+  check('11 help pages (5 implant pages for 82 items)', ctx.HELP_PAGES.length === 11);
+  check('11 help renderers', ctx.HELP_RENDERERS.length === 11);
+  check('help tabs never overflow the panel', (() => {
+    const last = ctx.helpTabRect(ctx.HELP_PAGES.length - 1);
+    const first = ctx.helpTabRect(0);
+    return first.x >= 0 && last.x + last.w <= ctx.W;
+  })());
   ctx.G.player = ctx.G.player || {};
   const fctx = fakeCtx();
   let renderOK = true;

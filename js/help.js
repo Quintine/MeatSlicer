@@ -6,7 +6,7 @@ const HELP_BUTTON = { x: W - 104, y: 24, w: 80, h: 26 };
 
 // Implant pages are generated from the live ITEMS roster so the manual never
 // drifts from the game data; the count and page count are dynamic.
-const HELP_ITEM_PAGE_SIZE = 23;
+const HELP_ITEM_PAGE_SIZE = 20;
 const HELP_ITEM_PAGE_COUNT = Math.ceil(Object.keys(ITEMS).length / HELP_ITEM_PAGE_SIZE);
 const HELP_PAGES = [
   { title: 'CONTROLS' },
@@ -24,7 +24,9 @@ function hfont(px, bold) { return (bold ? 'bold ' : '') + Math.round(px * HELP_S
 function helpPanelX() { return (W - HELP_PANEL.w) / 2; }
 
 function helpTabRect(i) {
-  const tw = 108, gap = 6;
+  // tabs shrink to fit the panel width so a growing page count never overflows
+  const gap = 6;
+  const tw = Math.min(108, Math.floor((HELP_PANEL.w - 40 - (HELP_PAGES.length - 1) * gap) / HELP_PAGES.length));
   const total = HELP_PAGES.length * tw + (HELP_PAGES.length - 1) * gap;
   return { x: W / 2 - total / 2 + i * (tw + gap), y: HELP_PANEL.y + 96, w: tw, h: 32 };
 }
@@ -199,16 +201,16 @@ function drawHelpItemList(ctx, px, py, page) {
   const pageEntries = entries.slice(page * HELP_ITEM_PAGE_SIZE, page * HELP_ITEM_PAGE_SIZE + HELP_ITEM_PAGE_SIZE);
   const colW = (HELP_PANEL.w - 80) / 2;
   for (let i = 0; i < pageEntries.length; i++) {
-    const col = Math.floor(i / 12), r = i % 12;
-    const lx = x + col * colW, ly = ty + r * 20;
+    const col = Math.floor(i / 10), r = i % 10;
+    const lx = x + col * colW, ly = ty + r * 26;
     const [iid, item] = pageEntries[i];
     const rar = ITEM_RARITY[item.rarity];
     ctx.fillStyle = rar.color; ctx.font = hfont(8, true);
     ctx.fillText(item.name.toUpperCase(), lx, ly);
     ctx.fillStyle = '#5f4d4d'; ctx.font = hfont(7, true);
-    ctx.fillText(item.rarity.toUpperCase().slice(0, 3) + '·' + item.cap, lx, ly + 12);
+    ctx.fillText(item.rarity.toUpperCase().slice(0, 3) + '·' + item.cap, lx, ly + 13);
     ctx.fillStyle = '#a08d84'; ctx.font = hfont(8, false);
-    ctx.fillText(fit(item.desc.toUpperCase(), 34), lx + 52, ly + 12);
+    ctx.fillText(fit(item.desc.toUpperCase(), 30), lx + 56, ly + 13);
   }
 }
 
@@ -310,7 +312,7 @@ function drawPauseHelp(ctx) {
       color: active ? '#f1e4d5' : (hover ? '#cdbdb2' : '#7d6a68'),
       accent: active ? '#4a9cad' : '#3c2f38',
       fill: active ? 'rgba(24,15,22,0.95)' : 'rgba(12,7,11,0.85)',
-      font: hfont(8, true),
+      font: hfont(r.w < 100 ? 7 : 8, true),
     });
   }
 
