@@ -130,7 +130,7 @@ function collectPickup(k) {
       }
       const def = ACTIVES[k.aid];
       p.active = { iid: k.aid, charges: k.charges !== undefined ? k.charges : def.cost };
-      addToast(def.name, def.desc + ' — [SPACE] when charged');
+      addToast(def.name, def.desc + ' — [SPACE] when charged', 5.5);
       spawnText(p.x, p.y - 14, def.name.toUpperCase(), '#55f5dc');
       Sfx.item();
       for (const q of G.pickups) if (q.type === 'itemspot') q.dead = true; // remove pedestal base

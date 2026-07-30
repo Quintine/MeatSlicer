@@ -172,10 +172,10 @@ function giveItem(iid) {
   item.apply(p.stats, p);
   p.items[iid] = lvl + 1;
   if (lvl > 0) {
-    addToast(item.name + ' ' + romanNum(lvl + 1), 'UPGRADED — ' + item.desc);
+    addToast(item.name + ' ' + romanNum(lvl + 1), 'UPGRADED — ' + item.desc, 5.5);
     spawnText(p.x, p.y - 14, 'UPGRADED!', '#ffd060');
   } else {
-    addToast(item.name, item.desc);
+    addToast(item.name, item.desc, 5.5);
     spawnText(p.x, p.y - 14, item.name.toUpperCase(), ITEM_RARITY[item.rarity].color);
   }
   if (item.rarity === 'legendary') Sfx.curse(); else Sfx.item();

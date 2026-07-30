@@ -198,7 +198,7 @@ function drawHUD(ctx) {
   ctx.textAlign = 'center';
   for (let i = 0; i < G.toasts.length; i++) {
     const t = G.toasts[i];
-    const a = clamp(2.5 - t.t, 0, 1);
+    const a = clamp((t.dur || 2.5) - t.t, 0, 1);
     const y = 22 + i * 48;
     ctx.globalAlpha = a;
     ctx.font = 'bold 13px monospace';
@@ -271,5 +271,5 @@ function drawMinimap(ctx) {
 
 function drawToastsUpdate(dt) {
   for (const t of G.toasts) t.t += dt;
-  while (G.toasts.length && G.toasts[0].t > 2.5) G.toasts.shift();
+  while (G.toasts.length && G.toasts[0].t > (G.toasts[0].dur || 2.5)) G.toasts.shift();
 }

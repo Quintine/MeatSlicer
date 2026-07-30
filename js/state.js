@@ -73,8 +73,8 @@ function powerScore() {
 }
 
 function addShake(n) { G.shake = Math.min(G.shake + n, 18); }
-function addToast(text, sub) {
-  G.toasts.push({ text, sub: sub || '', t: 0 });
+function addToast(text, sub, dur) {
+  G.toasts.push({ text, sub: sub || '', t: 0, dur: dur || 2.5 });
   if (G.toasts.length > 3) G.toasts.shift();
 }
 function addScore(n) {
