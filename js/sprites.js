@@ -48,7 +48,7 @@ const SPRITE_MANIFEST = [
   'a_bonenova', 'a_offalbomb', 'a_bloodtransfusion', 'a_cleaverstorm', 'a_butchersbell',
   'a_marrowdraught', 'a_slaughtertime', 'a_panicroom', 'a_skinnerscoin', 'a_gutreroll',
   // full 64px/128px eight-direction action atlases
-  'player_sheet', 'player_legs_sheet',
+  'player_sheet', 'player_legs_sheet', 'player_death_sheet',
   'enemy_shambler_sheet', 'enemy_runner_sheet', 'enemy_spitter_sheet',
   'enemy_splitter_sheet', 'enemy_mini_sheet', 'enemy_exploder_sheet',
   'boss_bonesaw_sheet', 'boss_gorecrown_sheet', 'boss_knifecrawl_sheet',
@@ -109,6 +109,20 @@ const Sprites = {
     ctx.drawImage(sheet, frame * frameSize, 0, frameSize, frameSize,
       -tw / 2, -tw / 2, tw, tw);
     ctx.restore();
+  },
+
+  // Non-directional one-row effects such as the player's authored gore burst.
+  strip(ctx, name, x, y, time, frames, fps, frameSize, targetW, hold) {
+    const sheet = this.imgs[name];
+    if (!sheet) {
+      this.actor(ctx, 'player', x, y, 0, 'death', time, targetW || frameSize);
+      return;
+    }
+    const raw = Math.floor(Math.max(0, time) * fps);
+    const frame = hold ? Math.min(frames - 1, raw) : raw % frames;
+    const tw = targetW || frameSize;
+    ctx.drawImage(sheet, frame * frameSize, 0, frameSize, frameSize,
+      x - tw / 2, y - tw / 2, tw, tw);
   },
 
   actor(ctx, name, x, y, facing, action, time, targetW, alpha, scaleX, scaleY) {

@@ -10,6 +10,7 @@ const ENEMY_TYPES = {
 };
 const MAX_ENEMIES = 72;
 const SPAWN_WARN = 0.5; // seconds a wave-spawned enemy materializes, frozen + harmless
+const HP_BAR_SHOW = 2.5;
 
 function makeEnemy(type, x, y, floor, elite) {
   const t = ENEMY_TYPES[type];
@@ -28,7 +29,7 @@ function makeEnemy(type, x, y, floor, elite) {
     xp: t.xp * (elite ? 3 : 1),
     sprite: t.sprite,
     elite: !!elite,
-    hitT: 0, flash: 0, burnT: 0, burnDps: 0, bleedT: 0, bleedDps: 0,
+    hitT: 0, flash: 0, hpBarT: 0, burnT: 0, burnDps: 0, bleedT: 0, bleedDps: 0,
     slowT: 0, stunT: 0, rootT: 0,
     fireT: rand(1, 2.5), fuse: -1, wob: rand(0, TAU),
     animSeed: rand(0, TAU), animT: rand(0, 1), attackT: 0, actionT: 0,
@@ -110,6 +111,7 @@ function damageEnemy(e, dmg, ang, knockback, opts) {
   dmg *= e.dmgTakenMul === undefined ? 1 : e.dmgTakenMul;
   e.hp -= dmg;
   e.flash = 0.12;
+  e.hpBarT = HP_BAR_SHOW;
   spawnText(e.x, e.y, Math.max(1, Math.round(dmg)), mitigated ? '#d0b887' : '#ffb0a0');
   if (e.plates > 0) {
     e.plateDmg = (e.plateDmg || 0) + dmg;
@@ -342,6 +344,7 @@ function updateEnemies(dt) {
     if (e.hp <= 0) { G.enemies.splice(i, 1); continue; }
     e.spawnT = Math.min((e.spawnT || 0) + dt, 1);
     e.animT = (e.animT || 0) + dt;
+    if (e.hpBarT > 0) e.hpBarT = Math.max(0, e.hpBarT - dt);
     if (e.attackT > 0) { e.attackT -= dt; e.actionT += dt; }
 
     // materializing spawns are frozen and harmless until the telegraph ends
@@ -356,12 +359,14 @@ function updateEnemies(dt) {
     if (e.orbT > 0) e.orbT -= dt;
     if (e.burnT > 0) {
       e.burnT -= dt;
+      e.hpBarT = HP_BAR_SHOW;
       tickEnemyDamage(e, e.burnDps * dt);
       if (chance(0.2)) addParticle({ type: 'flame', x: e.x + rand(-6, 6), y: e.y + rand(-6, 6), vx: 0, vy: -40, life: 0.3, t: 0, r: 3 });
       if (e.hp <= 0) { G.enemies.splice(i, 1); continue; }
     }
     if (e.bleedT > 0) {
       e.bleedT -= dt;
+      e.hpBarT = HP_BAR_SHOW;
       tickEnemyDamage(e, e.bleedDps * dt);
       if (e.hp <= 0) { G.enemies.splice(i, 1); continue; }
     }
@@ -497,13 +502,19 @@ function drawEnemies(ctx) {
       ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, TAU); ctx.stroke();
       ctx.globalAlpha = 1;
     }
-    // boss & elite hp pip
-    if (e.boss || e.elite) {
-      const w = e.boss ? 60 : 26;
-      ctx.fillStyle = '#400a10';
-      ctx.fillRect(e.x - w / 2, e.y - e.r - 10, w, 4);
-      ctx.fillStyle = '#d92038';
-      ctx.fillRect(e.x - w / 2, e.y - e.r - 10, w * clamp(e.hp / e.maxHp, 0, 1), 4);
+    // Damaged normal monsters show a compact timed pip; elites/bosses stay visible.
+    if (!e.phased && (e.boss || e.elite || (e.hpBarT > 0 && e.hp < e.maxHp))) {
+      const w = e.boss ? 60 : (e.elite ? 26 : (e.type === 'mini' ? 14 : 18));
+      const h = e.boss || e.elite ? 4 : 3;
+      const alpha = e.boss || e.elite ? 1 : clamp(e.hpBarT / 0.5, 0, 1);
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#24070b';
+      ctx.fillRect(e.x - w / 2 - 1, e.y - e.r - 11, w + 2, h + 2);
+      ctx.fillStyle = '#5a0d18';
+      ctx.fillRect(e.x - w / 2, e.y - e.r - 10, w, h);
+      ctx.fillStyle = '#e22b46';
+      ctx.fillRect(e.x - w / 2, e.y - e.r - 10, w * clamp(e.hp / e.maxHp, 0, 1), h);
+      ctx.restore();
     }
   }
 }

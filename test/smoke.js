@@ -953,6 +953,19 @@ console.log('== bigger gore-red minis ==');
   check('mini sprite grew', ctx.ENEMY_TYPES.mini.drawSize === 48);
 }
 
+console.log('== damaged monster health pips ==');
+{
+  const target = ctx.makeEnemy('shambler', 160, 160, 1, false);
+  target.warmT = 0;
+  check('undamaged normal monster starts without a timed health pip', target.hpBarT === 0);
+  ctx.damageEnemy(target, 1, 0, false, { noProc: true, noCrit: true });
+  check('damaging a normal monster reveals its health pip', target.hpBarT === 2.5 && target.hp < target.maxHp);
+  ctx.G.enemies = [target];
+  ctx.updateEnemies(2.6);
+  check('normal monster health pip expires after the tracking window', target.hpBarT === 0);
+  ctx.G.enemies = [];
+}
+
 console.log('== 500ms wave spawn telegraph ==');
 {
   ctx.startRun(); step(3, 16);
@@ -1426,9 +1439,14 @@ console.log('== performance and duplicate-hit regressions ==');
 console.log('== death and restart ==');
 ctx.G.player.invT = 0;
 ctx.hurtPlayer(9999, 0);
+check('death starts a three-second input lock', ctx.G.deathLockT === 3);
+check('player death creates a layered gore burst', ctx.G.parts.some(p => p.type === 'gib') && ctx.G.parts.some(p => p.type === 'shockwave'));
 step(5, 16);
 check('game over', ctx.G.mode === 'gameover');
 check('death animation advances once per game-over frame', Math.abs(ctx.G.player.deathT - 0.08) < 0.001);
+tap('r');
+check('restart input is ignored during death lock', ctx.G.mode === 'gameover');
+step(190, 16);
 tap('r');
 step(5, 16);
 check('restart works', ctx.G.mode === 'play' && ctx.G.floor === 1);

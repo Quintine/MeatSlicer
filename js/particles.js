@@ -48,7 +48,7 @@ function onGore(x, y) {
   return false;
 }
 
-function spawnGibs(x, y, n, big) {
+function spawnGibs(x, y, n, big, important) {
   for (let i = 0; i < n; i++) {
     const a = rand(0, TAU), sp = rand(60, big ? 290 : 220);
     const bone = chance(big ? 0.3 : 0.18);
@@ -59,7 +59,7 @@ function spawnGibs(x, y, n, big) {
       life: rand(0.5, big ? 1.35 : 1.1), t: 0, r,
       w: r * rand(1.3, 2.6), h: r * rand(0.65, 1.25),
       bone, shade: i % 3, rot: rand(0, TAU), vr: rand(-10, 10),
-    });
+    }, important);
   }
 }
 
@@ -97,11 +97,11 @@ function spawnSmoke(x, y, ang, n, color) {
   }
 }
 
-function spawnShockwave(x, y, radius, color, alpha) {
+function spawnShockwave(x, y, radius, color, alpha, important) {
   addParticle({
     type: 'shockwave', x, y, vx: 0, vy: 0, life: 0.42, t: 0,
     r: 5, maxR: radius, color: color || '#ffb06a', alpha: alpha === undefined ? 0.8 : alpha,
-  });
+  }, important);
 }
 
 function spawnMuzzleFx(x, y, ang, behavior) {
@@ -142,6 +142,19 @@ function spawnExplosionFx(x, y, r) {
   spawnSmoke(x, y, -Math.PI / 2, Math.min(8, 3 + Math.floor(r / 25)));
   spawnGibs(x, y, 5, r >= 80);
   addShake(6);
+}
+
+function spawnPlayerGore(x, y) {
+  spawnExplosionFx(x, y, 110);
+  spawnShockwave(x, y, 138, '#ff2947', 0.95, true);
+  for (let i = 0; i < 4; i++) spawnBlood(x, y, i * TAU / 4, 10, true);
+  spawnGibs(x, y, 26, true, true);
+  for (let i = 0; i < 18; i++) {
+    const a = rand(0, TAU), sp = rand(90, 350);
+    addParticle({ type: 'flame', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: rand(0.22, 0.68), t: 0, r: rand(4, 10) }, true);
+  }
+  addShake(16);
 }
 
 function spawnCorpse(e) {

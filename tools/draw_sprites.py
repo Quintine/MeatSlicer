@@ -1456,6 +1456,71 @@ def render_legs_sheet():
     return sheet
 
 
+def render_player_death_sheet():
+    """Derive a gore burst from the shipped AI player still without redrawing it."""
+    source_path = OUT / "player.png"
+    if not source_path.exists():
+        raise FileNotFoundError("assets/player.png is required for the derived death sheet")
+    source = _fit_actor(Image.open(source_path).convert("RGBA"), "player", 128)
+    frame_size, frame_count = 128, 12
+    sheet = Image.new("RGBA", (frame_size * frame_count, frame_size), (0, 0, 0, 0))
+    rng = random.Random(0x5A17CE)
+    fragments = []
+    cols = rows = 4
+    for gy in range(rows):
+        y0 = round(gy * source.height / rows)
+        y1 = round((gy + 1) * source.height / rows)
+        for gx in range(cols):
+            x0 = round(gx * source.width / cols)
+            x1 = round((gx + 1) * source.width / cols)
+            piece = source.crop((x0, y0, x1, y1))
+            if not piece.getbbox():
+                continue
+            relx = (x0 + x1) / 2 - source.width / 2
+            rely = (y0 + y1) / 2 - source.height / 2
+            a = math.atan2(rely, relx) + rng.uniform(-0.7, 0.7)
+            fragments.append((piece, relx, rely, a, rng.uniform(30, 68), rng.uniform(-105, 105)))
+
+    for index in range(frame_count):
+        p = index / max(1, frame_count - 1)
+        burst = p * p * (3 - 2 * p)
+        frame = Image.new("RGBA", (frame_size, frame_size), (0, 0, 0, 0))
+        d = ImageDraw.Draw(frame)
+        if index in (1, 2, 3):
+            flash = (1 - abs(index - 2) / 2) * 0.9
+            rr = 8 + index * 9
+            d.ellipse([64 - rr, 64 - rr, 64 + rr, 64 + rr], fill=(255, 223, 164, round(255 * flash)))
+        for dot in range(20):
+            da = (dot * 2.399963 + 0.37) % math.tau
+            dr = burst * (18 + (dot * 17) % 47)
+            rr = max(1, round((3 + dot % 4) * (1 - p * 0.55)))
+            dx = round(64 + math.cos(da) * dr)
+            dy = round(64 + math.sin(da) * dr)
+            alpha = round(230 * max(0, 1 - p * 0.75))
+            color = (174, 15 + (dot % 3) * 8, 38, alpha)
+            d.ellipse([dx - rr, dy - rr, dx + rr, dy + rr], fill=color)
+
+        origin_x = (frame_size - source.width) / 2
+        origin_y = (frame_size - source.height) / 2
+        for piece, relx, rely, ang, speed, spin in fragments:
+            work = piece.copy()
+            fade = 1 if p < 0.62 else max(0, 1 - (p - 0.62) / 0.38)
+            if fade < 1:
+                work.putalpha(work.getchannel("A").point(lambda alpha: round(alpha * fade)))
+            rotation = spin * burst
+            if rotation:
+                work = work.rotate(rotation, Image.Resampling.NEAREST, expand=True)
+            cx = origin_x + source.width / 2 + relx
+            cy = origin_y + source.height / 2 + rely
+            travel = speed * burst
+            cx += math.cos(ang) * travel + relx * burst * 0.45
+            cy += math.sin(ang) * travel + rely * burst * 0.45
+            frame.alpha_composite(work, (round(cx - work.width / 2), round(cy - work.height / 2)))
+        sheet.alpha_composite(frame, (index * frame_size, 0))
+    sheet.save(OUT / "player_death_sheet.png", optimize=True)
+    return sheet
+
+
 def main():
     filters = [a for a in sys.argv[1:] if not a.startswith("--")]
     OUT.mkdir(exist_ok=True)
@@ -1468,9 +1533,12 @@ def main():
     for name in actor_names:
         sheet = render_actor_sheet(name)
         print(f"drew assets/{name}_sheet.png ({sheet.width}x{sheet.height})")
-    if not filters or any("player_legs" in f or "player" in f for f in filters):
+    if not filters or any("player_legs" in f or f == "player" for f in filters):
         sheet = render_legs_sheet()
         print(f"drew assets/player_legs_sheet.png ({sheet.width}x{sheet.height})")
+    if any("player_death" in f for f in filters):
+        sheet = render_player_death_sheet()
+        print(f"drew assets/player_death_sheet.png ({sheet.width}x{sheet.height})")
     print(f"\n{len(names)} sprites and {len(actor_names)} animation sheets rendered.")
 
 

@@ -142,6 +142,8 @@ function confirmAction(name, action) {
 
 function gameOver() {
   G.mode = 'gameover';
+  G.deathLockT = DEATH_LOCK;
+  spawnPlayerGore(G.player.x, G.player.y);
   Sfx.playerDeath();
   if (G.score > (G.best || 0)) {
     G.best = G.score;
@@ -161,6 +163,7 @@ function loop(now) {
 
 function update(dt) {
   Music.update(dt);
+  if (G.deathLockT > 0) G.deathLockT = Math.max(0, G.deathLockT - dt);
   if (G.confirmT > 0) {
     G.confirmT = Math.max(0, G.confirmT - dt);
     if (G.confirmT <= 0) G.confirmAction = null;
@@ -254,7 +257,7 @@ function update(dt) {
     }
     case 'gameover':
       updateParticles(dt);
-      if (keyPressed('r', 'enter', ' ') || Input.mpressed) startRun();
+      if (G.deathLockT <= 0 && (keyPressed('r', 'enter', ' ') || Input.mpressed)) startRun();
       break;
   }
 
@@ -503,6 +506,9 @@ function drawPause(ctx) {
 }
 
 function drawGameOver(ctx) {
+  const reveal = clamp((DEATH_LOCK - G.deathLockT) / 0.9, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = reveal;
   ctx.fillStyle = 'rgba(4,1,3,0.86)'; ctx.fillRect(0, 0, W, H);
   drawPixelPanel(ctx, W / 2 - 230, 142, 460, 350, {
     accent: '#e02945', border: '#772638', fill: 'rgba(12,4,7,0.97)',
@@ -529,10 +535,12 @@ function drawGameOver(ctx) {
     drawPixelTag(ctx, 'NEW BEST CUT', W / 2 - 68, 367, { width: 136, height: 26, color: '#f1cb53', accent: '#b38b2e' });
   }
   drawPixelPanel(ctx, W / 2 - 140, 414, 280, 50, {
-    cut: 5, shadow: false, accent: '#cf2942', border: '#8c293c', fill: '#1a080e',
+    cut: 5, shadow: false, accent: G.deathLockT > 0 ? '#77552a' : '#cf2942',
+    border: G.deathLockT > 0 ? '#604727' : '#8c293c', fill: '#1a080e',
   });
-  ctx.fillStyle = '#f1e4d5'; ctx.font = 'bold 12px monospace';
-  ctx.fillText('[ R / ENTER ]  CUT AGAIN', W / 2, 444);
+  ctx.fillStyle = G.deathLockT > 0 ? '#d4ad3d' : '#f1e4d5'; ctx.font = 'bold 12px monospace';
+  ctx.fillText(G.deathLockT > 0 ? '[ INPUT LOCKED · ' + G.deathLockT.toFixed(1) + ' ]' : '[ R / ENTER ]  CUT AGAIN', W / 2, 444);
+  ctx.restore();
 }
 
 window.addEventListener('load', init);

@@ -411,8 +411,7 @@ function drawPlayer(ctx) {
   const kick = p.recoil * 3;
   Sprites.shadow(ctx, p.x, p.y + 17, 27 + p.moveBlend * 2, 9, 0.46);
   if (p.hp <= 0) {
-    // Preserve the authored full-body fall while the live character stays layered.
-    Sprites.actor(ctx, 'player', p.x, p.y, p.bodyFacing, 'death', p.deathT || 0, 96);
+    Sprites.strip(ctx, 'player_death_sheet', p.x, p.y, p.deathT || 0, 12, 14, 128, 144, true);
   } else {
     Sprites.legs(ctx, p.x, p.y + 4, p.bodyFacing, p.step, 124);
     const torsoOffset = (w.torsoFwd || 18) - kick;
