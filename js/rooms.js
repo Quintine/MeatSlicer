@@ -200,6 +200,9 @@ function nextFloor() {
   // Shield Heart perk: fresh shield hearts each floor
   G.player.shieldHp = G.player.stats.shieldPerk || 0;
   if (G.player.shieldHp > 0) { spawnText(G.player.x, G.player.y - 20, 'SHIELD UP', '#3bc9e0'); Sfx.shieldUp(); }
+  // legendary once-per-floor flags reset
+  G.player.secondSkinUsed = false;
+  G.player.lastCutActive = false;
   G.player.x = W / 2; G.player.y = H / 2;
   addToast('FLOOR ' + G.floor, 'the meat runs deeper here');
   Music.requestFloorMusic();

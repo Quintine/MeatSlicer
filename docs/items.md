@@ -109,7 +109,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | Item | Description | Exact effect per tier |
 |---|---|---|
 | **Iron Stomach** | +½ heart container, heal ½ heart | `maxHp +1`, heal 1 |
-| **Ghoul Heart** | +2 max HP, heal 2 | `maxHp +2`, heal 2 |
+| **Ghoul Heart** | +4 max HP, heal 4 | `maxHp +4`, heal 4 — a full 2 hearts |
 | **Twin Hearts** | +1 max heart, heal to full | `maxHp +2`, `hp = maxHp` — the premium Rare HP item |
 | **Rendered Fat** | +½ heart, +4% armor | `maxHp +1`, `armor +0.04`, heal 1 — clean hybrid HP/armor |
 | **Gristle Cord** | +0.12s hurt immunity, +4% armor | `invBonus +0.12`, `armor +0.04` |
@@ -139,7 +139,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Magnet Maw** | +60% pickup radius | `magnet ×1.6` — magnet radius 46 × magnet px |
 | **Gorging Leech** | +20% XP gained | `xpMul ×1.20` |
 | **Reroll Rib** | +1 perk reroll each level | `rerollPerLevel +1` and +1 reroll immediately |
-| **Brass Magazine** | 15% less ammo use, +20% ammo found | `ammoEff ×1.15`, `ammoPickupMul ×1.20` (the ×1.15 stays multiplicative; the **Scrap Feed** perk's additive stacks sit underneath it) |
+| **Brass Magazine** | +10% ammo efficiency, +20% ammo found | `ammoEff +0.10` (same diminishing additive formula as **Scrap Feed**, so the saving never reaches 50%), `ammoPickupMul ×1.20` |
 | **Hollow Bones** | +14% move speed | `speedMul ×1.14` (178 → ~203 px/s at tier I) |
 | **Gorged Tick** | +15% XP, +10% luck | `xpMul ×1.15`, `luck +0.10` |
 | **Hooked Sinew** | +30% pickup pull speed, +10% radius | `magnetPull ×1.30`, `magnet ×1.10` (activates the `magnetPull` stat) |
@@ -224,6 +224,16 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | 70 | Sawbone Coil | Uncommon | V | Shot modifier |
 | 71 | Slaughter Rhythm | Rare | III | Fire rate |
 | 72 | Thresher Plate | Uncommon | V | Survivability |
+| 73 | Abattoir Engine | Legendary | I | Utility |
+| 74 | Butcher's Oath | Legendary | I | Damage |
+| 75 | Crimson Metronome | Legendary | I | Fire rate |
+| 76 | Gore Crown | Legendary | I | On-kill |
+| 77 | Hollow Father | Legendary | I | Utility |
+| 78 | Meat Grinder | Legendary | I | Survivability |
+| 79 | Second Skin | Legendary | I | Survivability |
+| 80 | The Last Cut | Legendary | I | Damage |
+| 81 | Thousand Teeth | Legendary | I | Shot modifier |
+| 82 | Twin Sidearm | Legendary | I | Shot modifier |
 
 ## Synergy notes
 

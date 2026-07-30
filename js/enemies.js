@@ -148,6 +148,23 @@ function procOnHit(e, dmg, ang, opts) {
   const magnitudeScale = opts.procMagnitudeScale === undefined ? 1 : opts.procMagnitudeScale;
   const intervalScale = opts.procIntervalScale === undefined ? 1 : opts.procIntervalScale;
   const procDamage = dmg / Math.max(0.05, intervalScale) * magnitudeScale;
+  // Thousand Teeth: bullets shatter into 6 extra shards that can crit.
+  // Shards inherit the shard flag so they don't recurse. The −40% base bullet
+  // damage is applied as a global dmgMul penalty in the item's apply().
+  if (s.thousandTeeth > 0 && !(opts.bullet && opts.bullet.shard) && chance(clamp(chanceScale, 0, 1))) {
+    for (let i = 0; i < 6; i++) {
+      const sa = rand(0, TAU);
+      const shardCrit = chance(s.crit || 0);
+      G.bullets.push({
+        x: e.x, y: e.y, ang: sa,
+        vx: Math.cos(sa) * 300 * s.shotSpeedMul, vy: Math.sin(sa) * 300 * s.shotSpeedMul,
+        r: 3 * s.sizeMul, dmg: procDamage * 0.4 * (shardCrit ? (s.critMul || 2) : 1), pierce: 0, bounce: s.bounce,
+        life: 0.35 * s.rangeMul, t: 0, behavior: 'bullet', sprite: 'bullet_bone',
+        homing: s.homing ? 1.6 + s.homing * 0.7 : 0, shard: true, sizeMul: s.sizeMul,
+      });
+    }
+    spawnSpark(e.x, e.y, ang);
+  }
   if (s.splinter > 0 && !(opts.bullet && opts.bullet.shard) && chance(clamp(chanceScale, 0, 1))) {
     const count = Math.min(18, Math.floor(s.splinter));
     for (let i = 0; i < count; i++) {
@@ -240,6 +257,12 @@ function killEnemy(e, ang) {
   }
 
   if (e.boss) { onBossDeath(e); return; }
+
+  // Gore Crown: free nova on every kill
+  if (p.stats.goreCrown > 0) {
+    areaDamage(e.x, e.y, 70 * Math.sqrt(p.stats.sizeMul), 8 * p.stats.dmgMul * p.stats.dmgLiveMul, true, { noProc: true, noCrit: true });
+    spawnExplosionFx(e.x, e.y, 60);
+  }
 
   // Blood Moat: kills leave an acid pool
   if (p.stats.bloodMoat > 0 && G.hazards.length < 80) {

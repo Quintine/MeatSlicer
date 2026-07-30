@@ -21,7 +21,7 @@ const ITEMS = {
   magnetmaw:     { name: 'Magnet Maw',       desc: '+60% pickup radius',          rarity: 'common', cap: 3, apply: s => { s.magnet *= 1.6; } },
   gorgingleech:  { name: 'Gorging Leech',    desc: '+20% XP gained',              rarity: 'common', cap: 4, apply: s => { s.xpMul *= 1.20; } },
   hollowbones:   { name: 'Hollow Bones',     desc: '+14% move speed',             rarity: 'common', cap: 6, apply: s => { s.speedMul *= 1.14; } },
-  brassmagazine: { name: 'Brass Magazine',   desc: '15% less ammo use, +20% ammo found', rarity: 'common', cap: 5, apply: s => { s.ammoEff *= 1.15; s.ammoPickupMul *= 1.20; } },
+  brassmagazine: { name: 'Brass Magazine',   desc: '+10% ammo efficiency, +20% ammo found', rarity: 'common', cap: 5, apply: s => { s.ammoEff += 0.10; s.ammoPickupMul *= 1.20; } },
   ironstomach:   { name: 'Iron Stomach',     desc: '+½ heart container, heal ½ heart', rarity: 'common', cap: 8, apply: (s, p) => { s.maxHp += 1; p.hp = Math.min(s.maxHp, p.hp + 1); } },
   tannedhide:    { name: 'Tanned Hide',      desc: '+8% chance to ignore damage', rarity: 'common', cap: 6, apply: s => { s.armor += 0.08 / 0.92; } },
   bloodlust:     { name: 'Bloodlust',        desc: 'Kills may drop bonus XP',     rarity: 'common', cap: 5, apply: s => { s.bloodlust = (s.bloodlust || 0) + 0.12; } },
@@ -43,7 +43,7 @@ const ITEMS = {
   spinecage:     { name: 'Spine Cage',       desc: 'Contact attackers take damage', rarity: 'uncommon', cap: 5, apply: s => { s.thorns += 8; } },
   spitewell:     { name: 'Spite Well',       desc: 'Taking damage releases a blood nova', rarity: 'uncommon', cap: 5, apply: s => { s.retaliate += 10; } },
   orbitcrown:    { name: 'Orbit Crown',      desc: '+25% orbital speed and damage', rarity: 'uncommon', cap: 5, apply: s => { s.orbSpeedMul *= 1.25; s.orbDmgMul *= 1.25; } },
-  ghoulheart:    { name: 'Ghoul Heart',      desc: '+2 max HP, heal 2',           rarity: 'uncommon', cap: 5, apply: (s, p) => { s.maxHp += 2; p.hp = Math.min(s.maxHp, p.hp + 2); } },
+  ghoulheart:    { name: 'Ghoul Heart',      desc: '+4 max HP, heal 4',           rarity: 'uncommon', cap: 5, apply: (s, p) => { s.maxHp += 4; p.hp = Math.min(s.maxHp, p.hp + 4); } },
 
   // ---- rare ----
   splittongue:   { name: 'Split Tongue',     desc: 'Twin parallel shot',          rarity: 'rare', cap: 3, apply: s => { s.split += 1; } },
@@ -89,6 +89,18 @@ const ITEMS = {
   ironlung:      { name: 'Iron Lung',        desc: 'The first hit each room is blocked', rarity: 'rare', cap: 3, apply: s => { s.ironLung += 1; } },
   meathook:      { name: 'Meat Hook',        desc: 'Kills yank nearby enemies to the corpse', rarity: 'uncommon', cap: 4, apply: s => { s.meatHook += 1; } },
   blooddebt:     { name: 'Blood Debt',       desc: '+35% damage, −½ heart container', rarity: 'rare', cap: 3, apply: (s, p) => { s.dmgMul *= 1.35; s.maxHp = Math.max(1, s.maxHp - 1); p.hp = Math.min(p.hp, s.maxHp); } },
+
+  // ---- phase 4: boss-exclusive legendaries (cap 1, curses allowed) ----
+  butchersoath:  { name: "Butcher's Oath",   desc: '+80% damage, but max HP set to 2', rarity: 'legendary', cap: 1, apply: (s, p) => { s.dmgMul *= 1.8; s.maxHp = Math.min(s.maxHp, 2); p.hp = Math.min(p.hp, s.maxHp); } },
+  secondskin:    { name: 'Second Skin',      desc: 'Revive once per floor at ½ heart', rarity: 'legendary', cap: 1, apply: s => { s.secondSkin += 1; } },
+  twinsidearm:   { name: 'Twin Sidearm',     desc: 'Bone Popper double-taps; specials burn 2× ammo', rarity: 'legendary', cap: 1, apply: s => { s.twinSidearm += 1; } },
+  crimsonmetronome:{ name: 'Crimson Metronome', desc: '+60% fire rate; every 8th shot costs ½ heart', rarity: 'legendary', cap: 1, apply: s => { s.rateMul *= 1.6; s.crimsonMetronome += 1; } },
+  abattoirengine:{ name: 'Abattoir Engine',  desc: 'Pressure rises 2× faster; score and luck ×1.5', rarity: 'legendary', cap: 1, apply: s => { s.abattoirEngine += 1; s.luck += 0.5; } },
+  gorecrown:     { name: 'Gore Crown',       desc: 'Free nova on every kill, −25% damage', rarity: 'legendary', cap: 1, apply: s => { s.goreCrown += 1; s.dmgMul *= 0.75; } },
+  thousandteeth: { name: 'Thousand Teeth',   desc: '+6 shards that can crit, −40% base bullet damage', rarity: 'legendary', cap: 1, apply: s => { s.thousandTeeth += 1; s.dmgMul *= 0.6; } },
+  hollowfather:  { name: 'Hollow Father',    desc: '3 damage-scaling orbitals, −25% fire rate', rarity: 'legendary', cap: 1, apply: s => { s.orbitals += 3; s.hollowFather += 1; s.rateMul *= 0.75; } },
+  thelastcut:    { name: 'The Last Cut',     desc: 'At ½ heart: ×3 damage, +1s immunity', rarity: 'legendary', cap: 1, apply: s => { s.theLastCut += 1; } },
+  meatgrinder:   { name: 'Meat Grinder',     desc: '12 dps aura within 90px, +1 damage taken per hit', rarity: 'legendary', cap: 1, apply: s => { s.meatGrinder += 1; } },
 };
 
 const ITEM_LEVEL_CAP = 9;

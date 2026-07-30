@@ -55,7 +55,7 @@ const PRESSURE_DIAL_MIN = -5, PRESSURE_DIAL_MAX = 5;
 function pressureGainUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 1 + d * 0.2 : 1 + d * 0.8; }
 // -5 -> 5 units, 0 -> 3 units, +5 -> 0 units (piecewise linear)
 function pressureDropUnits(dial) { const d = clamp(dial, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX); return d <= 0 ? 3 - d * 0.4 : 3 - d * 0.6; }
-function pressureGain()      { return pressureGainUnits(G.pressureDial) * PRESSURE_UNIT; }
+function pressureGain()      { const base = pressureGainUnits(G.pressureDial) * PRESSURE_UNIT; return base * (G.player && G.player.stats.abattoirEngine > 0 ? 2 : 1); }
 function pressureDropScale() { return pressureDropUnits(G.pressureDial) / PRESSURE_DROP_BASE; }
 
 // total player power: perks drafted (level - 1) + item tiers owned, weighted by rarity.

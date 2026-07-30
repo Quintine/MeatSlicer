@@ -291,6 +291,16 @@ ITEMS = {
     "ironlung": "a riveted iron lung with bellows and a steel windpipe",
     "meathook": "a huge rusted slaughterhouse meat hook on a taut chain",
     "blooddebt": "a parchment contract signed in blood with a heart seal",
+    "butchersoath": "a blood-soaked butcher cleaver crossed with a black oath scroll",
+    "secondskin": "a pale translucent second skin peeling away to reveal muscle",
+    "twinsidearm": "two crossed bone pistols fused at the grip with sinew",
+    "crimsonmetronome": "a crimson metronome with a heart-shaped pendulum and blood drips",
+    "abattoirengine": "a roaring industrial abattoir engine with pressure gauges and meat grinders",
+    "gorecrown": "a jagged crown of congealed blood and bone spikes radiating a red aura",
+    "thousandteeth": "a gaping maw with hundreds of tiny sharp teeth in concentric rings",
+    "hollowfather": "a gaunt hollow patriarch figure with three orbiting bone halos",
+    "thelastcut": "a single gleaming cleaver edge with a desperate red gleam",
+    "meatgrinder": "an industrial meat grinder with spinning blades and gore pouring through",
 }
 for iid, subject in ITEMS.items():
     SPECS["i_" + iid] = Spec(subject + ", isolated inventory object, strong top-left light, no medallion, no icon background", 32)

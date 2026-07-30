@@ -26,6 +26,9 @@ function initPlayer() {
       dmgLiveMul: 1, executeBonus: 0, burnDamageBonus: 0, choirEvery: 0, sawboneCoil: 0,
       gluttonGut: 0, slaughterRhythm: 0, painEngine: 0, thresherPlate: 0, bloodMoat: 0,
       ironLung: 0, meatHook: 0, bloodDebt: 0,
+      // phase-4 legendaries
+      secondSkin: 0, twinSidearm: 0, crimsonMetronome: 0, abattoirEngine: 0,
+      goreCrown: 0, thousandTeeth: 0, hollowFather: 0, theLastCut: 0, meatGrinder: 0,
       maxHp: 6,
     },
   };
@@ -127,16 +130,23 @@ function updatePlayer(dt) {
   } else {
     if (Input.mdown && p.fireT <= 0 && p.weapon.ammo > 0) {
       fireWeapon(p, w);
+      // Twin Sidearm: the Bone Popper double-taps
+      if (st.twinSidearm > 0 && p.weapon.id === 'bonepopper') fireWeapon(p, w);
       // Hollow Choir: every 4th shot fires a free extra volley
       if (st.choirEvery > 0) {
         p.choirCount = (p.choirCount || 0) + 1;
         if (p.choirCount >= 4) { p.choirCount = 0; fireWeapon(p, w); }
       }
+      // Crimson Metronome: every 8th shot costs ½ heart
+      if (st.crimsonMetronome > 0) {
+        p.metronomeCount = (p.metronomeCount || 0) + 1;
+        if (p.metronomeCount >= 8) { p.metronomeCount = 0; p.hp = Math.max(0.5, p.hp - 1); spawnText(p.x, p.y - 14, '-½', '#e2472f'); }
+      }
       p.recoil = Math.min(1, p.recoil + (w.behavior === 'slam' ? 1 : 0.45));
       p.muzzleT = 0.07;
       p.attackT = 0.4; p.actionT = 0;
       p.fireT = rate;
-      if (p.weapon.ammo !== Infinity) p.weapon.ammo -= 1 / st.ammoEff;
+      if (p.weapon.ammo !== Infinity) p.weapon.ammo -= (st.twinSidearm > 0 ? 2 : 1) / st.ammoEff;
       Sfx.shoot(w);
       if (w.behavior === 'slam') addShake(5);
     }
@@ -182,6 +192,23 @@ function updatePlayer(dt) {
   st.rhythmRateBonus = rhythm;
   if (p.painEngineT > 0) p.painEngineT -= dt;
   st.dmgLiveMul = p.painEngineT > 0 ? 1 + st.painEngine : 1;
+  // The Last Cut: while at ½ heart, ×3 damage
+  if (st.theLastCut > 0 && p.lastCutActive && p.hp <= 1) st.dmgLiveMul *= 3;
+
+  // Meat Grinder: passive 12 dps aura within 90px
+  if (st.meatGrinder > 0) {
+    p.meatGrinderTick = (p.meatGrinderTick || 0) - dt;
+    if (p.meatGrinderTick <= 0) {
+      p.meatGrinderTick = 0.5;
+      for (const e of G.enemies) {
+        if (e.hp <= 0) continue;
+        if (dist2(e.x, e.y, p.x, p.y) < (90 + e.r) * (90 + e.r)) {
+          tickEnemyDamage(e, 6 * st.dmgMul * st.dmgLiveMul);
+          if (chance(0.3)) spawnBlood(e.x, e.y, angleTo(p.x, p.y, e.x, e.y), 2);
+        }
+      }
+    }
+  }
 
   // Thresher Plate: passive contact-damage aura (no need to be hit)
   if (st.thresherPlate > 0) {
@@ -232,6 +259,8 @@ function hurtPlayer(dmg, ang, attacker) {
     return;
   }
   let reduced = Math.max(1, Math.round(dmg));
+  // Meat Grinder: aura damages you for +1 per hit taken
+  if (p.stats.meatGrinder > 0) reduced += p.stats.meatGrinder;
   // shield hearts absorb first (from the Shield Heart perk)
   if (p.shieldHp > 0) {
     const absorbed = Math.min(p.shieldHp, reduced);
@@ -262,7 +291,27 @@ function hurtPlayer(dmg, ang, attacker) {
     areaDamage(p.x, p.y, 85 * Math.sqrt(p.stats.sizeMul), p.stats.retaliate * p.stats.dmgMul, true, { noProc: true });
     spawnExplosionFx(p.x, p.y, 70);
   }
+  // The Last Cut: at the brink, gain ×3 damage and +1s immunity
+  if (p.stats.theLastCut > 0 && p.hp > 0 && p.hp <= 1 && !p.lastCutActive) {
+    p.lastCutActive = true;
+    p.invT = Math.max(p.invT, 1.0 + p.stats.invBonus);
+    spawnText(p.x, p.y - 20, 'THE LAST CUT', '#e2472f');
+    addToast('THE LAST CUT', '×3 damage while at ½ heart');
+    Sfx.shieldUp();
+  }
   if (p.hp <= 0) {
+    // Second Skin: revive once per floor at ½ heart
+    if (p.stats.secondSkin > 0 && !p.secondSkinUsed) {
+      p.secondSkinUsed = true;
+      p.hp = 1;
+      p.invT = 1.5;
+      G.flash = 0.6;
+      addShake(10);
+      spawnText(p.x, p.y - 20, 'SECOND SKIN', '#e2472f');
+      addToast('SECOND SKIN', 'you refuse to die — once per floor');
+      Sfx.shieldUp();
+      return;
+    }
     p.hp = 0;
     p.deathT = 0;
     gameOver();

@@ -318,9 +318,9 @@ step(30, 16);
 
 console.log('== expanded perk and item rosters ==');
 {
-  check('41 new items added (14 phase-2 + 12 phase-3 passives)', Object.keys(ctx.ITEMS).length === 72);
+  check('41 new items added (14 phase-2 + 12 phase-3 + 10 legendaries)', Object.keys(ctx.ITEMS).length === 82);
   const newPerks = ['critbone', 'critmeat', 'flensing', 'ember', 'frostbile', 'heavyhand', 'thickhide', 'secondwind', 'scrapfeed', 'boneknit', 'spiteflesh', 'carrion', 'sinew'];
-  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib', 'chillgland', 'hookedsinew', 'gyroscopicribs', 'marrowpiston', 'splitcortex', 'gristlecord', 'renderedfat', 'whipcordtendon', 'rusteddiadem', 'gorgedtick', 'bonemealpowder', 'rimedfang', 'butcherstwine', 'cindersump', 'deadweight', 'cauterizedveins', 'hollowchoir', 'sawbonecoil', 'gluttonsgut', 'slaughterrhythm', 'painengine', 'thresherplate', 'bloodmoat', 'ironlung', 'meathook', 'blooddebt'];
+  const newItems = ['chainsinew', 'mortarbone', 'bloatrounds', 'marrowglut', 'hollowneedle', 'bloodshoteye', 'flayerkiss', 'emberjar', 'acidgland', 'hookrounds', 'sledgerounds', 'graftedtrigger', 'deadmanswitch', 'orbitcrown', 'tannedhide', 'deadmansclock', 'hollowbones', 'boneplate', 'wormgut', 'spinecage', 'secondstomach', 'spitewell', 'twinhearts', 'brassmagazine', 'crowbait', 'gorgingleech', 'rerollrib', 'chillgland', 'hookedsinew', 'gyroscopicribs', 'marrowpiston', 'splitcortex', 'gristlecord', 'renderedfat', 'whipcordtendon', 'rusteddiadem', 'gorgedtick', 'bonemealpowder', 'rimedfang', 'butcherstwine', 'cindersump', 'deadweight', 'cauterizedveins', 'hollowchoir', 'sawbonecoil', 'gluttonsgut', 'slaughterrhythm', 'painengine', 'thresherplate', 'bloodmoat', 'ironlung', 'meathook', 'blooddebt', 'butchersoath', 'secondskin', 'twinsidearm', 'crimsonmetronome', 'abattoirengine', 'gorecrown', 'thousandteeth', 'hollowfather', 'thelastcut', 'meatgrinder'];
   check('all new perks have manifest icons or fallbacks', newPerks.every(id => ctx.SPRITE_MANIFEST.includes('perk_' + id)));
   check('all new items have manifest icons or fallbacks', newItems.every(id => ctx.SPRITE_MANIFEST.includes('i_' + id)));
   check('new roster entries all have names, descriptions and effects',
@@ -367,10 +367,13 @@ console.log('== scrap feed has diminishing returns (like thick hide) ==');
   check('first stack ~5% saving', Math.abs(s1 - (1 - 1 / 1.05)) < 0.0001);
   check('each stack helps less', d2 < d1 && d3 < d2);
   check('saving never reaches 100%', save() < 1);
-  // Brass Magazine still multiplies on top (unchanged)
+  // Brass Magazine uses the same diminishing additive formula as Scrap Feed
   const s2x = { ammoEff: 1, ammoPickupMul: 1 };
   ctx.ITEMS.brassmagazine.apply(s2x, {});
-  check('brass magazine stays multiplicative', Math.abs(s2x.ammoEff - 1.15) < 0.0001);
+  check('brass magazine is additive-diminishing (not multiplicative)', Math.abs(s2x.ammoEff - 1.10) < 0.0001);
+  const s2y = { ammoEff: 1, ammoPickupMul: 1 };
+  for (let i = 0; i < 5; i++) ctx.ITEMS.brassmagazine.apply(s2y, {});
+  check('brass magazine never reaches 50% saving', 1 - 1 / s2y.ammoEff < 0.5);
 }
 
 console.log('== close-range weapon impact pass ==');
@@ -496,6 +499,33 @@ console.log('== tier-scaled items + duplicate favoring ==');
     if (p.items[ctx.randomItemId()]) ownedHits++;
   }
   check('item rolls favor owned items (' + ownedHits + '/200)', ownedHits >= 40);
+}
+
+console.log('== phase-4 boss-exclusive legendaries ==');
+{
+  const p = ctx.G.player;
+  p.items = {};
+  // boss pool is the only source that can roll legendaries
+  let bossLegendaries = 0;
+  for (let i = 0; i < 400; i++) if (ctx.ITEMS[ctx.rollItemId('boss', 5)].rarity === 'legendary') bossLegendaries++;
+  check('boss pool can roll legendaries (' + bossLegendaries + '/400)', bossLegendaries > 10);
+  // Butcher's Oath: big damage, HP clamped to 2
+  const savedMax = p.stats.maxHp, savedHp = p.hp;
+  p.stats.maxHp = 10; p.hp = 10;
+  ctx.giveItem('butchersoath');
+  check('Butcher\'s Oath clamps max HP to 2', p.stats.maxHp === 2 && p.hp === 2);
+  p.stats.maxHp = savedMax; p.hp = savedHp; delete p.items.butchersoath;
+  // Second Skin: revive once per floor at ½ heart
+  p.stats.secondSkin = 0; p.secondSkinUsed = false;
+  ctx.giveItem('secondskin');
+  p.hp = 1; p.invT = 0; ctx.G.mode = 'play';
+  ctx.hurtPlayer(9999, 0);
+  check('Second Skin revives at ½ heart', p.hp === 1 && p.secondSkinUsed === true && ctx.G.mode === 'play');
+  // second death same floor is real
+  p.invT = 0;
+  ctx.hurtPlayer(9999, 0);
+  check('Second Skin only works once per floor', ctx.G.mode === 'gameover');
+  ctx.startRun(); step(3, 16);
 }
 
 console.log('== phase-3 hook passives ==');
@@ -984,7 +1014,7 @@ console.log('== item stickiness ramps with owned count ==');
 
 console.log('== help manual grows with the implant roster ==');
 {
-  check('10 help pages (4 implant pages for 72 items)', ctx.HELP_PAGES.length === 10);
+  check('10 help pages (4 implant pages for 82 items)', ctx.HELP_PAGES.length === 10);
   check('10 help renderers', ctx.HELP_RENDERERS.length === 10);
   ctx.G.player = ctx.G.player || {};
   const fctx = fakeCtx();
