@@ -31,6 +31,8 @@ const G = {
   roomDamaged: false,
   roomEnterT: 0,
   recentHits: [],
+  confirmAction: null,
+  confirmT: 0,
   transition: 0,       // room transition fade
   muted: false,
   pauseHelp: false,

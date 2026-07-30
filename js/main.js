@@ -3,6 +3,10 @@
 let canvas, ctx, lastT = 0;
 
 const PRESSURE_SLIDER_RECT = { x: 300, y: 470, w: 360, h: 46 };
+const MENU_EXIT_BUTTON = { x: W - 208, y: H - 48, w: 180, h: 28 };
+const PAUSE_MENU_BUTTON = { x: W / 2 - 122, y: 522, w: 116, h: 28 };
+const PAUSE_EXIT_BUTTON = { x: W / 2 + 6, y: 522, w: 116, h: 28 };
+const CONFIRM_WINDOW = 3;
 
 function pauseBars() {
   const x = W / 2 - 55, w = 225;
@@ -87,21 +91,53 @@ function fitCanvas() {
   canvas.style.height = Math.floor(H * k) + 'px';
 }
 
-function startRun() {
+function resetRun() {
   Sfx.init(); Sfx.resume();
   Sfx.stopAllLoops(); Sfx.menu();
   G.floor = 1; G.score = 0; G.kills = 0; G.time = 0;
   G.parts = []; G.corpses = []; G.toasts = []; G.pendingLevelups = 0; G.perkChoices = null;
   G.pauseHelp = false; G.helpPage = 0;
+  G.confirmAction = null; G.confirmT = 0;
   G.pressure = 1; G.streak = 0; G.roomDamaged = false; G.roomEnterT = 0; G.recentHits = [];
   G.shake = 0; G.flash = 0;
   initPlayer();
   genFloor(1);
   enterRoom(0, 0);
   G.player.shieldHp = G.player.stats.shieldPerk || 0;
+}
+
+function startRun() {
+  resetRun();
   G.mode = 'play';
   Music.requestFloorMusic();
   addToast('FLOOR 1', 'clear the rooms. find the stairs. feed.');
+}
+
+function returnToMenu() {
+  resetRun();
+  G.mode = 'menu';
+  G.toasts = [];
+  Music.playMenu();
+}
+
+function quitToDesktop() {
+  if (window.MSDesktop && typeof window.MSDesktop.quit === 'function') {
+    window.MSDesktop.quit();
+    return;
+  }
+  window.close();
+  addToast('EXIT BLOCKED', 'close this browser tab to exit.');
+}
+
+function confirmAction(name, action) {
+  if (G.confirmAction === name && G.confirmT > 0) {
+    G.confirmAction = null; G.confirmT = 0;
+    action();
+    return;
+  }
+  G.confirmAction = name;
+  G.confirmT = CONFIRM_WINDOW;
+  Sfx.menu();
 }
 
 function gameOver() {
@@ -125,6 +161,10 @@ function loop(now) {
 
 function update(dt) {
   Music.update(dt);
+  if (G.confirmT > 0) {
+    G.confirmT = Math.max(0, G.confirmT - dt);
+    if (G.confirmT <= 0) G.confirmAction = null;
+  }
 
   // global keys
   if (keyPressed('m')) {
@@ -136,6 +176,11 @@ function update(dt) {
   switch (G.mode) {
     case 'menu': {
       const sl = PRESSURE_SLIDER_RECT;
+      const exitClick = Input.mpressed && inRect(Input.mx, Input.my, MENU_EXIT_BUTTON);
+      if (keyPressed('x') || exitClick) {
+        confirmAction('desktop', quitToDesktop);
+        break;
+      }
       if (keyPressed('arrowleft', 'a', '-', '_')) setPressureDial(G.pressureDial - 1);
       if (keyPressed('arrowright', 'd', '=', '+')) setPressureDial(G.pressureDial + 1);
       if (Input.mpressed && inRect(Input.mx, Input.my, sl)) G.menuDialDrag = true;
@@ -143,12 +188,12 @@ function update(dt) {
         setPressureDial(Math.round(((Input.mx - sl.x) / sl.w) * 10) - 5);
       }
       if (!Input.mdown) G.menuDialDrag = false;
-      if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl))) startRun();
+      if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl) && !exitClick)) startRun();
       break;
     }
     case 'play':
       G.time += dt;
-      if (keyPressed('p', 'escape')) { G.mode = 'pause'; Sfx.stopAllLoops(); Sfx.menu(); break; }
+      if (keyPressed('p', 'escape')) { G.mode = 'pause'; G.confirmAction = null; G.confirmT = 0; Sfx.stopAllLoops(); Sfx.menu(); break; }
       if (keyPressed('n')) Music.cycle(1);
       if (keyPressed('r')) swapWeapon();
       if (keyPressed(' ')) useActive();
@@ -167,11 +212,15 @@ function update(dt) {
       updateLevelup();
       updateParticles(dt);
       break;
-    case 'pause':
+    case 'pause': {
       if (G.pauseHelp) { updatePauseHelp(); break; }
-      if (keyPressed('p', 'escape')) { G.mode = 'play'; Sfx.menu(); break; }
+      const menuClick = Input.mpressed && inRect(Input.mx, Input.my, PAUSE_MENU_BUTTON);
+      const exitClick = Input.mpressed && inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
+      if (keyPressed('q') || menuClick) { confirmAction('menu', returnToMenu); break; }
+      if (keyPressed('x') || exitClick) { confirmAction('desktop', quitToDesktop); break; }
+      if (keyPressed('p', 'escape')) { G.mode = 'play'; G.confirmAction = null; G.confirmT = 0; Sfx.menu(); break; }
       if (keyPressed('h') || (Input.mpressed && inRect(Input.mx, Input.my, HELP_BUTTON))) {
-        G.pauseHelp = true; G.helpPage = 0; Sfx.menu(); break;
+        G.pauseHelp = true; G.helpPage = 0; G.confirmAction = null; G.confirmT = 0; Sfx.menu(); break;
       }
       if (keyPressed('r')) swapWeapon(true);
       if (keyPressed('t')) setAutoPerk(!G.autoPerk);
@@ -202,6 +251,7 @@ function update(dt) {
         else if (dist(Input.mx, Input.my, W / 2 + 200, H / 2 + 60) < 22) Music.cycle(1);
       }
       break;
+    }
     case 'gameover':
       updateParticles(dt);
       if (keyPressed('r', 'enter', ' ') || Input.mpressed) startRun();
@@ -333,6 +383,13 @@ function drawMenu(ctx) {
       width: 148, height: 26, color: '#e0b94e', accent: '#a47e25',
     });
   }
+  const exitHover = inRect(Input.mx, Input.my, MENU_EXIT_BUTTON);
+  const exitConfirm = G.confirmAction === 'desktop';
+  drawPixelTag(ctx, exitConfirm ? '[X] CONFIRM EXIT' : '[X] EXIT TO DESKTOP', MENU_EXIT_BUTTON.x, MENU_EXIT_BUTTON.y, {
+    width: MENU_EXIT_BUTTON.w, height: MENU_EXIT_BUTTON.h,
+    color: exitConfirm ? '#ffd36a' : (exitHover ? '#f5e9d6' : '#ad8f8c'),
+    accent: exitConfirm ? '#d69a22' : (exitHover ? '#e22b46' : '#6e3843'),
+  });
 }
 
 function drawPressureDial(ctx) {
@@ -422,9 +479,20 @@ function drawPause(ctx) {
   drawPixelTag(ctx, '[R] SWAP', W / 2 - 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
   drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), W / 2, 502, { width: 112, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
   drawPixelTag(ctx, '[M] MUTE', W / 2 + 125, 502, { width: 112, height: 28, color: '#bba9a1', accent: '#6e3843' });
-  ctx.fillStyle = '#69585a'; ctx.font = '9px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('ARROWS / CLICK CHANGE TRACK  ·  DRAG SLIDERS  ·  LIVE BOSSES OVERRIDE TRACK', W / 2, 543);
+  const menuHover = inRect(Input.mx, Input.my, PAUSE_MENU_BUTTON);
+  const exitHover = inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
+  const menuConfirm = G.confirmAction === 'menu';
+  const exitConfirm = G.confirmAction === 'desktop';
+  drawPixelTag(ctx, menuConfirm ? '[Q] CONFIRM MENU' : '[Q] MAIN MENU', PAUSE_MENU_BUTTON.x, PAUSE_MENU_BUTTON.y, {
+    width: PAUSE_MENU_BUTTON.w, height: PAUSE_MENU_BUTTON.h,
+    color: menuConfirm ? '#ffd36a' : (menuHover ? '#f5e9d6' : '#bba9a1'),
+    accent: menuConfirm ? '#d69a22' : (menuHover ? '#b5243a' : '#6e3843'),
+  });
+  drawPixelTag(ctx, exitConfirm ? '[X] CONFIRM EXIT' : '[X] EXIT', PAUSE_EXIT_BUTTON.x, PAUSE_EXIT_BUTTON.y, {
+    width: PAUSE_EXIT_BUTTON.w, height: PAUSE_EXIT_BUTTON.h,
+    color: exitConfirm ? '#ffd36a' : (exitHover ? '#f5e9d6' : '#bba9a1'),
+    accent: exitConfirm ? '#d69a22' : (exitHover ? '#b5243a' : '#6e3843'),
+  });
 
   const hb = HELP_BUTTON;
   const helpHover = inRect(Input.mx, Input.my, hb);

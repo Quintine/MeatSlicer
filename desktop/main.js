@@ -2,7 +2,7 @@
 // Serves the game over a privileged app:// scheme so the renderer keeps a real
 // origin: fetch() in js/sfxbank.js uses absolute /assets/... paths, and 28 mp3
 // tracks stream through <audio> elements. Both need standard+stream privileges.
-const { app, BrowserWindow, Menu, net, protocol } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, net, protocol } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -46,6 +46,11 @@ function createWindow() {
     backgroundColor: '#040305', // matches css/style.css body
     show: false,
     autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   });
   Menu.setApplicationMenu(null);
   win.once('ready-to-show', () => win.show());
@@ -126,6 +131,7 @@ function installVerifyHarness(win) {
 }
 
 app.whenReady().then(() => {
+  ipcMain.on('ms-quit', () => app.quit());
   installProtocol();
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
