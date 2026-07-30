@@ -84,9 +84,9 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 |---|---|
 | **Enter / Space / Click** | Start run (title), restart after death |
 
-The title screen has **[X] Exit to Desktop**. Pause has **[Q] Main Menu** and **[X] Exit**.
+The desktop app title screen has **[X] Exit to Desktop**. Pause has **[Q] Main Menu** and **[X] Exit**.
 The first matching press arms a 3-second confirmation; press it again to confirm. `P` or
-`Escape` resumes. Electron quits directly; the browser fallback asks you to close the tab.
+`Escape` resumes. In a web browser, desktop-exit controls are greyed out and non-interactive.
 
 Right-click is disabled (context menu suppressed). There is **no dash, no interact key** — pickups are collected by walking over them.
 

@@ -1582,6 +1582,7 @@ check('restart works', ctx.G.mode === 'play' && ctx.G.floor === 1);
 
 console.log('== confirmed destructive actions ==');
 {
+  check('web renderer disables desktop-only exit', ctx.canQuitDesktop() === false);
   let fired = 0;
   ctx.confirmAction('probe', () => fired++);
   check('first destructive action arms confirmation without firing', ctx.G.confirmAction === 'probe' && ctx.G.confirmT > 2.9 && fired === 0);
