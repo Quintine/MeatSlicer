@@ -176,9 +176,9 @@ function giveItem(iid) {
     spawnText(p.x, p.y - 14, 'UPGRADED!', '#ffd060');
   } else {
     addToast(item.name, item.desc);
-    spawnText(p.x, p.y - 14, item.name.toUpperCase(), '#c9a227');
+    spawnText(p.x, p.y - 14, item.name.toUpperCase(), ITEM_RARITY[item.rarity].color);
   }
-  Sfx.item();
+  if (item.rarity === 'legendary') Sfx.curse(); else Sfx.item();
   refreshOrbitals(p);
 }
 

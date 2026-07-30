@@ -3,12 +3,12 @@ const Sfx = {
   ctx: null, master: null, comp: null, glue: null, limiter: null, muted: false,
   mixBus: null, musicBus: null, musicMute: null, duckGain: null, saturators: {},
   buses: {}, active: [], procedural: [], lastPlayed: new Map(), currentWeaponLoop: null,
-  footstepN: 0, fleshN: 0, wallN: 0, goreN: 0,
+  fleshN: 0, wallN: 0, goreN: 0,
   lastPunch: -999, lastPunchLevel: 0,
   maxVoices: 24,
   cooldowns: {
     hit: 0.035, crit: 0.07, ricochet: 0.05, wallHit: 0.045, sawHit: 0.09, gem: 0.025,
-    enemyDie: 0.04, goreBurst: 0.055, footstep: 0.10, lifesteal: 0.12,
+    enemyDie: 0.04, goreBurst: 0.055, lifesteal: 0.12,
     loop_wpnloop_bile: 0.12, loop_wpnloop_cauterizer: 0.12,
     loop_wpnloop_redhand: 0.11, loop_wpnloop_spinaltap_charge: 0.12,
   },
@@ -302,36 +302,6 @@ const Sfx = {
     this.blip(260, .14, 'sine', .2, 180, 'voices');
   },
   playerDeath() { this.stopAllLoops(); if (this.sample('plr_death', 'voices', null, 1, 'playerDeath')) return; this.thump(80, .65, .7, 25, 'voices'); this.noise(.7, .45, 350, 'voices'); },
-  footstep(strength, wet) {
-    if (!this.canPlay('footstep')) return;
-    this.footstepN = (this.footstepN % 4) + 1;
-    const dryName = 'plr_step' + this.footstepN;
-    const wanted = wet ? 'plr_step_wet' + this.footstepN : dryName;
-    const force = strength === undefined ? 1 : clamp(strength, .55, 1);
-    const side = this.footstepN % 2 ? .96 : 1.04;
-    const gain = .66 * force * side;
-    let sampled = false;
-    if (typeof SfxBank !== 'undefined' && SfxBank.buffers.has(wanted)) {
-      this.enforceVoiceLimit();
-      sampled = SfxBank.play(wanted, this.output('impacts', null), {
-        gain: gain * rand(.96, 1.04), rate: rand(.965, 1.035),
-      });
-    } else if (typeof SfxBank !== 'undefined') {
-      SfxBank.want(wanted);
-      // Keep the gait audible while a wet variant is still decoding.
-      if (wet && SfxBank.buffers.has(dryName)) {
-        this.enforceVoiceLimit();
-        sampled = SfxBank.play(dryName, this.output('impacts', null), { gain: gain * .9, rate: rand(.97, 1.03) });
-      }
-    }
-    this.punch(.18 * force * side);
-    if (!sampled) {
-      if (wet) {
-        this.noise(.08, .17 * force, 360, 'impacts');
-        this.noise(.025, .05 * force, 1500, 'impacts', null, true);
-      } else this.noise(.055, .13 * force, 420, 'impacts');
-    }
-  },
   ricochet(pos) { if (this.sample('imp_ricochet', 'impacts', pos, .5, 'ricochet')) return; this.blip(rand(1400, 1900), .045, 'triangle', .12, -500, 'impacts', pos); },
 
   wallHit(pos) {
@@ -376,8 +346,10 @@ const Sfx = {
   ammo() { this.ui('ammo', () => { this.click(.14, 1600, 'ui'); this.blip(520, .08, 'square', .12, -80, 'ui'); }); },
   weapon() { this.ui('weapon', () => { this.thump(120, .14, .4, 50, 'ui'); this.blip(300, .1, 'square', .25, 200, 'ui'); this.blip(450, .12, 'square', .2, 250, 'ui'); }); },
   item() { this.ui('item', () => { this.thump(100, .2, .4, 45, 'ui'); this.blip(350, .15, 'triangle', .3, 150, 'ui'); this.blip(525, .2, 'triangle', .25, 200, 'ui'); }); },
-  active() { this.thump(140, .22, .5, 60, 'ui'); this.blip(700, .12, 'sawtooth', .28, 500, 'ui'); this.noise(.1, .14, 2400, 'ui', null, true); },
-  activeEmpty() { this.blip(220, .12, 'square', .18, -90, 'ui'); },
+  active() { this.ui('active', () => { this.thump(140, .22, .5, 60, 'ui'); this.blip(700, .12, 'sawtooth', .28, 500, 'ui'); this.noise(.1, .14, 2400, 'ui', null, true); }); },
+  activeEmpty() { this.ui('active_empty', () => this.blip(220, .12, 'square', .18, -90, 'ui')); },
+  curse() { this.ui('curse', () => { this.thump(60, .5, .5, 30, 'ui'); this.blip(180, .4, 'sawtooth', .22, -60, 'ui'); }); },
+  revive() { if (this.sample('plr_revive', 'voices', null, .85, 'revive')) return; this.blip(500, .3, 'sine', .25, 300, 'ui'); this.thump(100, .3, .4, 50, 'ui'); },
   levelup() { this.ui('levelup', () => { this.blip(400, .12, 'square', .25, 200, 'ui'); setTimeout(() => this.blip(600, .12, 'square', .25, 200, 'ui'), 100); setTimeout(() => this.blip(800, .2, 'square', .25, 200, 'ui'), 200); }); },
   perk() { this.ui('perk', () => this.blip(500, .1, 'square', .25, 300, 'ui')); },
   menu() { this.ui('menu', () => this.blip(620, .055, 'square', .11, 120, 'ui')); },

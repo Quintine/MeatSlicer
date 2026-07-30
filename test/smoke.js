@@ -180,21 +180,14 @@ step(12, 16);
 const aimDeltaBeforeIdle = Math.abs(Math.atan2(Math.sin(ctx.G.player.aim - idleBodyFacing), Math.cos(ctx.G.player.aim - idleBodyFacing)));
 const aimDeltaAfterIdle = Math.abs(Math.atan2(Math.sin(ctx.G.player.aim - ctx.G.player.bodyFacing), Math.cos(ctx.G.player.aim - ctx.G.player.bodyFacing)));
 check('legs rotate back toward aim after movement stops', aimDeltaAfterIdle < aimDeltaBeforeIdle);
-let footstepCalls = 0, wetFootsteps = 0;
-const realFootstep = ctx.Sfx.footstep;
 const decalStart = ctx.G.cur.decals.length;
 for (const offset of [45, 90, 135, 180]) {
   ctx.G.cur.decals.push({ x: ctx.G.player.x + offset, y: ctx.G.player.y, s: 1.6, rot: 0, img: 'decal_blood1' });
 }
 check('gore proximity query detects blood underfoot', ctx.onGore(ctx.G.player.x + 45, ctx.G.player.y));
-ctx.Sfx.footstep = (_strength, wet) => { footstepCalls++; if (wet) wetFootsteps++; };
 press('d'); step(60, 16); release('d');
-const movingFootsteps = footstepCalls;
 step(30, 16);
-ctx.Sfx.footstep = realFootstep;
 ctx.G.cur.decals.splice(decalStart);
-check('stride-9 cycle emits synchronized footsteps', movingFootsteps >= 2 && footstepCalls === movingFootsteps);
-check('blood decals select wet footstep events', wetFootsteps >= 1);
 ctx.Input.mdown = true; ctx.Input.mx = 700; ctx.Input.my = 300;
 step(30, 16);
 check('bullets fired', ctx.G.bullets.length > 0 || ctx.G.kills >= 0); // may have hit nothing

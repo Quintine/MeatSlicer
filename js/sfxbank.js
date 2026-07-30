@@ -79,6 +79,10 @@ const SfxBank = {
     ui_perk: 'ui_perk.mp3',
     ui_stairs: 'ui_stairs.mp3',
     ui_menu: 'ui_menu.mp3',
+    ui_active: 'ui_active.mp3',
+    ui_active_empty: 'ui_active_empty.mp3',
+    ui_curse: 'ui_curse.mp3',
+    plr_revive: 'plr_revive.mp3',
 
     imp_crit: 'imp_crit.mp3',
     imp_ricochet: 'imp_ricochet.mp3',
@@ -88,14 +92,6 @@ const SfxBank = {
     plr_death: 'plr_death.mp3',
     plr_shield_break: 'plr_shield_break.mp3',
     plr_shield_up: 'plr_shield_up.mp3',
-    plr_step1: 'plr_step1.mp3',
-    plr_step2: 'plr_step2.mp3',
-    plr_step3: 'plr_step3.mp3',
-    plr_step4: 'plr_step4.mp3',
-    plr_step_wet1: 'plr_step_wet1.mp3',
-    plr_step_wet2: 'plr_step_wet2.mp3',
-    plr_step_wet3: 'plr_step_wet3.mp3',
-    plr_step_wet4: 'plr_step_wet4.mp3',
     imp_flesh1: 'imp_flesh1.mp3',
     imp_flesh2: 'imp_flesh2.mp3',
     imp_flesh3: 'imp_flesh3.mp3',
@@ -115,7 +111,7 @@ const SfxBank = {
     if (this.buffers.has(name) || this.pending.has(name) || this.failed.has(name)) return;
     const file = this.FILES[name];
     if (!file || !this.ctx || typeof fetch !== 'function') return;
-    const job = fetch('/assets/sfx/' + encodeURIComponent(file) + '?v=41')
+    const job = fetch('/assets/sfx/' + encodeURIComponent(file) + '?v=42')
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
       .then(bytes => this.ctx.decodeAudioData(bytes))
       .then(buffer => this.buffers.set(name, this.trim(buffer)))

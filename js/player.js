@@ -5,7 +5,7 @@ function initPlayer() {
     x: W / 2, y: H / 2, r: 20,
     hp: 6, shieldHp: 0,
     aim: 0, bodyFacing: 0, fireT: 0, charge: 0, invT: 0, frenzyT: 0,
-    step: 0, stepTick: 0, moveBlend: 0, recoil: 0, muzzleT: 0,
+    step: 0, moveBlend: 0, recoil: 0, muzzleT: 0,
     animT: 0, attackT: 0, actionT: 0, hitT: 0, deathT: 0,
     weapon: { id: 'bonepopper', ammo: Infinity },
     holstered: null,   // a special weapon set aside while the pistol is out
@@ -76,15 +76,11 @@ function updatePlayer(dt) {
     p.x += (mx / len) * spd * dt;
     p.y += (my / len) * spd * dt;
     p.step += dt * 9 * Math.min(st.speedMul, 1.8);
-    const stepTick = Math.floor(p.step / Math.PI);
-    if (stepTick !== p.stepTick && p.hp > 0) Sfx.footstep(p.moveBlend, onGore(p.x, p.y));
-    p.stepTick = stepTick;
   }
   else {
     // Finish on a planted contact frame instead of freezing halfway through a stride.
     const planted = Math.round(p.step / Math.PI) * Math.PI;
     p.step = lerp(p.step, planted, clamp(dt * 10, 0, 1));
-    p.stepTick = Math.round(p.step / Math.PI);
   }
   p.moveBlend = lerp(p.moveBlend, mx || my ? 1 : 0, clamp(dt * 12, 0, 1));
   p.recoil = Math.max(0, p.recoil - dt * 7);
@@ -339,7 +335,7 @@ function hurtPlayer(dmg, ang, attacker) {
       addShake(10);
       spawnText(p.x, p.y - 20, 'SECOND SKIN', '#e2472f');
       addToast('SECOND SKIN', 'you refuse to die — once per floor');
-      Sfx.shieldUp();
+      Sfx.revive();
       return;
     }
     p.hp = 0;

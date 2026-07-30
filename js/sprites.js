@@ -84,7 +84,7 @@ const Sprites = {
       const img = new Image();
       img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
       img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=41';
+      img.src = 'assets/' + name + '.png?v=42';
     }
   },
 
