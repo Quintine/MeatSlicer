@@ -14,12 +14,7 @@ MeatSlicer is an endless top-down arena roguelite. You are the Butcher, descendi
 | [Perks](perks.md) | All 23 Mutation Draft perks, XP curve, draft mechanics |
 | [Enemies](enemies.md) | All 11 enemy types, elites, drops, wave and scaling formulas |
 | [Bosses](bosses.md) | All 9 bosses: rotation, scaling, full attack patterns, counters |
-
-For developers:
-
-| Doc | Contents |
-|---|---|
-| [Debug Console](dev-debug.md) | Hidden dev-only cheat/inspection toolset (backtick `` ` `` key, `--dev` flag): all 8 tabs, run tainting, stat-rebuild internals |
+| [Debug Console](dev-debug.md) | In-game cheat/inspection toolset (backtick `` ` `` key, `--dev` flag): all 8 tabs, run tainting, stat-rebuild internals |
 | [Changelog](CHANGELOG.md) | Release history by version |
 
 ### Quick numbers
@@ -63,6 +58,15 @@ npm test
 ```
 
 Runs the smoke test (`test/smoke.js`).
+
+### Debug console
+
+An in-game cheat/inspection panel is available in dev builds. Launch with the
+dev flag — `MeatSlicer.exe --dev`, `npm start -- --dev`, or `play-dev.bat` /
+`http://localhost:8123/?dev=1` in a browser — then press the **backtick `` ` ``**
+key in play or pause. Eight tabs cover health, weapons, items, perks, pressure,
+spawning enemies/bosses, timescale, visualizers, and a live stats readout. Using
+mutating actions voids the run's best score. See [Debug Console](dev-debug.md).
 
 ## Tech overview
 

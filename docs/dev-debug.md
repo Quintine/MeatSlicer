@@ -1,7 +1,8 @@
-# Debug Console (dev only)
+# Debug Console
 
-A hidden in-game cheat / inspection toolset. Not linked from the player-facing
-help manual — it is meant to stay undiscovered in normal play.
+An in-game cheat / inspection toolset. It is gated behind a dev launch flag so
+it doesn't interfere with normal play, and it's documented here because the
+game is still in development — testers and players are welcome to use it.
 
 ## Enabling it
 

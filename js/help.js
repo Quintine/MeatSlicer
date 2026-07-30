@@ -105,6 +105,10 @@ function drawHelpControls(ctx, px, py) {
       'ENTER / SPACE / CLICK — START RUN · R / ENTER — RESTART AFTER DEATH',
       'PICKUPS ARE COLLECTED BY WALKING OVER THEM — NO INTERACT KEY',
     ] },
+    { head: 'DEBUG CONSOLE (DEV BUILD)', lines: [
+      '` / ~ — CHEAT & INSPECTION PANEL · ENABLE WITH --dev OR ?dev=1',
+      'SET STATS / ITEMS / PRESSURE, SPAWN ENEMIES & BOSSES — SEE docs/dev-debug.md',
+    ] },
   ], HELP_PANEL.w - 80);
 }
 
