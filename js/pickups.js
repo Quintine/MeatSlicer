@@ -117,7 +117,7 @@ function collectPickup(k) {
       if (old) {
         const a = rand(0, TAU);
         spawnPickup('weapon', p.x + Math.cos(a) * 34, p.y + Math.sin(a) * 34,
-          { wid: old.id, ammo: old.ammo, delay: 0.6 });
+          { wid: old.id, ammo: old.ammo, delay: WEAPON_DROP_LOCKOUT });
       }
       p.weapon = { id: w.id, ammo: k.ammo !== undefined ? k.ammo : w.ammo };
       p.holstered = null;

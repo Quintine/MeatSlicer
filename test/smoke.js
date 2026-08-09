@@ -324,6 +324,30 @@ console.log('== upgrade card click does not fire ==');
   check('card click fires no bullet (mdown not carried into play)', ctx.G.bullets.length === 0);
 }
 
+console.log('== dropped weapon lockout ==');
+{
+  ctx.startRun(); step(3, 16); // clean, armed player in play mode
+  const p = ctx.G.player;
+  p.weapon = { id: 'cleaver', ammo: 60 }; p.holstered = null;
+  ctx.G.pickups.length = 0;
+  ctx.spawnPickup('weapon', p.x, p.y, { wid: 'repeater', ammo: 30 });
+  ctx.updatePickups(0.016); ctx.updatePickups(0.016); // pick up the repeater
+  check('weapon swap happens instantly on fresh loot', p.weapon.id === 'repeater');
+  const drop = ctx.G.pickups.find(k => k.type === 'weapon');
+  check('old weapon dropped with the lockout delay', !!drop && Math.abs(drop.delay - ctx.WEAPON_DROP_LOCKOUT) < 0.1);
+  if (drop) { drop.vx = 0; drop.vy = 0; } // hold it still for the timing checks
+  // standing on the drop, it must stay uncollectible for ~70% of the lockout
+  const blockedFor = Math.floor(ctx.WEAPON_DROP_LOCKOUT * 0.7 / 0.016);
+  for (let i = 0; i < blockedFor; i++) { p.x = drop.x; p.y = drop.y; ctx.updatePickups(0.016); }
+  const stillBlocked = ctx.G.pickups.some(k => k.type === 'weapon') && p.weapon.id === 'repeater';
+  check('dropped weapon stays un-pickable inside the lockout window', stillBlocked);
+  // the remaining ~30% (plus margin) lets it be re-picked
+  const collectFor = Math.ceil(ctx.WEAPON_DROP_LOCKOUT / 0.016) + 10;
+  for (let i = 0; i < collectFor; i++) { p.x = drop.x; p.y = drop.y; ctx.updatePickups(0.016); }
+  check('dropped weapon re-pickable after the lockout', p.weapon.id === 'cleaver');
+  check('lockout constant is within the 2-3s request', ctx.WEAPON_DROP_LOCKOUT >= 2 && ctx.WEAPON_DROP_LOCKOUT <= 3);
+}
+
 autoDraft = true; // later sections must not get stuck in the perk draft
 
 console.log('== shield heart perk ==');
