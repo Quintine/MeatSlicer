@@ -15,6 +15,7 @@ MeatSlicer is an endless top-down arena roguelite. You are the Butcher, descendi
 | [Enemies](enemies.md) | All 11 enemy types, elites, drops, wave and scaling formulas |
 | [Bosses](bosses.md) | All 9 bosses: rotation, scaling, full attack patterns, counters |
 | [Debug Console](dev-debug.md) | In-game cheat/inspection toolset (backtick `` ` `` key, `--dev` flag): all 8 tabs, run tainting, stat-rebuild internals |
+| [Development Guide](development.md) | Architecture, build/test workflow, Electron packaging, asset and audio pipelines, versioning, releases, and Git practices |
 | [Changelog](CHANGELOG.md) | Release history by version |
 
 ### Quick numbers
