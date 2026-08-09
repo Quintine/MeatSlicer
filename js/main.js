@@ -221,6 +221,10 @@ function update(dt) {
       break;
     case 'levelup':
       updateLevelup();
+      // A click that installed a perk must not carry the held button into play;
+      // updatePlayer fires on Input.mdown, so the very next frame would shoot.
+      // Same mask pattern as the pinned debug console below.
+      if (G.mode !== 'levelup') Input.mdown = false;
       updateParticles(dt);
       break;
     case 'debug':

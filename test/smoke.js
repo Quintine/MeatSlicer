@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, WEAPON_DROP_LOCKOUT, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -308,6 +308,22 @@ console.log('== rebalanced perks + automatic draft ==');
   ctx.G.autoPerk = false;
   ctx.startRun(); step(3, 16);
 }
+
+console.log('== upgrade card click does not fire ==');
+{
+  ctx.startRun(); step(3, 16); // fresh run in play mode
+  ctx.G.enemies.length = 0; // determinism: nothing can interfere
+  const perksBefore = ctx.G.player.perks.length;
+  ctx.G.pendingLevelups = 1; ctx.G.perkChoices = ctx.PERKS.slice(0, 3); ctx.G.mode = 'levelup';
+  // click inside card 0 (cards start at x=207, y=220, 170x230)
+  ctx.Input.mx = 300; ctx.Input.my = 300;
+  ctx.Input.mpressed = true; ctx.Input.mdown = true;
+  step(6, 16); // first frame consumes the click, the rest run with mdown held
+  check('card click exits the draft into play', ctx.G.mode === 'play');
+  check('card click grants exactly one perk', ctx.G.player.perks.length === perksBefore + 1);
+  check('card click fires no bullet (mdown not carried into play)', ctx.G.bullets.length === 0);
+}
+
 autoDraft = true; // later sections must not get stuck in the perk draft
 
 console.log('== shield heart perk ==');
