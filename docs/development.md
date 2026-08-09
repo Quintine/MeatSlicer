@@ -4,7 +4,7 @@ This guide consolidates the durable project knowledge used to develop, test,
 package, and maintain MeatSlicer. When this guide and the implementation
 disagree, the implementation and configuration files are the source of truth.
 
-**Memory version: 0.5.0**
+**Memory version: 0.5.2**
 
 ## Architecture
 
