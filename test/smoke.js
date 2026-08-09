@@ -1810,5 +1810,33 @@ check('debug console closes back to play', ctx.G.mode === 'play');
   ctx.G.mode = 'play';
 })();
 
+console.log('== crimson metronome heart loan ==');
+{
+  ctx.startRun(); step(3, 16); // self-contained: fresh player, empty arena
+  ctx.G.enemies.length = 0;
+  const p = ctx.G.player;
+  ctx.giveItem('crimsonmetronome');
+  check('metronome grants the loan flag', p.stats.crimsonMetronome === 1);
+  p.weapon = { id: 'repeater', ammo: 500 }; p.holstered = null; // per-shot trigger
+  p.hp = 6; p.metronomeCount = 0; p.metronomeTmp = 0;
+  const hpBefore = p.hp;
+  ctx.Input.mdown = true;
+  let guard = 0;
+  while (p.metronomeTmp === 0 && guard++ < 4000) step(1, 16);
+  ctx.Input.mdown = false;
+  check('8th shot lends ½ heart (not lost)', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+  ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('clean room clear repays the loan', p.hp === hpBefore && p.metronomeTmp === 0);
+  ctx.Input.mdown = true;
+  guard = 0;
+  while (p.metronomeTmp === 0 && guard++ < 4000) step(1, 16);
+  ctx.Input.mdown = false;
+  check('loan accrues again', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+  ctx.G.roomDamaged = true;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('hit room forfeits the loan', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+}
+
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : '\n' + failures + ' CHECKS FAILED');
 process.exit(failures === 0 ? 0 : 1);

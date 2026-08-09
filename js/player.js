@@ -31,6 +31,7 @@ function initPlayer() {
     animT: 0, attackT: 0, actionT: 0, hitT: 0, deathT: 0,
     weapon: { id: 'bonepopper', ammo: Infinity },
     holstered: null,   // a special weapon set aside while the pistol is out
+    metronomeTmp: 0,   // ½-hearts lent by Crimson Metronome, repaid on a clean clear
     level: 1, xp: 0,
     items: {},         // iid -> quality tier (1..3)
     perks: [],         // perk ids drafted this run, in grant order
@@ -155,10 +156,16 @@ function updatePlayer(dt) {
         p.choirCount = (p.choirCount || 0) + 1;
         if (p.choirCount >= 4) { p.choirCount = 0; fireWeapon(p, w); }
       }
-      // Crimson Metronome: every 8th shot costs ½ heart
+      // Crimson Metronome: every 8th shot lends ½ heart, repaid when the room clears clean
       if (st.crimsonMetronome > 0) {
         p.metronomeCount = (p.metronomeCount || 0) + 1;
-        if (p.metronomeCount >= 8) { p.metronomeCount = 0; p.hp = Math.max(0.5, p.hp - 1); spawnText(p.x, p.y - 14, '-½', '#e2472f'); }
+        if (p.metronomeCount >= 8) {
+          p.metronomeCount = 0;
+          const loss = Math.min(1, Math.max(0, p.hp - 0.5));
+          p.hp = Math.max(0.5, p.hp - 1);
+          p.metronomeTmp += loss; // on loan: restored by a clean room clear
+          spawnText(p.x, p.y - 14, '-½', '#e2472f');
+        }
       }
       p.recoil = Math.min(1, p.recoil + (w.behavior === 'slam' ? 1 : 0.45));
       p.muzzleT = 0.07;

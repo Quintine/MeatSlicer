@@ -94,7 +94,7 @@ const ITEMS = {
   butchersoath:  { name: "Butcher's Oath",   desc: '+80% damage, but max HP set to 2', rarity: 'legendary', cap: 1, apply: (s, p) => { s.dmgMul *= 1.8; s.maxHp = Math.min(s.maxHp, 2); p.hp = Math.min(p.hp, s.maxHp); } },
   secondskin:    { name: 'Second Skin',      desc: 'Revive once per floor at ½ heart', rarity: 'legendary', cap: 1, apply: s => { s.secondSkin += 1; } },
   twinsidearm:   { name: 'Twin Sidearm',     desc: 'Bone Popper double-taps; specials burn 2× ammo', rarity: 'legendary', cap: 1, apply: s => { s.twinSidearm += 1; } },
-  crimsonmetronome:{ name: 'Crimson Metronome', desc: '+60% fire rate; every 8th shot costs ½ heart', rarity: 'legendary', cap: 1, apply: s => { s.rateMul *= 1.6; s.crimsonMetronome += 1; } },
+  crimsonmetronome:{ name: 'Crimson Metronome', desc: '+60% fire rate; every 8th shot lends ½ heart, repaid if you clear the room clean', rarity: 'legendary', cap: 1, apply: s => { s.rateMul *= 1.6; s.crimsonMetronome += 1; } },
   abattoirengine:{ name: 'Abattoir Engine',  desc: 'Pressure rises 2× faster; score and luck ×1.5', rarity: 'legendary', cap: 1, apply: s => { s.abattoirEngine += 1; s.luck += 0.5; } },
   gorecrown:     { name: 'Gore Crown',       desc: 'Free nova on every kill, −25% damage', rarity: 'legendary', cap: 1, apply: s => { s.goreCrown += 1; s.dmgMul *= 0.75; } },
   thousandteeth: { name: 'Thousand Teeth',   desc: '+6 shards that can crit, −40% base bullet damage', rarity: 'legendary', cap: 1, apply: s => { s.thousandTeeth += 1; s.dmgMul *= 0.6; } },
