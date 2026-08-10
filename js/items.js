@@ -198,7 +198,7 @@ const ACTIVES = {
     spawnShockwave(p.x, p.y, 150, '#e8dcc2', 0.8); addShake(8);
   } },
   offalbomb:       { name: 'Offal Bomb',       desc: 'Gore bomb at the cursor',    cost: 1, use(p) {
-    explodeAt(Input.mx, Input.my, 95, 25 * p.stats.dmgMul, true);
+    explodeAt(mxW(), myW(), 95, 25 * p.stats.dmgMul, true);
   } },
   bloodtransfusion:{ name: 'Blood Transfusion', desc: 'Heal 2 hearts, lose 25% current XP', cost: 2, use(p) {
     p.xp = Math.floor(p.xp * 0.75);

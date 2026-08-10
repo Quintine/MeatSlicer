@@ -298,8 +298,11 @@ function draw() {
 
   if (G.mode === 'menu') { drawMenu(ctx); return; }
 
-  // world (with screen shake)
+  updateCamera();
+
+  // world (with camera + screen shake)
   ctx.save();
+  ctx.translate(-G.cam.x, -G.cam.y);
   if (G.shake > 0) ctx.translate(rand(-G.shake, G.shake) * 0.5, rand(-G.shake, G.shake) * 0.5);
   drawRoom(ctx);
   drawCorpses(ctx);
@@ -309,6 +312,7 @@ function draw() {
   drawBullets(ctx);
   drawParticles(ctx);
   drawTelegraphs(ctx);
+  if (G.devMode) drawDebugOverlays(ctx);
   ctx.restore();
 
   if (G.atmosphereLayer) ctx.drawImage(G.atmosphereLayer, 0, 0);
@@ -340,7 +344,7 @@ function draw() {
   else if (G.mode === 'pause') { drawPause(ctx); if (G.pauseHelp) drawPauseHelp(ctx); }
   else if (G.mode === 'gameover') drawGameOver(ctx);
   else if (G.mode === 'debug') drawDebug(ctx);
-  if (G.devMode) { drawDebugOverlays(ctx); if (G.debugPin && G.mode !== 'debug') drawDebugPin(ctx); }
+  if (G.devMode) { if (G.debugPin && G.mode !== 'debug') drawDebugPin(ctx); }
 }
 
 function drawMenu(ctx) {

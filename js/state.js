@@ -53,6 +53,7 @@ const G = {
   roomLayerKey: '',
   atmosphereLayer: null,
   arena: { x0: WALL, y0: WALL, x1: W - WALL, y1: H - WALL, cx: W / 2, cy: H / 2, w: W - WALL * 2, h: H - WALL * 2 },
+  cam: { x: 0, y: 0 },   // world coords of the viewport's top-left; 0,0 for every fit-to-screen room
 };
 
 const PERK_POWER_WEIGHT = 0.5;

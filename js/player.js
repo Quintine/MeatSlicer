@@ -95,7 +95,7 @@ function updatePlayer(dt) {
   p.y = clamp(p.y, G.arena.y0 + p.r, G.arena.y1 - p.r);
 
   // aim
-  p.aim = angleTo(p.x, p.y, Input.mx, Input.my);
+  p.aim = angleTo(p.x, p.y, mxW(), myW());
   // The waist and legs turn smoothly with travel while the weapon torso aims freely.
   // Once planted, the lower body turns back under the independently aimed torso.
   if (mx || my) {
