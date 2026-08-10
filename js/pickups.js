@@ -40,6 +40,18 @@ function updatePickups(dt) {
     k.vx *= 0.9; k.vy *= 0.9;
     const d = dist(k.x, k.y, p.x, p.y);
 
+    // nearby pickup: toast the description once per approach, re-arm on leaving
+    if (k.type === 'item' || k.type === 'active' || k.type === 'weapon') {
+      if (d < 90 && !k.toastNear) {
+        k.toastNear = true;
+        if (k.type === 'item') addToast(ITEMS[k.iid].name, ITEMS[k.iid].desc, 3.5);
+        else if (k.type === 'active') addToast(ACTIVES[k.aid].name, ACTIVES[k.aid].desc, 3.5);
+        else addToast(WEAPONS[k.wid].name, WEAPONS[k.wid].desc, 3.5);
+      } else if (d >= 90 && k.toastNear) {
+        k.toastNear = false; // re-arm once the player leaves the 90px radius
+      }
+    }
+
     // gems & small pickups fly to the player inside magnet radius
     if ((k.type === 'gem' || k.type === 'heart' || k.type === 'ammo') && d < magR) {
       const a = angleTo(k.x, k.y, p.x, p.y);

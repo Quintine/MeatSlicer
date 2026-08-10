@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -283,6 +283,11 @@ console.log('== XP / perks ==');
 ctx.gainXP(100);
 step(5, 16);
 check('levelup triggered', ctx.G.mode === 'levelup' || ctx.G.pendingLevelups > 0);
+check('perk selection is locked on first presentation', (ctx.G.selectionLock || 0) > 0);
+const lockedChoices = ctx.G.perkChoices;
+tap('1'); // ignored while the selection lock is active
+check('locked draft ignores selection input', ctx.G.perkChoices === lockedChoices);
+step(100, 16); // advance 1.6s in levelup mode, clearing the 1.5s selection lock
 let guard = 0;
 while (ctx.G.mode === 'levelup' && guard++ < 30) { tap('1'); step(2, 16); }
 check('perks drafted', ctx.G.mode === 'play');
@@ -298,6 +303,7 @@ console.log('== rebalanced perks + automatic draft ==');
   ctx.G.pendingLevelups = 1; ctx.G.autoPerk = false; ctx.openPerkDraft();
   p.stats.rerolls = 1; tap('r');
   check('Reroll Rib currency refreshes a manual draft', p.stats.rerolls === 0 && ctx.G.perkChoices.length === 3);
+  step(100, 16); // clear the 1.5s selection lock armed by openPerkDraft above
   tap('4');
   check('one-off random draft choice resolves normally', ctx.G.mode === 'play' && ctx.G.pendingLevelups === 0);
   const levelBefore = p.level;
@@ -309,6 +315,24 @@ console.log('== rebalanced perks + automatic draft ==');
   ctx.startRun(); step(3, 16);
 }
 autoDraft = true; // later sections must not get stuck in the perk draft
+
+console.log('== nearby-item description toast ==');
+{
+  const p = ctx.G.player;
+  ctx.G.pickups.length = 0;
+  ctx.G.toasts.length = 0;
+  ctx.spawnPickup('item', p.x + 50, p.y, { iid: 'hollowpoints' });
+  step(1, 16); // within the 90px radius -> toast once
+  check('nearby item toasts its description once',
+    ctx.G.toasts.length === 1 && ctx.G.toasts[0].text === ctx.ITEMS.hollowpoints.name && ctx.G.toasts[0].sub === ctx.ITEMS.hollowpoints.desc);
+  step(4, 16); // stay adjacent, must not re-fire
+  check('proximity toast does not repeat while adjacent', ctx.G.toasts.length === 1);
+  p.x += 500; step(1, 16); // leave the 90px radius -> re-arms
+  p.x -= 420; step(1, 16); // back within 90 (outside pickup reach) -> fires again
+  check('proximity toast re-arms after leaving', ctx.G.toasts.length === 2);
+  ctx.G.pickups.length = 0;
+  ctx.startRun(); step(3, 16);
+}
 
 console.log('== shield heart perk ==');
 {
@@ -341,6 +365,16 @@ ctx.giveItem('ironstomach');
 check('items applied', Object.keys(ctx.G.player.items).length === 4);
 check('orbital knives active', ctx.G.player.stats.orbitals >= 1);
 step(30, 16);
+
+console.log('== Sine Weave diminishing stagger ==');
+{
+  const s = {}; ctx.PERKS.find(p => p.id === 'sinew').apply(s, {});
+  check('sine weave first stack is 3% stagger chance', Math.abs(ctx.stunChance(s.stunRaw) - 0.03) < 1e-6);
+  check('sine weave chance never exceeds 50%', ctx.stunChance(1e6) === 0.5);
+  check('sine weave gains diminishing returns', ctx.stunChance(s.stunRaw * 2) < 2 * ctx.stunChance(s.stunRaw));
+  ctx.PERKS.find(p => p.id === 'sinew').apply(s, {});
+  check('sine weave stacks raw rating', Math.abs(s.stunRaw - 2 * (0.03 / 0.97)) < 1e-9);
+}
 
 console.log('== expanded perk and item rosters ==');
 {
@@ -997,7 +1031,7 @@ console.log('== damaged monster health pips ==');
   ctx.G.enemies = [];
 }
 
-console.log('== 500ms wave spawn telegraph ==');
+console.log('== 750ms entry-wave spawn telegraph ==');
 {
   ctx.startRun(); step(3, 16);
   // enter a combat room to trigger a wave
@@ -1010,7 +1044,7 @@ console.log('== 500ms wave spawn telegraph ==');
   const room2 = ctx.G.cur;
   if (room2.type === 'combat' && ctx.G.enemies.length > 0) {
     const spawner = ctx.G.enemies[0];
-    check('wave spawn is telegraphing', spawner.warmT > 0.3 && spawner.warmT <= ctx.SPAWN_WARN);
+    check('wave spawn is telegraphing', spawner.warmT > 0.3 && spawner.warmT <= ctx.ENTRY_WARN);
     const sx = spawner.x, sy = spawner.y;
     ctx.G.player.invT = 0;
     const hpBefore = ctx.G.player.hp;
@@ -1018,7 +1052,7 @@ console.log('== 500ms wave spawn telegraph ==');
     step(20, 16); // ~320ms
     check('telegraphed spawn is frozen', Math.abs(spawner.x - sx) < 0.01 && Math.abs(spawner.y - sy) < 0.01);
     check('telegraphed spawn deals no contact damage', ctx.G.player.hp === hpBefore);
-    step(25, 16); // past 500ms total
+    step(30, 16); // past 750ms total
     check('spawn arms after the telegraph', spawner.warmT <= 0);
     ctx.G.player.x = ctx.W / 2; ctx.G.player.y = ctx.H / 2; ctx.G.player.invT = 1;
   } else {
@@ -1032,6 +1066,33 @@ console.log('== 500ms wave spawn telegraph ==');
   const minis = ctx.G.enemies.filter(e => e.type === 'mini');
   check('splitter splits into minis', minis.length === 2);
   check('splits spawn instantly (no telegraph)', minis.every(m => (m.warmT || 0) === 0));
+  ctx.G.enemies.length = 0;
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== room-entry reaction buffer ==');
+{
+  ctx.startRun(); step(3, 16);
+  // enter a combat neighbor room so a first-entry wave is staged at the arrival door
+  const sr = ctx.G.rooms['0,0'];
+  const sd = Object.keys(sr.doors).find(d => sr.doors[d]);
+  const DIRS3 = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+  const [edx, edy] = DIRS3[sd];
+  ctx.enterRoom(sr.gx + edx, sr.gy + edy);
+  const er = ctx.G.cur;
+  if (er.type === 'combat' && ctx.G.enemies.length > 0) {
+    // move the player to a far corner, then run the post-teleport separation
+    const erA = ctx.G.arena;
+    ctx.G.player.x = erA.x0 + 40; ctx.G.player.y = erA.y0 + 40;
+    ctx.separateEntryWave();
+    const buf = Math.min(ctx.ENTRY_BUFFER, Math.min(erA.w, erA.h) * 0.42);
+    const ok = ctx.G.enemies.every(e =>
+      e.boss || e.hp <= 0 || ((e.x - ctx.G.player.x) ** 2 + (e.y - ctx.G.player.y) ** 2) >= (buf * 0.9) ** 2);
+    check('entry enemies stay past the reaction buffer', ok);
+    check('first-entry wave telegraphs with ENTRY_WARN', ctx.G.enemies.every(e => (e.warmT || 0) <= ctx.ENTRY_WARN));
+  } else {
+    check('combat room staged for entry-buffer test (' + er.type + ')', true);
+  }
   ctx.G.enemies.length = 0;
   ctx.startRun(); step(3, 16);
 }

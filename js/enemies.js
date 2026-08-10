@@ -108,7 +108,7 @@ function spawnPosAwayFromPlayer() {
   return { x: rand(a.cx - rx, a.cx + rx), y: rand(a.cy - ry, a.cy + ry) };
 }
 
-function spawnWave(count, floor) {
+function spawnWave(count, floor, warn) {
   for (let i = 0; i < count; i++) {
     if (G.enemies.length >= MAX_ENEMIES) break;
     const type = pickWaveEnemyType(floor);
@@ -116,7 +116,7 @@ function spawnWave(count, floor) {
     const canElite = type !== 'bulwark' && type !== 'broodsac';
     const elite = canElite && chance(Math.min(0.03 + floor * 0.02, 0.2));
     const e = makeEnemy(type, pos.x, pos.y, floor, elite);
-    e.warmT = SPAWN_WARN; // telegraph the incoming spawn so the player isn't blindsided
+    e.warmT = warn || SPAWN_WARN; // telegraph the incoming spawn so the player isn't blindsided
     G.enemies.push(e);
     spawnBlood(pos.x, pos.y, rand(0, TAU), 4);
     Sfx.spawn(e);
@@ -195,6 +195,11 @@ function damageEnemy(e, dmg, ang, knockback, opts) {
   return false;
 }
 
+// Diminishing (armor-style) conversion of a raw stun rating into a stagger chance.
+function stunChance(raw) {
+  return Math.min(0.50, Math.max(0, raw) / (1 + Math.max(0, raw)));
+}
+
 // Shared player-hit payload. Every weapon primitive routes through damageEnemy,
 // so items remain useful for bullets, beams, slams, saws, traps and orbitals.
 function procOnHit(e, dmg, ang, opts) {
@@ -243,7 +248,10 @@ function procOnHit(e, dmg, ang, opts) {
     e.burnDps = Math.max(e.burnDps || 0, 5 * s.dmgMul);
   }
   if (s.slowOnHit > 0 && chance(clamp(s.slowOnHit * chanceScale, 0, 0.9))) e.slowT = Math.max(e.slowT || 0, 1.5);
-  if (!e.boss && e.type !== 'bulwark' && s.stunOnHit > 0 && chance(clamp(s.stunOnHit * chanceScale, 0, 0.75))) e.stunT = Math.max(e.stunT || 0, 0.35);
+  if (!e.boss && e.type !== 'bulwark') {
+    const stunCh = clamp((s.stunOnHit || 0) * chanceScale, 0, 0.75) + stunChance(s.stunRaw || 0);
+    if (stunCh > 0 && chance(clamp(stunCh, 0, 0.75))) e.stunT = Math.max(e.stunT || 0, 0.35);
+  }
   if (s.pullOnHit > 0 && !e.boss && chance(clamp(s.pullOnHit * chanceScale, 0, 0.8))) {
     const toward = angleTo(e.x, e.y, p.x, p.y);
     e.vx += Math.cos(toward) * 170; e.vy += Math.sin(toward) * 170;

@@ -23,7 +23,7 @@ const PERKS = [
   { id: 'boneknit', name: 'Bone Knit',       desc: '3% chance to heal ½ heart after combat rooms', apply: s => { s.roomHealChance += 0.03; } },
   { id: 'spiteflesh',name: 'Spite Flesh',    desc: 'Contact attackers take damage', apply: s => { s.thorns += 4; } },
   { id: 'carrion',  name: 'Carrion Sense',   desc: '+8% pickup radius and pull speed', apply: s => { s.magnet *= 1.08; s.magnetPull *= 1.08; } },
-  { id: 'sinew',    name: 'Sinew Weave',     desc: '+3% move speed and range', apply: s => { s.speedMul *= 1.03; s.rangeMul *= 1.03; } },
+  { id: 'sinew',    name: 'Sinew Weave',     desc: 'Hits may stagger enemies (starts 3%, up to 50%)', apply: s => { s.stunRaw = (s.stunRaw || 0) + STUN_UNIT; } },
 ];
 
 const PERK_CARD_W = 170, PERK_CARD_H = 230, PERK_CARD_GAP = 18;
@@ -61,6 +61,7 @@ function openPerkDraft() {
   }
   const opts = shuffle([...PERKS]).slice(0, 3);
   G.perkChoices = opts;
+  if (G.mode !== 'levelup') G.selectionLock = 1.5;
   G.mode = 'levelup';
   Sfx.levelup();
 }
@@ -82,11 +83,13 @@ function choosePerk(i) {
   else G.mode = 'play';
 }
 
-function updateLevelup() {
-  if (keyPressed('1')) choosePerk(0);
-  else if (keyPressed('2')) choosePerk(1);
-  else if (keyPressed('3')) choosePerk(2);
-  else if (keyPressed('4', ' ')) choosePerk(irand(0, G.perkChoices.length - 1));
+function updateLevelup(dt) {
+  G.selectionLock = Math.max(0, (G.selectionLock || 0) - dt);
+  const unlocked = G.selectionLock <= 0;
+  if (unlocked && keyPressed('1')) choosePerk(0);
+  else if (unlocked && keyPressed('2')) choosePerk(1);
+  else if (unlocked && keyPressed('3')) choosePerk(2);
+  else if (unlocked && keyPressed('4', ' ')) choosePerk(irand(0, G.perkChoices.length - 1));
   else if (keyPressed('t')) {
     setAutoPerk(true);
     G.mode = 'play';
@@ -97,7 +100,7 @@ function updateLevelup() {
     G.perkChoices = shuffle([...PERKS]).slice(0, 3);
     Sfx.menu();
   }
-  else if (Input.mpressed && G.perkChoices) {
+  else if (unlocked && Input.mpressed && G.perkChoices) {
     // click a card
     for (let i = 0; i < 3; i++) {
       const cx = perkCardX(i);
