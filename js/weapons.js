@@ -100,11 +100,11 @@ function fireWeapon(p, w) {
       break;
     }
     case 'lob': case 'lob_trap': case 'lob_swarm': {
-      const primaryD = Math.max(dist(bx, by, Input.mx, Input.my), 1);
+      const primaryD = Math.max(dist(bx, by, mxW(), myW()), 1);
       for (let i = 0; i < volley.length; i++) {
         const a = volley[i];
-        const tx = i === 0 ? Input.mx : p.x + Math.cos(a) * primaryD;
-        const ty = i === 0 ? Input.my : p.y + Math.sin(a) * primaryD;
+        const tx = i === 0 ? mxW() : p.x + Math.cos(a) * primaryD;
+        const ty = i === 0 ? myW() : p.y + Math.sin(a) * primaryD;
         const d = Math.max(dist(bx, by, tx, ty), 1);
         const flight = clamp(d / (520 * spdMul), 0.12, 0.8);
         mk(a, {

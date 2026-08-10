@@ -3,11 +3,15 @@
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const OPP = { n: 's', s: 'n', e: 'w', w: 'e' };
 const ROOM_SHAPES = {
-  hall:      { x0: 48,  y0: 48,  x1: 912, y1: 592 },
-  wide_hall: { x0: 48,  y0: 208, x1: 912, y1: 432 },
-  tall_hall: { x0: 368, y0: 48,  x1: 592, y1: 592 },
-  chamber:   { x0: 208, y0: 128, x1: 752, y1: 512 },
-  pit:       { x0: 128, y0: 88,  x1: 832, y1: 552 },
+  hall:      { x0: 48,  y0: 48,  x1: 912, y1: 592 },   // unchanged — start & boss rooms
+  wide_hall: { x0: 48,  y0: 176, x1: 912, y1: 464 },   // h 224 -> 288 ("a little wider"; cy stays 320, min dim 288 < 300 keeps censer/broodsac excluded)
+  tall_hall: { x0: 336, y0: 48,  x1: 624, y1: 592 },   // w 224 -> 288 (cx stays 480)
+  chamber:   { x0: 208, y0: 128, x1: 752, y1: 512 },   // unchanged — item rooms
+  pit:       { x0: 128, y0: 88,  x1: 832, y1: 552 },   // unchanged
+  grand_hall:{ x0: 48,  y0: 48,  x1: 1680, y1: 592 },  // new, ~1.7× wide — camera scrolls horizontally (w 1632 > 960)
+  deep_hall: { x0: 480, y0: 48,  x1: 912, y1: 1136 },  // new, ~1.85× tall — camera scrolls vertically (h 1088 > 640)
+  meat_hall: { x0: 48,  y0: 48,  x1: 1680, y1: 1136 }, // new, 1.7× × 1.85× — camera scrolls both axes
+  odd_hall:  { x0: 160, y0: 128, x1: 800, y1: 512 },   // new, fits screen but off-center — visually "odd" with zero camera
 };
 const ROOM_THEMES = {
   abattoir: { floor: ['tile_floor1', 'tile_floor1', 'tile_floor4', 'tile_floor6'], wall: ['tile_wall', 'tile_wall2'] },
@@ -49,13 +53,14 @@ function genFloor(floor) {
     const d = Math.abs(r.gx) + Math.abs(r.gy);
     if (r.type === 'combat' && d >= 2) { r.type = 'item'; break; }
   }
-  const combatShapes = ['hall', 'hall', 'hall', 'pit', 'chamber', 'wide_hall', 'tall_hall'];
+  const smallShapes = ['hall', 'hall', 'pit', 'chamber', 'wide_hall', 'tall_hall', 'odd_hall'];
+  const bigShapes = ['grand_hall', 'deep_hall', 'meat_hall'];
   const themes = Object.keys(ROOM_THEMES);
   for (const r of Object.values(G.rooms)) {
     r.theme = choice(themes);
     if (r.type === 'start' || r.type === 'boss') r.shape = 'hall';
     else if (r.type === 'item') r.shape = 'chamber';
-    else r.shape = choice(combatShapes);
+    else r.shape = (G.floor >= 2 && chance(0.30)) ? choice(bigShapes) : choice(smallShapes);
     for (const [dir, [dx, dy]] of Object.entries(DIRS)) {
       r.doors[dir] = !!G.rooms[(r.gx + dx) + ',' + (r.gy + dy)];
     }
@@ -142,6 +147,20 @@ function enterRoom(gx, gy) {
     room.spawnT = 0;
   }
 }
+
+// Isaac-style: the view centers on the player and is clamped so it never leaves
+// the room. Rooms that fit the screen keep cam exactly at the room center —
+// which is (0,0) for every current shape, so existing rendering is byte-identical.
+function updateCamera() {
+  const a = G.arena, p = G.player;
+  if (!a || !p) return;
+  G.cam = G.cam || { x: 0, y: 0 };
+  G.cam.x = a.w <= W ? a.cx - W / 2 : clamp(p.x - W / 2, a.x0, a.x1 - W);
+  G.cam.y = a.h <= H ? a.cy - H / 2 : clamp(p.y - H / 2, a.y0, a.y1 - H);
+}
+// screen-space mouse -> world coords (safe pre-player: cam exists from state.js)
+function mxW() { return Input.mx + G.cam.x; }
+function myW() { return Input.my + G.cam.y; }
 
 function separateEntryWave() {
   const p = G.player;
@@ -338,11 +357,11 @@ const FLOOR_TILE_POOL = [
 ];
 const WALL_TILE_POOL = ['tile_wall', 'tile_wall', 'tile_wall2', 'tile_wall3', 'tile_wall4'];
 
-function drawFloorTiles(target, r) {
+function drawFloorTiles(target, r, extW, extH) {
   const a = roomBounds(r);
   const theme = ROOM_THEMES[r.theme] || ROOM_THEMES.abattoir;
   target.fillStyle = '#050204';
-  target.fillRect(0, 0, W, H);
+  target.fillRect(0, 0, extW === undefined ? W : extW, extH === undefined ? H : extH);
   target.save();
   target.beginPath(); target.rect(a.x0, a.y0, a.w, a.h); target.clip();
   const tx0 = Math.floor(a.x0 / TILE), tx1 = Math.ceil(a.x1 / TILE);
@@ -364,11 +383,12 @@ function drawFloor(ctx, r) {
   if (!canCache) { drawFloorTiles(ctx, r); return; }
   const key = r.gx + ',' + r.gy + ':' + G.floor + ':' + r.shape + ':' + r.theme;
   if (!G.roomLayer || G.roomLayerKey !== key) {
+    const a = roomBounds(r);
     const layer = document.createElement('canvas');
-    layer.width = W; layer.height = H;
+    layer.width = Math.max(W, a.x1); layer.height = Math.max(H, a.y1);
     const lctx = layer.getContext('2d');
     lctx.imageSmoothingEnabled = false;
-    drawFloorTiles(lctx, r);
+    drawFloorTiles(lctx, r, layer.width, layer.height);
     G.roomLayer = layer; G.roomLayerKey = key;
   }
   ctx.drawImage(G.roomLayer, 0, 0);

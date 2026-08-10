@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -277,6 +277,64 @@ console.log('== variable room shapes and themes ==');
   check('enemy spawn positions stay inside every room shape', allSpawns);
   check('every room shape and theme renders headlessly', allDraw);
   ctx.G.cur = savedRoom; ctx.G.arena = savedArena; ctx.G.player.x = px; ctx.G.player.y = py;
+}
+
+console.log('== big rooms + camera ==');
+{
+  // fit rooms keep camera pinned at (0,0) — current look is unchanged
+  const fit = ctx.makeRoom(0, 0, 'combat'); fit.shape = 'hall';
+  ctx.setArenaForRoom(fit);
+  ctx.G.player.x = 100; ctx.G.player.y = 320;
+  ctx.updateCamera();
+  check('fit rooms keep camera at origin', ctx.G.cam.x === 0 && ctx.G.cam.y === 0);
+
+  // wide room: camera follows the player, clamped to the room
+  const wide = ctx.makeRoom(0, 0, 'combat'); wide.shape = 'grand_hall';
+  ctx.setArenaForRoom(wide);
+  const wa = ctx.G.arena;
+  ctx.G.player.x = 100; ctx.G.player.y = 320; ctx.updateCamera();
+  check('camera clamps at left arena edge', ctx.G.cam.x === wa.x0);
+  ctx.G.player.x = wa.x1 - 200; ctx.G.player.y = 320; ctx.updateCamera();
+  check('camera clamps at right arena edge', ctx.G.cam.x === wa.x1 - ctx.W);
+  ctx.G.player.x = wa.cx; ctx.G.player.y = 320; ctx.updateCamera();
+  check('camera centers on the player mid-room', ctx.G.cam.x === wa.cx - ctx.W / 2 && ctx.G.cam.y === 0);
+
+  // world-mouse conversion
+  ctx.G.cam.x = wa.cx - ctx.W / 2; ctx.Input.mx = 120; ctx.Input.my = 240;
+  check('screen mouse maps to world coords', ctx.mxW() === 120 + ctx.G.cam.x && ctx.myW() === 240);
+
+  // end-to-end: live in a big room — update+draw path, floor direct path, aim
+  ctx.startRun();
+  const big = ctx.G.rooms['0,0'];
+  big.shape = 'meat_hall';
+  ctx.G.cur = big; ctx.setArenaForRoom(big);
+  ctx.G.player.x = ctx.G.arena.x0 + 80; ctx.G.player.y = ctx.G.arena.y0 + 80;
+  ctx.G.enemies.length = 0;
+  ctx.Input.mx = 300; ctx.Input.my = 200; ctx.Input.mdown = true;
+  step(3, 16); // runs update() (firing, weapon lob path) + draw() (direct floor, camera)
+  check('big room runs without error and aims at world mouse',
+    Math.abs(ctx.G.player.aim - ctx.angleTo(ctx.G.player.x, ctx.G.player.y, ctx.Input.mx + ctx.G.cam.x, ctx.Input.my + ctx.G.cam.y)) < 1e-9);
+  ctx.Input.mdown = false;
+  ctx.startRun(); step(3, 16);
+}
+
+// floor >= 2 mixes big/odd rooms into combat shapes; doors stay reciprocal
+{
+  ctx.G.floor = 6;
+  let sawBig = false, reciprocal = true;
+  for (let trial = 0; trial < 40 && !sawBig; trial++) {
+    ctx.genFloor(6);
+    for (const r of Object.values(ctx.G.rooms)) {
+      if (r.type === 'combat' && ['grand_hall', 'deep_hall', 'meat_hall', 'odd_hall'].includes(r.shape)) sawBig = true;
+      if (r.doors.n && !ctx.G.rooms[(r.gx) + ',' + (r.gy - 1)]) reciprocal = false;
+      if (r.doors.s && !ctx.G.rooms[(r.gx) + ',' + (r.gy + 1)]) reciprocal = false;
+      if (r.doors.e && !ctx.G.rooms[(r.gx + 1) + ',' + (r.gy)]) reciprocal = false;
+      if (r.doors.w && !ctx.G.rooms[(r.gx - 1) + ',' + (r.gy)]) reciprocal = false;
+    }
+  }
+  check('floor 6 mixes in big and odd rooms', sawBig);
+  check('big-room maps keep reciprocal doors', reciprocal);
+  ctx.startRun(); step(3, 16);
 }
 
 console.log('== XP / perks ==');

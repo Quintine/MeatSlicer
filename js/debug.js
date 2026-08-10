@@ -72,7 +72,7 @@ function dbgClicked(rect) { return Input.mpressed && inRect(Input.mx, Input.my, 
 // clamp the cursor to the arena so spawned pickups/pedestals never land in walls
 function dbgCursor() {
   const a = G.arena;
-  return { x: clamp(Input.mx, a.x0 + 12, a.x1 - 12), y: clamp(Input.my, a.y0 + 12, a.y1 - 12) };
+  return { x: clamp(mxW(), a.x0 + 12, a.x1 - 12), y: clamp(myW(), a.y0 + 12, a.y1 - 12) };
 }
 
 // number row: label + [-] value [+]
@@ -185,7 +185,7 @@ function dbgRenderPlayer(ctx, b) {
     { t: 'KILL PLAYER', fn: () => { p.hp = 0; gameOver(); } },
     { t: '+1 LEVELUP', fn: () => { G.pendingLevelups++; addToast('DEBUG', '+1 pending levelup'); } },
     { t: 'OPEN DRAFT', fn: () => { openPerkDraft(); } },
-    { t: 'TP TO CURSOR', fn: () => { p.x = clamp(Input.mx, G.arena.x0 + p.r, G.arena.x1 - p.r); p.y = clamp(Input.my, G.arena.y0 + p.r, G.arena.y1 - p.r); } },
+    { t: 'TP TO CURSOR', fn: () => { p.x = clamp(mxW(), G.arena.x0 + p.r, G.arena.x1 - p.r); p.y = clamp(myW(), G.arena.y0 + p.r, G.arena.y1 - p.r); } },
     { t: '+500 SCORE', fn: () => addScore(500) },
   ];
   for (let i = 0; i < acts.length; i++) {
