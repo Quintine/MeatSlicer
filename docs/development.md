@@ -4,7 +4,7 @@ This guide consolidates the durable project knowledge used to develop, test,
 package, and maintain MeatSlicer. When this guide and the implementation
 disagree, the implementation and configuration files are the source of truth.
 
-**Memory version: 0.5.2**
+**Memory version: 0.6.0**
 
 ## Architecture
 
@@ -201,8 +201,8 @@ failures, and an SFX buffer count matching `SfxBank.FILES` and the files on
 disk; the exact count can change as audio is added.
 
 The Windows build is not code-signed, so downloaded copies may trigger a
-SmartScreen warning. Code signing, installers, automatic updates, and
-macOS/Linux packaging remain future work.
+SmartScreen warning. Code signing, installers, and automatic updates remain
+future work.
 
 ## Visual asset pipeline
 
