@@ -111,7 +111,7 @@ const SfxBank = {
     if (this.buffers.has(name) || this.pending.has(name) || this.failed.has(name)) return;
     const file = this.FILES[name];
     if (!file || !this.ctx || typeof fetch !== 'function') return;
-    const job = fetch('/assets/sfx/' + encodeURIComponent(file) + '?v=51')
+    const job = fetch('/assets/sfx/' + encodeURIComponent(file) + '?v=52')
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
       .then(bytes => this.ctx.decodeAudioData(bytes))
       .then(buffer => this.buffers.set(name, this.trim(buffer)))
