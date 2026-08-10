@@ -16,6 +16,9 @@ const ROOM_THEMES = {
   flesh:    { floor: ['tile_floor8', 'tile_floor8', 'tile_floor1'], wall: ['tile_wall4', 'tile_wall2'] },
 };
 
+const ENTRY_WARN = 0.75;   // first-entry wave telegraph seconds (~750ms reaction)
+const ENTRY_BUFFER = 170;  // min px between player and a freshly-entered enemy
+
 function roomBounds(room) {
   const def = ROOM_SHAPES[(room && room.shape) || 'hall'] || ROOM_SHAPES.hall;
   return { x0: def.x0, y0: def.y0, x1: def.x1, y1: def.y1,
@@ -88,6 +91,7 @@ function enterRoom(gx, gy) {
   G.roomLayerKey = '';
   G.roomDamaged = false;
   G.roomEnterT = G.time;
+  G.entryFresh = false;
 
   const room = G.rooms[roomKey(gx, gy)];
   G.cur = room;
@@ -110,7 +114,8 @@ function enterRoom(gx, gy) {
       const w = wavesFor(G.floor);
       room.wavesLeft = w.length;
       room.pendingWave = w;
-      spawnWave(w[0], G.floor);
+      G.entryFresh = true;
+      spawnWave(w[0], G.floor, ENTRY_WARN);
       room.wavesLeft--;
       room.spawnT = 0;
     } else if (room.type === 'boss') {
@@ -135,6 +140,20 @@ function enterRoom(gx, gy) {
     spawnWave(room.pendingWave[room.pendingWave.length - room.wavesLeft], G.floor);
     room.wavesLeft--;
     room.spawnT = 0;
+  }
+}
+
+function separateEntryWave() {
+  const p = G.player;
+  const a = G.arena;
+  const minD = Math.min(ENTRY_BUFFER, Math.min(a.w, a.h) * 0.42);
+  const minD2 = minD * minD;
+  for (const e of G.enemies) {
+    if (e.boss || e.hp <= 0) continue;
+    if (dist2(e.x, e.y, p.x, p.y) < minD2) {
+      const pos = spawnPosAwayFromPlayer();
+      e.x = pos.x; e.y = pos.y;
+    }
   }
 }
 
@@ -206,6 +225,7 @@ function updateRoom(dt) {
       if (dir === 'w') p.x = next.x1 - p.r - 8;
       p.x = clamp(p.x, next.x0 + p.r, next.x1 - p.r);
       p.y = clamp(p.y, next.y0 + p.r, next.y1 - p.r);
+      if (G.entryFresh) { separateEntryWave(); G.entryFresh = false; }
       G.transition = 0.3;
       Sfx.door();
     }

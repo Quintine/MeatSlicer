@@ -4,6 +4,8 @@ This guide consolidates the durable project knowledge used to develop, test,
 package, and maintain MeatSlicer. When this guide and the implementation
 disagree, the implementation and configuration files are the source of truth.
 
+**Memory version: 0.5.2**
+
 ## Architecture
 
 MeatSlicer is an endless top-down arena roguelite built with plain JavaScript
@@ -308,6 +310,38 @@ When changing the version:
 4. Run `npm run dist`.
 5. Verify the packaged executable with `MS_VERIFY_OUT`.
 
+## Memory versioning
+
+The project knowledge ("memories") — this guide and the player-facing documents
+under `docs/` — carries its own `X.Y.Z` version, tracked independently of the
+game release version in `package.json`:
+
+- `X` — a major milestone. Changed by the project owner only; a routine update
+  or bump rule never raises it.
+- `Y` — a major feature push: a large content expansion, a major mechanic, or a
+  significant restructure of the knowledge base.
+- `Z` — a small addition, a bug fix, or a single new small feature (a new
+  gotcha, a corrected formula, a changed workflow, or the documentation sync
+  that follows a gameplay change).
+
+Components are independent counters and never roll over: `0.999.999` and
+`0.42.677` are perfectly valid, and bumping `Z` on `0.999.999` gives
+`0.999.1000`. Only `X` is exempt from automatic increases — it changes by
+explicit human edit.
+
+The current version is the `**Memory version:**` stamp at the top of this
+guide; that stamp is the single source of truth.
+
+When a change to durable knowledge lands (anywhere under `docs/`):
+
+1. Edit the stamp: bump `Z` for a small addition or fix, `Y` for a major push,
+   or — for a milestone — the project owner raises `X` by hand.
+2. Run `npm test` (docs are not loaded by the game, so the suite is unaffected)
+   and commit with an imperative message naming the bump, e.g.
+   `docs: record Iron Lung synergy (memory 0.5.0 -> 0.5.1)`.
+3. No `?v=` cache bump is needed — `docs/` is not served through `index.html`
+   script tags; it only ships inside packages.
+
 ## Git workflow
 
 Every completed change should be committed:
@@ -334,3 +368,6 @@ Player-facing mechanics belong in the relevant files under `docs/`. Keep those
 documents synchronized with gameplay changes. This development guide should be
 updated whenever the build, packaging, asset, audio, release, or contribution
 workflow changes.
+
+Keep the `**Memory version:**` stamp at the top of this guide current: any
+durable-knowledge change bumps it per `## Memory versioning`.

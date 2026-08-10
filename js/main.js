@@ -220,7 +220,7 @@ function update(dt) {
       drawToastsUpdate(dt);
       break;
     case 'levelup':
-      updateLevelup();
+      updateLevelup(dt);
       updateParticles(dt);
       break;
     case 'debug':

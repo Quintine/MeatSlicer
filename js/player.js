@@ -6,6 +6,7 @@ function defaultPlayerStats() {
     pierce: 0, bounce: 0, homing: 0, split: 0, fan: 0, rear: 0, splinter: 0,
     orbitals: 0, lifestealChance: 0, explodeOnKill: 0,
     armor: 0, luck: 0, magnet: 1, magnetPull: 1, xpMul: 1, crit: 0.05, critMul: 2, bloodlust: 0,
+    stunRaw: 0,
     bleed: 0, igniteChance: 0, slowOnHit: 0, stunOnHit: 0, acidOnHit: 0, pullOnHit: 0,
     chain: 0, knockbackMul: 1, invBonus: 0, ammoEff: 1, ammoPickupMul: 1,
     roomHeal: 0, roomHealChance: 0, thorns: 0, retaliate: 0, sizeMul: 1, mortar: 0, frenzy: 0,
