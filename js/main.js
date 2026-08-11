@@ -101,7 +101,7 @@ function resetRun() {
   G.confirmAction = null; G.confirmT = 0;
   G.deathLockT = 0;
   G.pressure = 1; G.streak = 0; G.roomDamaged = false; G.roomEnterT = 0; G.recentHits = [];
-  G.shake = 0; G.flash = 0;
+  G.shake = 0; G.flash = 0; G.shotLockT = 0;
   G.debugUsed = false; G.debugFlags = {}; G.debugTimescale = 1; G.debugFrameStep = false;
   initPlayer();
   genFloor(1);
@@ -169,6 +169,7 @@ function loop(now) {
 }
 
 function update(dt) {
+  const menuWas = G.mode !== 'play';
   Music.update(dt);
   if (G.deathLockT > 0) G.deathLockT = Math.max(0, G.deathLockT - dt);
   if (G.confirmT > 0) {
@@ -221,10 +222,6 @@ function update(dt) {
       break;
     case 'levelup':
       updateLevelup(dt);
-      // A click that installed a perk must not carry the held button into play;
-      // updatePlayer fires on Input.mdown, so the very next frame would shoot.
-      // Same mask pattern as the pinned debug console below.
-      if (G.mode !== 'levelup') Input.mdown = false;
       updateParticles(dt);
       break;
     case 'debug':
@@ -291,6 +288,8 @@ function update(dt) {
       break;
   }
 
+  if (menuWas && G.mode === 'play') { Input.mdown = false; G.shotLockT = 0.05; }
+  G.shotLockT = Math.max(0, (G.shotLockT || 0) - dt);
   if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 30);
   if (G.flash > 0) G.flash = Math.max(0, G.flash - dt);
   if (G.transition > 0) G.transition = Math.max(0, G.transition - dt);

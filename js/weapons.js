@@ -47,7 +47,7 @@ function fireWeapon(p, w) {
   const st = p.stats;
   const ang = p.aim;
   const muzzle = w.muzzle || 35;
-  const bx = p.x + Math.cos(ang) * muzzle, by = p.y + Math.sin(ang) * muzzle;
+  let bx = p.x + Math.cos(ang) * muzzle, by = p.y + Math.sin(ang) * muzzle;
   const dmgMul = st.dmgMul * st.dmgLiveMul;
   const spdMul = st.shotSpeedMul;
   spawnMuzzleFx(bx, by, ang, w.behavior);
@@ -86,6 +86,10 @@ function fireWeapon(p, w) {
       break;
     }
     case 'cone': case 'flame': {
+      if (w.behavior === 'flame') {
+        const rh = ang + Math.PI / 2;
+        bx += Math.cos(rh) * 26; by += Math.sin(rh) * 26;   // right-hand hold: origin right of the body
+      }
       for (const center of volley) {
         for (let i = 0; i < 2; i++) mk(center + rand(-w.spread, w.spread), { pierce: 2 + st.pierce, r: 6 * st.sizeMul });
       }
@@ -144,9 +148,12 @@ function sawTick(p, def, inst, dt) {
   const inert = 1 + (st.pierce + st.bounce + st.homing) * 0.06;
   let hitAny = false;
   for (const a of angles) {
-    const reach = 30 * st.rangeMul * Math.sqrt(st.shotSpeedMul);
-    const cx = p.x + Math.cos(a) * reach, cy = p.y + Math.sin(a) * reach;
-    const radius = 34 * Math.sqrt(st.sizeMul);
+    const reach = 58 * st.rangeMul * Math.sqrt(st.shotSpeedMul);   // out to the blade (was 30)
+    const rh = p.aim + Math.PI / 2;                                 // right-hand side, perpendicular to aim
+    const rho = 36 * Math.sqrt(st.sizeMul);                         // right-hand offset distance
+    const cx = p.x + Math.cos(a) * reach + Math.cos(rh) * rho;
+    const cy = p.y + Math.sin(a) * reach + Math.sin(rh) * rho;
+    const radius = 38 * Math.sqrt(st.sizeMul);                      // full blade (was 34)
     for (const e of G.enemies) {
       if (dist2(cx, cy, e.x, e.y) < (radius + e.r) * (radius + e.r)) {
         const tickScale = dt / Math.max(0.01, def.interval || 0.1);

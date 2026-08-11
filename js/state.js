@@ -28,6 +28,7 @@ const G = {
   pressure: 1,
   pressureDial: 0,
   streak: 0,
+  shotLockT: 0,
   roomDamaged: false,
   roomEnterT: 0,
   recentHits: [],

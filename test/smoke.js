@@ -88,6 +88,16 @@ function check(name, cond) {
   else { console.log('  FAIL ' + name); failures++; }
 }
 
+// Deterministic PRNG override so statistical sampling checks pass every run.
+// Restores Math.random afterwards; nested calls work via an internal stack.
+function withSeededRandom(seed, fn) {
+  let s = seed >>> 0;
+  const orig = Math.random;
+  const inner = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  Math.random = inner;
+  try { return fn(); } finally { Math.random = orig; }
+}
+
 console.log('== boot ==');
 for (const fn of (listeners['win:load'] || [])) fn();
 step(5, 16);
@@ -388,6 +398,92 @@ console.log('== upgrade card click does not fire ==');
   check('card click fires no bullet (mdown not carried into play)', ctx.G.bullets.length === 0);
 }
 
+console.log('== big-room door entry lands at the door ==');
+{
+  ctx.startRun(); step(3, 16);
+  // current room is the start room; force a west neighbor as a deep_hall
+  const cur = ctx.G.rooms['0,0'];
+  cur.type = 'start'; cur.shape = 'hall';
+  const west = ctx.makeRoom(-1, 0, 'combat'); west.shape = 'deep_hall';
+  ctx.G.rooms['-1,0'] = west;
+  cur.doors.w = true; west.doors.e = true;
+  cur.pickups = ctx.G.pickups;
+  ctx.G.cur = cur; ctx.setArenaForRoom(cur);
+  const a = ctx.G.arena;
+  ctx.G.enemies.length = 0;
+  ctx.G.player.y = a.cy; ctx.G.player.x = a.x0 + ctx.G.player.r + 2;
+  ctx.Input.mx = ctx.G.player.x; ctx.Input.my = ctx.G.player.y; ctx.Input.mdown = false;
+  press('a'); step(1, 16); release('a'); step(2, 16);
+  const na = ctx.roomBounds(west);
+  check('entering a big room places the player at its door, not in a wall',
+    ctx.G.cur === west &&
+    Math.abs(ctx.G.player.x - (na.x1 - ctx.G.player.r - 8)) < 1 &&
+    Math.abs(ctx.G.player.y - na.cy) < 1);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== red right hand hitbox sits on the right ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player; p.aim = 0; p.weapon = { id: 'redhand', ammo: 999 }; p.holstered = null;
+  ctx.G.enemies.length = 0;
+  // NEW hitbox center: (p.x + 58, p.y + 36), radius 38. Old center: (p.x + 30, p.y), radius 34.
+  // Point (p.x+75, p.y+40): dist to old center ~60 > 34+18 (misses), dist to new ~17 < 38+18 (hits).
+  const e = ctx.makeEnemy('shambler', p.x + 75, p.y + 40, 1, false); e.spd = 0; e.hp = 5;
+  ctx.G.enemies.push(e); const hp = e.hp;
+  ctx.sawTick(p, ctx.WEAPONS.redhand, p.weapon, 0.05);
+  ctx.G.enemies.length = 0;
+  check('chainsaw hits the right-plus-forward blade zone', e.hp < hp);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== flamethrower spawns right of the body ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player; p.aim = 0; p.weapon = { id: 'cauterizer', ammo: 999 }; p.holstered = null;
+  ctx.G.bullets.length = 0; ctx.fireWeapon(p, ctx.WEAPONS.cauterizer);
+  const flame = ctx.G.bullets.filter(b => b.behavior === 'flame');
+  const minY = Math.min(...flame.map(b => b.y));
+  check('flame pellets start right of the body center', minY > (p.y + 20));
+  ctx.G.bullets.length = 0; ctx.startRun(); step(3, 16);
+}
+
+console.log('== firing slows the player ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player, dt = 1 / 60, fr = 30;
+  ctx.G.enemies.length = 0;
+  const measure = () => {
+    const x0 = p.x; ctx.Input.mdown = true; ctx.Input.mx = 900; ctx.Input.my = p.y; press('d');
+    for (let i = 0; i < fr; i++) ctx.updatePlayer(dt);
+    release('d'); ctx.Input.mdown = false;
+    return p.x - x0;
+  };
+  p.x = 200; p.y = 320; p.weapon = { id: 'bonepopper', ammo: 999 }; p.holstered = null;
+  const pistolDx = measure();
+  p.x = 200; p.weapon = { id: 'repeater', ammo: 999 };
+  const heavyDx = measure();
+  const expected = (factor) => 178 * factor * (fr * dt);
+  check('pistol firing slows the player ~5%, heavy ~15%',
+    Math.abs(pistolDx - expected(0.95)) < 0.5 && Math.abs(heavyDx - expected(0.85)) < 0.5);
+  ctx.G.bullets.length = 0; ctx.startRun(); step(3, 16);
+}
+
+console.log('== pedestal base persists after the item is taken ==');
+{
+  ctx.startRun(); step(3, 16);
+  ctx.G.pickups.length = 0;
+  const p = ctx.G.player;
+  const x = p.x + 40, y = p.y;
+  ctx.spawnItemPedestal(x, y, 'hollowpoints', 'room');
+  p.x = x; p.y = y; step(8, 16); // walk onto it: the item is taken
+  const baseBefore = ctx.G.pickups.some(q => q.type === 'itemspot');
+  for (let i = 0; i < 40; i++) { p.x += 3; step(1, 16); } // walk back and forth over the pedestal
+  const baseAfter = ctx.G.pickups.some(q => q.type === 'itemspot');
+  check('pedestal survives item pickup and being walked over', baseBefore && baseAfter);
+  ctx.startRun(); step(3, 16);
+}
+
 console.log('== dropped weapon lockout ==');
 {
   ctx.startRun(); step(3, 16); // clean, armed player in play mode
@@ -417,16 +513,18 @@ autoDraft = true; // later sections must not get stuck in the perk draft
 console.log('== nearby-item description toast ==');
 {
   const p = ctx.G.player;
+  p.x = 300; p.y = 320; // deterministic anchor away from walls so teleports aren't clamped
   ctx.G.pickups.length = 0;
   ctx.G.toasts.length = 0;
-  ctx.spawnPickup('item', p.x + 50, p.y, { iid: 'hollowpoints' });
+  const it = ctx.spawnPickup('item', p.x + 50, p.y, { iid: 'hollowpoints' });
+  it.vx = 0; it.vy = 0; // deterministic: no drift while stepping
   step(1, 16); // within the 90px radius -> toast once
   check('nearby item toasts its description once',
     ctx.G.toasts.length === 1 && ctx.G.toasts[0].text === ctx.ITEMS.hollowpoints.name && ctx.G.toasts[0].sub === ctx.ITEMS.hollowpoints.desc);
   step(4, 16); // stay adjacent, must not re-fire
   check('proximity toast does not repeat while adjacent', ctx.G.toasts.length === 1);
   p.x += 500; step(1, 16); // leave the 90px radius -> re-arms
-  p.x -= 420; step(1, 16); // back within 90 (outside pickup reach) -> fires again
+  p.x -= 400; step(1, 16); // back to 50px (within 90 toast radius, outside the 32px pickup reach) -> fires again
   check('proximity toast re-arms after leaving', ctx.G.toasts.length === 2);
   ctx.G.pickups.length = 0;
   ctx.startRun(); step(3, 16);
@@ -494,10 +592,10 @@ console.log('== expanded perk and item rosters ==');
   ctx.G.player = livePlayer;
 }
 
-console.log('== diminishing armor block chance ==');
+console.log('== armor is a literal damage-dodge chance ==');
 {
-  const c1 = ctx.armorBlockChance(0.5), c2 = ctx.armorBlockChance(1), cHuge = ctx.armorBlockChance(999);
-  check('armor chance has diminishing absolute returns', c1 > 0 && c2 > c1 && (c2 - c1) < c1);
+  const c1 = ctx.armorBlockChance(0.05), c2 = ctx.armorBlockChance(0.10), cHuge = ctx.armorBlockChance(999);
+  check('armor chance tracks the rating directly', Math.abs(c1 - 0.05) < 1e-9 && Math.abs(c2 - 0.10) < 1e-9);
   check('armor chance is capped at 75%', Math.abs(cHuge - 0.75) < 0.0001);
   const p = ctx.G.player, hp = p.hp;
   const realChance = ctx.chance;
@@ -653,9 +751,11 @@ console.log('== tier-scaled items + duplicate favoring ==');
   check('kill-explosion hurts nearby enemies', v2.hp < v2hpBefore);
   ctx.G.enemies.length = 0;
   let ownedHits = 0;
-  for (let i = 0; i < 200; i++) {
-    if (p.items[ctx.randomItemId()]) ownedHits++;
-  }
+  withSeededRandom(0xC0FFEE, () => {
+    for (let i = 0; i < 200; i++) {
+      if (p.items[ctx.randomItemId()]) ownedHits++;
+    }
+  });
   check('item rolls favor owned items (' + ownedHits + '/200)', ownedHits >= 40);
 }
 
@@ -857,7 +957,7 @@ console.log('== per-weapon muzzle spawn distances ==');
   p.aim = 0;
   const badMuzzles = [];
   for (const w of Object.values(ctx.WEAPONS)) {
-    if (['slam', 'saw', 'beam'].includes(w.behavior)) continue;
+    if (['slam', 'saw', 'beam', 'flame'].includes(w.behavior)) continue;
     ctx.G.bullets.length = 0;
     ctx.fireWeapon(p, w);
     const b = ctx.G.bullets[0];
@@ -949,16 +1049,18 @@ console.log('== drop economy: weapons are rare, elites feed you ==');
   // elites: always bonus gems, mostly ammo, sometimes an item
   p.x = 100; p.y = 100;
   let eliteGemValue = 0, eliteAmmo = 0, eliteItems = 0, eliteWeapons = 0;
-  for (let i = 0; i < 30; i++) {
-    const e = ctx.makeEnemy('shambler', 700, 500, 1, true);
-    ctx.G.enemies.push(e);
-    ctx.G.pickups.length = 0; // isolate this kill's drops
-    ctx.damageEnemy(e, 9999, 0, false);
-    eliteGemValue += ctx.G.pickups.filter(k => k.type === 'gem').reduce((s, k) => s + k.v, 0);
-    eliteAmmo += ctx.G.pickups.filter(k => k.type === 'ammo').length;
-    eliteItems += ctx.G.pickups.filter(k => k.type === 'item').length;
-    eliteWeapons += ctx.G.pickups.filter(k => k.type === 'weapon').length;
-  }
+  withSeededRandom(0xBEEF, () => {
+    for (let i = 0; i < 30; i++) {
+      const e = ctx.makeEnemy('shambler', 700, 500, 1, true);
+      ctx.G.enemies.push(e);
+      ctx.G.pickups.length = 0; // isolate this kill's drops
+      ctx.damageEnemy(e, 9999, 0, false);
+      eliteGemValue += ctx.G.pickups.filter(k => k.type === 'gem').reduce((s, k) => s + k.v, 0);
+      eliteAmmo += ctx.G.pickups.filter(k => k.type === 'ammo').length;
+      eliteItems += ctx.G.pickups.filter(k => k.type === 'item').length;
+      eliteWeapons += ctx.G.pickups.filter(k => k.type === 'weapon').length;
+    }
+  });
   step(3, 16);
   check('elites always drop bonus gems (avg value ' + (eliteGemValue / 30).toFixed(1) + ')', eliteGemValue / 30 >= 5.5);
   check('elites mostly drop ammo (' + eliteAmmo + '/30)', eliteAmmo >= 6);

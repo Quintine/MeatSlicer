@@ -59,7 +59,7 @@ function updatePickups(dt) {
       k.x += Math.cos(a) * sp * dt; k.y += Math.sin(a) * sp * dt;
     }
 
-    if (d < p.r + 12 && !(k.delay > 0)) {
+    if (d < p.r + 12 && !(k.delay > 0) && k.type !== 'itemspot') {
       collectPickup(k);
       G.pickups.splice(i, 1);
     }
@@ -141,7 +141,6 @@ function collectPickup(k) {
     }
     case 'item': {
       giveItem(k.iid);
-      for (const q of G.pickups) if (q.type === 'itemspot') q.dead = true; // remove pedestal base
       break;
     }
     case 'active': {
@@ -156,7 +155,6 @@ function collectPickup(k) {
       addToast(def.name, def.desc + ' — [SPACE] when charged', 5.5);
       spawnText(p.x, p.y - 14, def.name.toUpperCase(), '#55f5dc');
       Sfx.item();
-      for (const q of G.pickups) if (q.type === 'itemspot') q.dead = true; // remove pedestal base
       break;
     }
     case 'stairs':

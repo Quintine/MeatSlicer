@@ -65,6 +65,8 @@ function swapWeapon(silent) {
 function updatePlayer(dt) {
   const p = G.player;
   const st = p.stats;
+  const w = WEAPONS[p.weapon.id];
+  const held = Input.mdown && !(G.shotLockT > 0);   // fire allowed; locked for 50ms after a menu closes
   if (p.invT > 0) p.invT -= dt;
   if (p.hitT > 0) p.hitT -= dt;
   if (p.frenzyT > 0) p.frenzyT -= dt;
@@ -79,7 +81,7 @@ function updatePlayer(dt) {
   if (keyDown('d', 'arrowright')) mx += 1;
   if (mx || my) {
     const len = Math.hypot(mx, my);
-    const spd = 178 * st.speedMul;
+    const spd = 178 * st.speedMul * (held ? (w.id === 'bonepopper' ? 0.95 : 0.85) : 1);
     p.x += (mx / len) * spd * dt;
     p.y += (my / len) * spd * dt;
     p.step += dt * 9 * Math.min(st.speedMul, 1.8);
@@ -106,9 +108,8 @@ function updatePlayer(dt) {
   }
 
   // firing
-  const w = WEAPONS[p.weapon.id];
   const sustained = ['cone', 'flame', 'saw', 'beam'].includes(w.behavior);
-  Sfx.syncWeaponLoop(w, sustained && Input.mdown && p.weapon.ammo > 0);
+  Sfx.syncWeaponLoop(w, sustained && held && p.weapon.ammo > 0);
   if (p.fireT > 0) p.fireT -= dt;
   const frenzyMul = p.frenzyT > 0 ? 1 + st.frenzy : 1;
   const draughtMul = p.marrowDraughtT > 0 ? 2 : 1;
@@ -116,7 +117,7 @@ function updatePlayer(dt) {
   const rate = w.interval / effectiveRate;
 
   if (w.behavior === 'saw') {
-    if (Input.mdown && p.weapon.ammo > 0) {
+    if (held && p.weapon.ammo > 0) {
       sawTick(p, w, p.weapon, dt);
       if (!(p.marrowDraughtT > 0)) p.weapon.ammo -= dt * (w.drain || 18) / st.ammoEff;
       p.muzzleT = 0.04; p.recoil = 0.18 + Math.sin(G.time * 45) * 0.05;
@@ -126,7 +127,7 @@ function updatePlayer(dt) {
     else p.fireT = 0;
   } else if (w.drain) {
     // cone / flame streams: projectiles are free, ammo is time-denominated
-    if (Input.mdown && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
+    if (held && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
       if (p.fireT <= 0) {
         fireWeapon(p, w);
         p.recoil = Math.min(1, p.recoil + 0.45);
@@ -139,7 +140,7 @@ function updatePlayer(dt) {
     }
     else p.fireT = 0;
   } else if (w.behavior === 'beam') {
-    if (Input.mdown && p.weapon.ammo > 0) {
+    if (held && p.weapon.ammo > 0) {
       p.charge = Math.min(p.charge + dt * effectiveRate * Math.sqrt(st.shotSpeedMul), w.chargeTime);
     } else if (Input.mreleased && p.charge > 0) {
       if (p.charge >= w.chargeTime * 0.4) fireBeam(p, w, p.charge / w.chargeTime);
@@ -148,7 +149,7 @@ function updatePlayer(dt) {
       p.charge = Math.max(0, p.charge - dt * 2);
     }
   } else {
-    if (Input.mdown && p.fireT <= 0 && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
+    if (held && p.fireT <= 0 && p.weapon.ammo > 0 && !(p.panicRoomT > 0)) {
       fireWeapon(p, w);
       // Twin Sidearm: the Bone Popper double-taps
       if (st.twinSidearm > 0 && p.weapon.id === 'bonepopper') fireWeapon(p, w);
@@ -282,7 +283,7 @@ function updatePlayer(dt) {
 }
 
 function armorBlockChance(rating) {
-  return Math.min(0.75, Math.max(0, rating) / (1 + Math.max(0, rating)));
+  return Math.min(0.75, Math.max(0, rating));
 }
 
 function pressureRelief(dmgTaken) {

@@ -23,7 +23,7 @@ const ITEMS = {
   hollowbones:   { name: 'Hollow Bones',     desc: '+14% move speed',             rarity: 'common', cap: 6, apply: s => { s.speedMul *= 1.14; } },
   brassmagazine: { name: 'Brass Magazine',   desc: '+10% ammo efficiency, +20% ammo found', rarity: 'common', cap: 5, apply: s => { s.ammoEff += 0.10; s.ammoPickupMul *= 1.20; } },
   ironstomach:   { name: 'Iron Stomach',     desc: '+½ heart container, heal ½ heart', rarity: 'common', cap: 8, apply: (s, p) => { s.maxHp += 1; p.hp = Math.min(s.maxHp, p.hp + 1); } },
-  tannedhide:    { name: 'Tanned Hide',      desc: '+8% chance to ignore damage', rarity: 'common', cap: 6, apply: s => { s.armor += 0.08 / 0.92; } },
+  tannedhide:    { name: 'Tanned Hide',      desc: '+8% chance to ignore damage', rarity: 'common', cap: 6, apply: s => { s.armor += 0.08; } },
   bloodlust:     { name: 'Bloodlust',        desc: 'Kills may drop bonus XP',     rarity: 'common', cap: 5, apply: s => { s.bloodlust = (s.bloodlust || 0) + 0.12; } },
 
   // ---- uncommon ----

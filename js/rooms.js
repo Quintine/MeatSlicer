@@ -239,10 +239,10 @@ function updateRoom(dt) {
       enterRoom(r.gx + dx, r.gy + dy);
       const next = G.arena;
       // place player at the opposite door in the destination's own shape
-      if (dir === 'n') p.y = next.y1 - p.r - 8;
-      if (dir === 's') p.y = next.y0 + p.r + 8;
-      if (dir === 'e') p.x = next.x0 + p.r + 8;
-      if (dir === 'w') p.x = next.x1 - p.r - 8;
+      if (dir === 'n') { p.y = next.y1 - p.r - 8; p.x = next.cx; }
+      if (dir === 's') { p.y = next.y0 + p.r + 8; p.x = next.cx; }
+      if (dir === 'e') { p.x = next.x0 + p.r + 8; p.y = next.cy; }
+      if (dir === 'w') { p.x = next.x1 - p.r - 8; p.y = next.cy; }
       p.x = clamp(p.x, next.x0 + p.r, next.x1 - p.r);
       p.y = clamp(p.y, next.y0 + p.r, next.y1 - p.r);
       if (G.entryFresh) { separateEntryWave(); G.entryFresh = false; }
