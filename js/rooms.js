@@ -97,6 +97,7 @@ function enterRoom(gx, gy) {
   G.roomDamaged = false;
   G.roomEnterT = G.time;
   G.entryFresh = false;
+  if (G.player) G.player.metronomeTmp = 0; // fresh per-room Crimson-Metronome loan ledger
 
   const room = G.rooms[roomKey(gx, gy)];
   G.cur = room;
@@ -260,6 +261,13 @@ function recordRoomClear(room) {
   }
   // active items charge on room clears: +1 per combat room, +2 per boss
   const p = G.player;
+  // Crimson Metronome: a ½-heart loan is repaid when the room clears clean
+  if (!G.roomDamaged && p.metronomeTmp > 0) {
+    const back = Math.min(p.metronomeTmp, p.stats.maxHp - p.hp);
+    p.hp += back;
+    p.metronomeTmp = 0;
+    if (back > 0) spawnText(p.x, p.y - 26, 'LOAN REPAID +' + back, '#d98991');
+  }
   if (p && p.active) {
     const a = ACTIVES[p.active.iid];
     if (a) {

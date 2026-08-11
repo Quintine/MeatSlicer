@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -372,6 +372,46 @@ console.log('== rebalanced perks + automatic draft ==');
   ctx.G.autoPerk = false;
   ctx.startRun(); step(3, 16);
 }
+
+console.log('== upgrade card click does not fire ==');
+{
+  ctx.startRun(); step(3, 16); // fresh run in play mode
+  ctx.G.enemies.length = 0; // determinism: nothing can interfere
+  const perksBefore = ctx.G.player.perks.length;
+  ctx.G.pendingLevelups = 1; ctx.G.perkChoices = ctx.PERKS.slice(0, 3); ctx.G.mode = 'levelup';
+  // click inside card 0 (cards start at x=207, y=220, 170x230)
+  ctx.Input.mx = 300; ctx.Input.my = 300;
+  ctx.Input.mpressed = true; ctx.Input.mdown = true;
+  step(6, 16); // first frame consumes the click, the rest run with mdown held
+  check('card click exits the draft into play', ctx.G.mode === 'play');
+  check('card click grants exactly one perk', ctx.G.player.perks.length === perksBefore + 1);
+  check('card click fires no bullet (mdown not carried into play)', ctx.G.bullets.length === 0);
+}
+
+console.log('== dropped weapon lockout ==');
+{
+  ctx.startRun(); step(3, 16); // clean, armed player in play mode
+  const p = ctx.G.player;
+  p.weapon = { id: 'cleaver', ammo: 60 }; p.holstered = null;
+  ctx.G.pickups.length = 0;
+  ctx.spawnPickup('weapon', p.x, p.y, { wid: 'repeater', ammo: 30 });
+  ctx.updatePickups(0.016); ctx.updatePickups(0.016); // pick up the repeater
+  check('weapon swap happens instantly on fresh loot', p.weapon.id === 'repeater');
+  const drop = ctx.G.pickups.find(k => k.type === 'weapon');
+  check('old weapon dropped with the lockout delay', !!drop && Math.abs(drop.delay - ctx.WEAPON_DROP_LOCKOUT) < 0.1);
+  if (drop) { drop.vx = 0; drop.vy = 0; } // hold it still for the timing checks
+  // standing on the drop, it must stay uncollectible for ~70% of the lockout
+  const blockedFor = Math.floor(ctx.WEAPON_DROP_LOCKOUT * 0.7 / 0.016);
+  for (let i = 0; i < blockedFor; i++) { p.x = drop.x; p.y = drop.y; ctx.updatePickups(0.016); }
+  const stillBlocked = ctx.G.pickups.some(k => k.type === 'weapon') && p.weapon.id === 'repeater';
+  check('dropped weapon stays un-pickable inside the lockout window', stillBlocked);
+  // the remaining ~30% (plus margin) lets it be re-picked
+  const collectFor = Math.ceil(ctx.WEAPON_DROP_LOCKOUT / 0.016) + 10;
+  for (let i = 0; i < collectFor; i++) { p.x = drop.x; p.y = drop.y; ctx.updatePickups(0.016); }
+  check('dropped weapon re-pickable after the lockout', p.weapon.id === 'cleaver');
+  check('lockout constant is within the 2-3s request', ctx.WEAPON_DROP_LOCKOUT >= 2 && ctx.WEAPON_DROP_LOCKOUT <= 3);
+}
+
 autoDraft = true; // later sections must not get stuck in the perk draft
 
 console.log('== nearby-item description toast ==');
@@ -1888,6 +1928,34 @@ check('debug console closes back to play', ctx.G.mode === 'play');
   check('useActive(force) fires in debug mode', ctx.G.player.active.charges === 0);
   ctx.G.mode = 'play';
 })();
+
+console.log('== crimson metronome heart loan ==');
+{
+  ctx.startRun(); step(3, 16); // self-contained: fresh player, empty arena
+  ctx.G.enemies.length = 0;
+  const p = ctx.G.player;
+  ctx.giveItem('crimsonmetronome');
+  check('metronome grants the loan flag', p.stats.crimsonMetronome === 1);
+  p.weapon = { id: 'repeater', ammo: 500 }; p.holstered = null; // per-shot trigger
+  p.hp = 6; p.metronomeCount = 0; p.metronomeTmp = 0;
+  const hpBefore = p.hp;
+  ctx.Input.mdown = true;
+  let guard = 0;
+  while (p.metronomeTmp === 0 && guard++ < 4000) step(1, 16);
+  ctx.Input.mdown = false;
+  check('8th shot lends ½ heart (not lost)', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+  ctx.G.roomDamaged = false;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('clean room clear repays the loan', p.hp === hpBefore && p.metronomeTmp === 0);
+  ctx.Input.mdown = true;
+  guard = 0;
+  while (p.metronomeTmp === 0 && guard++ < 4000) step(1, 16);
+  ctx.Input.mdown = false;
+  check('loan accrues again', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+  ctx.G.roomDamaged = true;
+  ctx.recordRoomClear({ type: 'combat' });
+  check('hit room forfeits the loan', p.hp === hpBefore - 1 && p.metronomeTmp === 1);
+}
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : '\n' + failures + ' CHECKS FAILED');
 process.exit(failures === 0 ? 0 : 1);

@@ -15,3 +15,8 @@ win:
   target:
     - zip
   icon: build/icon.png
+linux:
+  target:
+    - AppImage
+  icon: build/icon.png
+  category: Game

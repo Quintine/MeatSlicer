@@ -61,6 +61,8 @@ const PERK_POWER_WEIGHT = 0.5;
 const AMMO_DROP_SCALE = 0.75;
 const STUN_UNIT = 0.03 / 0.97; // Sine Weave raw rating per stack, so the first stack = 3% stagger chance
 const PRESSURE_MIN = 0.60, PRESSURE_MAX = 2.00;
+// seconds a player-dropped weapon stays un-pickable (prevents instant swap loops)
+const WEAPON_DROP_LOCKOUT = 2.5;
 const PRESSURE_UNIT = 0.01;          // one "point" on the dial scale
 const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
 const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
