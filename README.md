@@ -40,7 +40,7 @@ npm test
 npm run dist
 ```
 
-`npm test` runs the smoke test. `npm run dist` packages the Windows Electron build as a zip in `dist/`.
+`npm test` runs the smoke test. `npm run dist` packages the Windows Electron build as a zip in `dist/`; `npm run dist:linux` produces a Linux AppImage in `dist/`. Every release ships both platforms.
 
 ## Documentation
 

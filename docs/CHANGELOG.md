@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] — 2026-08-11
+
+### Added
+- **Dual-platform release** — every push now ships BOTH a Windows zip and a Linux AppImage attached to a matching GitHub release (`dist:linux` script + AppImage target added to `electron-builder.yml`). Standing policy recorded in the release-process knowledge.
+- **Crimson Metronome heart loan** — the legendary lends a half heart on its 8th shot and repays it when the room is cleared clean; a hit room forfeits the loan.
+- **Weapon-drop lockout** — dropped weapons stay un-pickable for a 2.5s window to stop instant swap loops.
+- **Big-room wall-peek camera** — in rooms larger than the screen, the camera now glides slightly past the arena edge (into the drawn wall band) as the player nears a wall, so walls and their exit doors come into view.
+- **20 pre-existing statistical checks seeded deterministically** — large RNG sampling (item favor, elite drops, toast re-arm) now runs under a fixed seed so the smoke suite passes identically every run.
+
+### Changed
+- **Big-room door entries land at the door** — the door-transition placement now sets BOTH coordinates (destination arena's `cx`/`cy` on the opposite face), fixing the landing-into-a-wall bug in the new large room shapes.
+- **Red Right Hand hitbox matches the saw** — the chainsaw's hit area now sits on the character's right hand (`aim + π/2`, offset `rho`) at full blade reach/radius, instead of a small forward circle.
+- **Flamethrower fires from the right hand** — The Cauterizer's projectiles originate 26px right of the body; the Bile Blunderbuss cone is unchanged.
+- **Firing slows movement** — holding fire while moving slows the player 5% with the Bone Popper and 15% with every other weapon.
+- **Armour is now a literal dodge chance** — the `armor` stat is a direct 0–75% damage-dodge chance (the diminishing curve is gone); Tanned Hide +8%, Thick Hide +4%.
+- **Pedestal bases persist** — an item pedestal stays after its item is taken and is never removed by walking over it.
+- **Weapon fire locked out in menus + 50ms after close** — firing is impossible in any menu and for 50ms after it closes; supersedes the level-up-only click mask.
+- **Perk-selection guard shortened** — the accidental-pick lock on a fresh draft dropped from 1.5s to ~0.4s.
+
+### Fixed
+- **No accidental shot when choosing an upgrade card** — the reward-click no longer carries the held button into play (now generalized to every menu→play transition).
+
+### Removed
+- **`docs/development.md`** — retired from the repo; durable developer knowledge now lives in Serena memories (`.serena/memories/meatslicer-development.md`, memory version 0.7.0, and `meatslicer-release-process.md`).
+
+---
+
+## [0.6.0] — 2026-08-10
+
+### Added
+- **Big rooms with Isaac-style camera** — floor rooms can spawn extra-large and odd-shaped arenas (grand hall, deep hall, meat hall, odd hall); the view follows the player and clamps to the room instead of being a fixed screen, and the floor mixes them in at higher floors with reciprocal doors.
+
+---
+
 ## [0.5.0] — 2026-07-30
 
 ### Added
@@ -155,4 +189,4 @@ The initial series of commits that built the game from scratch. Grouped by featu
 
 ---
 
-*Generated from the git log. Last commit: v0.5.0*
+*Generated from the git log. Last commit: v0.7.0*
