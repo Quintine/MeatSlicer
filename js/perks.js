@@ -61,7 +61,7 @@ function openPerkDraft() {
   }
   const opts = shuffle([...PERKS]).slice(0, 3);
   G.perkChoices = opts;
-  if (G.mode !== 'levelup') G.selectionLock = 1.5;
+  if (G.mode !== 'levelup') G.selectionLock = 0.4; // brief guard against accidental instant picks
   G.mode = 'levelup';
   Sfx.levelup();
 }

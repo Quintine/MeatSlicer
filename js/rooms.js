@@ -152,12 +152,16 @@ function enterRoom(gx, gy) {
 // Isaac-style: the view centers on the player and is clamped so it never leaves
 // the room. Rooms that fit the screen keep cam exactly at the room center —
 // which is (0,0) for every current shape, so existing rendering is byte-identical.
+// In larger rooms the camera may peek a little past the arena edge (into the
+// drawn wall band, which is WALL thick) so walls and their exit doors come into
+// view as the player reaches them.
+const CAM_EDGE_PEEK = WALL * 0.9; // how far past the arena edge the camera may glide
 function updateCamera() {
   const a = G.arena, p = G.player;
   if (!a || !p) return;
   G.cam = G.cam || { x: 0, y: 0 };
-  G.cam.x = a.w <= W ? a.cx - W / 2 : clamp(p.x - W / 2, a.x0, a.x1 - W);
-  G.cam.y = a.h <= H ? a.cy - H / 2 : clamp(p.y - H / 2, a.y0, a.y1 - H);
+  G.cam.x = a.w <= W ? a.cx - W / 2 : clamp(p.x - W / 2, a.x0 - CAM_EDGE_PEEK, a.x1 - W + CAM_EDGE_PEEK);
+  G.cam.y = a.h <= H ? a.cy - H / 2 : clamp(p.y - H / 2, a.y0 - CAM_EDGE_PEEK, a.y1 - H + CAM_EDGE_PEEK);
 }
 // screen-space mouse -> world coords (safe pre-player: cam exists from state.js)
 function mxW() { return Input.mx + G.cam.x; }

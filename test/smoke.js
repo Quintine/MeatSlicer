@@ -61,7 +61,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -303,11 +303,15 @@ console.log('== big rooms + camera ==');
   ctx.setArenaForRoom(wide);
   const wa = ctx.G.arena;
   ctx.G.player.x = 100; ctx.G.player.y = 320; ctx.updateCamera();
-  check('camera clamps at left arena edge', ctx.G.cam.x === wa.x0);
+  check('big-room camera peeks past the left arena edge toward the wall',
+    Math.abs(ctx.G.cam.x - (wa.x0 - ctx.CAM_EDGE_PEEK)) < 1);
   ctx.G.player.x = wa.x1 - 200; ctx.G.player.y = 320; ctx.updateCamera();
-  check('camera clamps at right arena edge', ctx.G.cam.x === wa.x1 - ctx.W);
+  check('big-room camera peeks past the right arena edge toward the wall',
+    Math.abs(ctx.G.cam.x - (wa.x1 - ctx.W + ctx.CAM_EDGE_PEEK)) < 1);
   ctx.G.player.x = wa.cx; ctx.G.player.y = 320; ctx.updateCamera();
   check('camera centers on the player mid-room', ctx.G.cam.x === wa.cx - ctx.W / 2 && ctx.G.cam.y === 0);
+  // the wall peek stays inside the drawn wall band (never black void)
+  check('wall peek stays within the wall band', ctx.CAM_EDGE_PEEK <= ctx.WALL);
 
   // world-mouse conversion
   ctx.G.cam.x = wa.cx - ctx.W / 2; ctx.Input.mx = 120; ctx.Input.my = 240;
@@ -352,10 +356,11 @@ ctx.gainXP(100);
 step(5, 16);
 check('levelup triggered', ctx.G.mode === 'levelup' || ctx.G.pendingLevelups > 0);
 check('perk selection is locked on first presentation', (ctx.G.selectionLock || 0) > 0);
+check('perk selection lock is a brief ~0.4s guard', (ctx.G.selectionLock || 0) > 0 && (ctx.G.selectionLock || 0) <= 0.4);
 const lockedChoices = ctx.G.perkChoices;
 tap('1'); // ignored while the selection lock is active
 check('locked draft ignores selection input', ctx.G.perkChoices === lockedChoices);
-step(100, 16); // advance 1.6s in levelup mode, clearing the 1.5s selection lock
+step(100, 16); // advance 1.6s in levelup mode, clearing the 0.4s selection lock
 let guard = 0;
 while (ctx.G.mode === 'levelup' && guard++ < 30) { tap('1'); step(2, 16); }
 check('perks drafted', ctx.G.mode === 'play');
@@ -371,7 +376,7 @@ console.log('== rebalanced perks + automatic draft ==');
   ctx.G.pendingLevelups = 1; ctx.G.autoPerk = false; ctx.openPerkDraft();
   p.stats.rerolls = 1; tap('r');
   check('Reroll Rib currency refreshes a manual draft', p.stats.rerolls === 0 && ctx.G.perkChoices.length === 3);
-  step(100, 16); // clear the 1.5s selection lock armed by openPerkDraft above
+  step(100, 16); // clear the 0.4s selection lock armed by openPerkDraft above
   tap('4');
   check('one-off random draft choice resolves normally', ctx.G.mode === 'play' && ctx.G.pendingLevelups === 0);
   const levelBefore = p.level;
