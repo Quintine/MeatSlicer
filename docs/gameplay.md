@@ -100,7 +100,7 @@ Right-click is disabled (context menu suppressed). There is **no dash, no intera
 |---|---|
 | Max HP | 6 (shown as 3 hearts, 2 HP per heart) |
 | Hitbox radius | 20 px |
-| Move speed | 178 px/s |
+| Move speed | 178 px/s (×0.95 while firing the Bone Popper, ×0.85 while firing any other weapon) |
 | Crit chance | 5% |
 | Crit damage | ×2.0 |
 | Post-hit invulnerability | 0.9 s |
@@ -111,7 +111,7 @@ Right-click is disabled (context menu suppressed). There is **no dash, no intera
 ### Damage, armor, and shields
 
 - Every hit taken deals a **minimum of 1 damage** (`max(1, round(dmg))`).
-- **Armor** gives a chance to completely ignore a hit: block chance = `armor / (1 + armor)`, capped at 75%. A blocked hit shows "BLOCKED" and grants only 0.2 s of invulnerability.
+- **Armor** gives a chance to completely ignore a hit. Each source of armor adds its listed chance directly (e.g. Tanned Hide +8%, Thick Hide +4%) — the block chance is simply `armor`, capped at 75%. A blocked hit shows "BLOCKED" and grants only 0.2 s of invulnerability.
 - **Shield hearts** (cyan) absorb damage before real HP. They come from the Bone Plate item and Shield Heart perk, and are refilled to full at the start of each floor. Losing your last shield triggers a "SHIELD DOWN" warning. On the HUD they render at half-heart granularity — **2 shield HP = one full cyan heart**, matching red hearts (2 HP = 1 heart).
 - Getting hit knocks you back 14 px, shakes the screen, and flashes a red vignette.
 

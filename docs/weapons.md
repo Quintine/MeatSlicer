@@ -244,12 +244,13 @@ Area denial. Traps persist on the floor and snap shut on up to **three** victims
 |---|---|
 | Damage | 7 per tick (ticks scale with fire rate) |
 | Damage interval | 0.10 s |
-| Reach | 30 × rangeMul × √shotSpeedMul from player |
-| Arc radius | 34 × √sizeMul |
+| Reach | 58 × rangeMul × √shotSpeedMul from player |
+| Right-hand offset | 36 × √sizeMul to the right of aim |
+| Arc radius | 38 × √sizeMul |
 | Ammo | 150 (refill 72 per pickup; drains 18/sec while held, ÷ ammoEff) |
 | Recoil | 0.38 |
 
-Continuous melee chainsaw — hold LMB and walk into things. Damage scales with `dmgMul × rateMul`, plus the same +6%-per-pierce/bounce/homing inert bonus as the Tenderizer. Sparks fly, ammo drains.
+Continuous melee chainsaw — hold LMB and walk into things. The hitbox sits on the character's right hand (`aim + π/2`) at full blade reach/radius, so swings connect on the right side of the body. Damage scales with `dmgMul × rateMul`, plus the same +6%-per-pierce/bounce/homing inert bonus as the Tenderizer. Sparks fly, ammo drains.
 
 ---
 
@@ -271,7 +272,7 @@ Continuous melee chainsaw — hold LMB and walk into things. Damage scales with 
 | Ammo | 110 (refill 21 per pickup), **drains 12/sec while held** |
 | Recoil | 0.32 |
 
-Flamethrower. Hits **ignite for 1.5 s** with burn DPS = bullet damage × 0.8 (3.6 DPS base). Melt hordes that get close; useless at range. Ammo is time-denominated: a full tank is ~9 seconds of flame.
+Flamethrower — projectiles originate **26 px to the right of the body** (right-hand hold). Hits **ignite for 1.5 s** with burn DPS = bullet damage × 0.8 (3.6 DPS base). Melt hordes that get close; useless at range. Ammo is time-denominated: a full tank is ~9 seconds of flame.
 
 ### The Tenderizer
 

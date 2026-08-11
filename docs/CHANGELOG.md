@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.2] — 2026-08-11
+
+### Fixed
+- **Documentation kept in sync with the 0.7.0 QoL batch** — everything that changed in 0.7.0 is now documented: the armor stat is described as a literal 0–75% dodge chance (Tanned Hide +8%, Thick Hide +4% — no more diminishing curve) in the gameplay, items, and perks guides; Red Right Hand's right-hand full-blade hitbox (reach 58 / offset 36 / radius 38) and the Cauterizer's right-hand projectile origin are now in the weapons guide; and the firing movement slow (×0.95 Bone Popper / ×0.85 otherwise) is in the player stats.
+
+---
+
 ## [0.7.0] — 2026-08-11
 
 ### Added
@@ -189,4 +196,4 @@ The initial series of commits that built the game from scratch. Grouped by featu
 
 ---
 
-*Generated from the git log. Last commit: v0.7.0*
+*Generated from the git log. Last commit: v0.7.2*

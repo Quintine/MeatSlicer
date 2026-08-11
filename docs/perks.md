@@ -55,7 +55,7 @@ XP comes from gems dropped by kills, room clears, and bosses, scaled by your `xp
 |---|---|---|
 | **Big Heart** | +½ max heart, heal ½ heart | `maxHp +1`, heal 1 |
 | **Shield Heart** | +½ shield heart at the start of each floor | `shieldPerk +1`, `shieldHp +1` — refills every floor transition |
-| **Thick Hide** | +4% chance to ignore damage | `armor +1/24 (≈0.0417)` — block chance `armor / (1 + armor)`, cap 75% |
+| **Thick Hide** | +4% chance to ignore damage | `armor +0.04` — literal dodge chance, cap 75% |
 | **Second Wind** | +0.15s hurt immunity | `invBonus +0.15` — post-hit invulnerability 0.9 s → 1.05 s |
 | **Spite Flesh** | Contact attackers take damage | `thorns +4` — melee attackers take `4 × dmgMul` |
 | **Bone Knit** | 3% chance to heal ½ heart after combat rooms | `roomHealChance +0.03` (cap 90%) |

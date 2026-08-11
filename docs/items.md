@@ -115,7 +115,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Gristle Cord** | +0.12s hurt immunity, +4% armor | `invBonus +0.12`, `armor +0.04` |
 | **Bone Plate** | +½ shield heart each floor | `shieldPerk +1`, `shieldHp +1` — shields refill every floor (1 shield HP = ½ heart, renders as half a cyan pip) |
 | **Second Stomach** | +½ heart and excess healing shields | `maxHp +1`, heal 1, `overShield +1` — overflow healing becomes shield HP |
-| **Tanned Hide** | +8% chance to ignore damage | `armor +0.087` — block chance `armor / (1 + armor)`, cap 75% |
+| **Tanned Hide** | +8% chance to ignore damage | `armor +0.08` — literal dodge chance, cap 75% |
 | **Dead Man's Clock** | +0.25s hurt immunity | `invBonus +0.25` — post-hit invulnerability 0.9 s → 1.15 s at tier I |
 | **Worm Gut** | Heal ½ heart after combat rooms | `roomHeal +1` — guaranteed 1 HP heal after each combat room clear |
 | **Spine Cage** | Contact attackers take damage | `thorns +8` — melee attackers take `8 × dmgMul` when they hurt you |
