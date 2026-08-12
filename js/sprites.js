@@ -86,12 +86,12 @@ const Sprites = {
       pending++;
       const img = new Image();
       const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.onload = () => { this.imgs[name] = img; finish(); };
+      img.onload = () => { this.imgs[name] = img; if (typeof img.decode === 'function') img.decode().then(finish, finish); else finish(); };
       img.onerror = () => {
-        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=55'; return; }
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=56'; return; }
         finish();
       };
-      img.src = hd ? 'assets/hd/' + name + '.webp?v=55' : 'assets/' + name + '.png?v=55';
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=56' : 'assets/' + name + '.png?v=56';
     }
   },
 
