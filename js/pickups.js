@@ -53,15 +53,14 @@ function updatePickups(dt) {
     }
 
     // gems & small pickups fly to the player inside magnet radius
-    if ((k.type === 'gem' || k.type === 'heart' || k.type === 'ammo') && d < magR) {
+    if ((k.type === 'gem' || k.type === 'ammo' || (k.type === 'heart' && p.hp < p.stats.maxHp)) && d < magR) {
       const a = angleTo(k.x, k.y, p.x, p.y);
       const sp = lerp(320, 60, d / magR) * p.stats.magnetPull;
       k.x += Math.cos(a) * sp * dt; k.y += Math.sin(a) * sp * dt;
     }
 
     if (d < p.r + 12 && !(k.delay > 0) && k.type !== 'itemspot') {
-      collectPickup(k);
-      G.pickups.splice(i, 1);
+      if (collectPickup(k) !== false) G.pickups.splice(i, 1);
     }
   }
 }
@@ -74,10 +73,11 @@ function collectPickup(k) {
       Sfx.gem();
       break;
     case 'heart': {
-      // Glutton's Gut: hearts heal +1 extra per tier; overheal becomes score
+      // At full HP hearts stay on the floor for later; Glutton's Gut heals +1
+      // extra per tier below that.
+      if (p.hp >= p.stats.maxHp) return false;
       const healAmt = 2 + (p.stats.gluttonGut || 0);
-      if (p.hp < p.stats.maxHp) { healPlayer(healAmt); spawnText(p.x, p.y, '+' + healAmt, '#d92038'); }
-      else addScore(25 + (p.stats.gluttonGut || 0) * 10);
+      healPlayer(healAmt); spawnText(p.x, p.y, '+' + healAmt, '#d92038');
       Sfx.heart();
       break;
     }
@@ -91,7 +91,7 @@ function collectPickup(k) {
       for (const inst of carried) {
         const def = WEAPONS[inst.id];
         const cap = def.ammo * 1.5;
-        const wanted = Math.max(1, Math.ceil((def.refill || 1) * p.stats.ammoPickupMul));
+        const wanted = Math.max(1, Math.ceil((def.refill || 1) * p.stats.ammoPickupMul * ammoPressureMul()));
         const add = Math.max(0, Math.min(wanted, cap - inst.ammo));
         inst.ammo += add;
         total += add;
@@ -115,7 +115,7 @@ function collectPickup(k) {
           spawnText(p.x, p.y, 'AMMO FULL', '#d0b060');
         } else {
           const cap = w.ammo * 1.5;
-          const wanted = Math.max(1, Math.ceil((w.refill || 1) * p.stats.ammoPickupMul));
+          const wanted = Math.max(1, Math.ceil((w.refill || 1) * p.stats.ammoPickupMul * ammoPressureMul()));
           const add = Math.max(0, Math.min(wanted, cap - match.ammo));
           match.ammo += add;
           if (wanted > add) addScore(Math.round((wanted - add) * 2));
@@ -161,6 +161,7 @@ function collectPickup(k) {
       nextFloor();
       break;
   }
+  return true;
 }
 
 // readable nameplate shown when the player walks up to a pickup

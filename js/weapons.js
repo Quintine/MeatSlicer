@@ -48,6 +48,10 @@ function fireWeapon(p, w) {
   const ang = p.aim;
   const muzzle = w.muzzle || 35;
   let bx = p.x + Math.cos(ang) * muzzle, by = p.y + Math.sin(ang) * muzzle;
+  if (w.behavior === 'flame') {
+    const rh = ang + Math.PI / 2;
+    bx += Math.cos(rh) * 26; by += Math.sin(rh) * 26;   // right-hand hold: FX and bullets share one origin
+  }
   const dmgMul = st.dmgMul * st.dmgLiveMul;
   const spdMul = st.shotSpeedMul;
   spawnMuzzleFx(bx, by, ang, w.behavior);
@@ -86,10 +90,6 @@ function fireWeapon(p, w) {
       break;
     }
     case 'cone': case 'flame': {
-      if (w.behavior === 'flame') {
-        const rh = ang + Math.PI / 2;
-        bx += Math.cos(rh) * 26; by += Math.sin(rh) * 26;   // right-hand hold: origin right of the body
-      }
       for (const center of volley) {
         for (let i = 0; i < 2; i++) mk(center + rand(-w.spread, w.spread), { pierce: 2 + st.pierce, r: 6 * st.sizeMul });
       }
@@ -173,6 +173,7 @@ function sawTick(p, def, inst, dt) {
 // fire the Spinal Tap beam
 function fireBeam(p, def, charge) {
   const st = p.stats;
+  const muzzle = def.muzzle || 35;
   const angles = [p.aim];
   for (let i = 1; i <= st.split; i++) angles.push(p.aim + (i % 2 ? 1 : -1) * 0.025);
   for (let i = 1; i <= st.fan; i++) { angles.push(p.aim + 0.16 * i); angles.push(p.aim - 0.16 * i); }
@@ -182,16 +183,16 @@ function fireBeam(p, def, charge) {
   const dmg = def.dmg * st.dmgMul * st.dmgLiveMul * (0.4 + 0.6 * charge) * inert;
   const width = 14 * Math.sqrt(st.sizeMul);
   for (const ang of angles) {
-    const x2 = p.x + Math.cos(ang) * len, y2 = p.y + Math.sin(ang) * len;
+    const x0 = p.x + Math.cos(ang) * muzzle, y0 = p.y + Math.sin(ang) * muzzle;
+    const x2 = x0 + Math.cos(ang) * len, y2 = y0 + Math.sin(ang) * len;
     for (const e of G.enemies) {
-      if (distToSegment(e.x, e.y, p.x, p.y, x2, y2) < e.r + width) {
+      if (distToSegment(e.x, e.y, x0, y0, x2, y2) < e.r + width) {
         damageEnemy(e, dmg, ang, true, { source: 'player' });
       }
     }
-    spawnBeam(p.x, p.y, ang, len);
+    spawnBeam(x0, y0, ang, len);
   }
   const ang = p.aim;
-  const muzzle = def.muzzle || 35;
   spawnMuzzleFx(p.x + Math.cos(ang) * muzzle, p.y + Math.sin(ang) * muzzle, ang, 'beam');
   p.recoil = 1;
   p.muzzleT = 0.11;

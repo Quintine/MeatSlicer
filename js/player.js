@@ -1,5 +1,7 @@
 // ---- the butcher (player) ----
 
+const DASH_SLOW_T = 0.6; // seconds of 50% move speed after a dash; doubles as the dash cooldown
+
 function defaultPlayerStats() {
   return {
     dmgMul: 1, rateMul: 1, speedMul: 1, shotSpeedMul: 1, rangeMul: 1,
@@ -28,7 +30,7 @@ function initPlayer() {
     x: W / 2, y: H / 2, r: 20,
     hp: 6, shieldHp: 0,
     aim: 0, bodyFacing: 0, fireT: 0, charge: 0, invT: 0, frenzyT: 0,
-    step: 0, moveBlend: 0, recoil: 0, muzzleT: 0,
+    step: 0, moveBlend: 0, recoil: 0, muzzleT: 0, dashSlowT: 0,
     animT: 0, attackT: 0, actionT: 0, hitT: 0, deathT: 0,
     weapon: { id: 'bonepopper', ammo: Infinity },
     holstered: null,   // a special weapon set aside while the pistol is out
@@ -79,9 +81,20 @@ function updatePlayer(dt) {
   if (keyDown('s', 'arrowdown')) my += 1;
   if (keyDown('a', 'arrowleft')) mx -= 1;
   if (keyDown('d', 'arrowright')) mx += 1;
+  if (p.dashSlowT > 0) p.dashSlowT -= dt;
   if (mx || my) {
     const len = Math.hypot(mx, my);
-    const spd = 178 * st.speedMul * (held ? (w.id === 'bonepopper' ? 0.95 : 0.85) : 1);
+    const firing = held ? (w.id === 'bonepopper' ? 0.95 : 0.85) : 1;
+    if (keyPressed('shift') && p.dashSlowT <= 0) {
+      const dashD = 0.45 * (178 * st.speedMul * firing) * DASH_SLOW_T;
+      p.x += (mx / len) * dashD;
+      p.y += (my / len) * dashD;
+      p.dashSlowT = DASH_SLOW_T;
+      spawnSmoke(p.x, p.y, Math.atan2(-my, -mx), 6, '#9b8d84');
+      spawnShockwave(p.x, p.y, 26, '#d8c9a8', 0.35);
+      Sfx.duck();
+    }
+    const spd = 178 * st.speedMul * firing * (p.dashSlowT > 0 ? 0.5 : 1);
     p.x += (mx / len) * spd * dt;
     p.y += (my / len) * spd * dt;
     p.step += dt * 9 * Math.min(st.speedMul, 1.8);
@@ -436,9 +449,10 @@ function drawPlayer(ctx) {
     const torsoY = p.y + Math.sin(p.aim) * torsoOffset;
     Sprites.draw(ctx, 'pt_' + p.weapon.id, torsoX, torsoY, p.aim, w.torsoW || 116, p.hitT > 0);
   }
-  if (p.hp > 0 && p.muzzleT > 0 && w.behavior !== 'slam') {
+  if (p.hp > 0 && p.muzzleT > 0 && w.behavior !== 'slam' && w.behavior !== 'saw') {
     const muzzleDist = (w.muzzle || 40) - kick;
-    const mx = p.x + Math.cos(p.aim) * muzzleDist, my = p.y + Math.sin(p.aim) * muzzleDist;
+    let mx = p.x + Math.cos(p.aim) * muzzleDist, my = p.y + Math.sin(p.aim) * muzzleDist;
+    if (w.behavior === 'flame') { const rh = p.aim + Math.PI / 2; mx += Math.cos(rh) * 26; my += Math.sin(rh) * 26; }
     ctx.save(); ctx.translate(mx, my); ctx.rotate(p.aim);
     ctx.globalAlpha = p.muzzleT / 0.07;
     ctx.fillStyle = '#ffe6a0';

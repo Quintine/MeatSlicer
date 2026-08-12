@@ -211,6 +211,13 @@ function dbgRenderPlayer(ctx, b) {
   dbgText(ctx, 'Mutating this tab taints the run — best score will not be saved.', b.x, y, '#7d5a58', hfont(8));
 }
 
+function debugRefillAmmo() {
+  const p = G.player;
+  for (const inst of [p.weapon, p.holstered]) {
+    if (inst && inst.ammo !== Infinity) inst.ammo = WEAPONS[inst.id].ammo;
+  }
+}
+
 function dbgRenderWeapons(ctx, b) {
   const p = G.player;
   const lw = 320;
@@ -232,12 +239,12 @@ function dbgRenderWeapons(ctx, b) {
     p.charge = 0; p.fireT = 0;
     addToast('DEBUG', WEAPONS[wid].name);
   });
-  act('REFILL AMMO', () => { if (p.weapon.ammo !== Infinity) p.weapon.ammo = WEAPONS[p.weapon.id].ammo; });
+  act('REFILL AMMO', () => { debugRefillAmmo(); });
   act('HOLSTER CURRENT', () => { if (p.weapon.id !== 'bonepopper') { p.holstered = p.weapon; p.weapon = { id: 'bonepopper', ammo: Infinity }; } });
   act('DROP AT CURSOR', () => { const c = dbgCursor(); spawnPickup('weapon', c.x, c.y, { wid }); });
   act('SPAWN ITEM PEDESTAL', () => { const c = dbgCursor(); spawnItemPedestal(c.x, c.y, null, 'room'); });
   ay += 4;
-  dbgNumRow(ctx, 'ammo', ax, ay, b.w - lw - 20, () => (p.weapon.ammo === Infinity ? 999 : p.weapon.ammo), v => { debugTaint(); if (p.weapon.ammo !== Infinity) p.weapon.ammo = Math.max(0, v); }, 10, 0, 999);
+  dbgNumRow(ctx, 'ammo', ax, ay, b.w - lw - 20, () => (p.weapon.ammo !== Infinity ? p.weapon.ammo : (p.holstered && p.holstered.ammo !== Infinity ? p.holstered.ammo : 999)), v => { debugTaint(); const t = p.weapon.ammo !== Infinity ? p.weapon : (p.holstered && p.holstered.ammo !== Infinity ? p.holstered : null); if (t) t.ammo = Math.max(0, v); }, 10, 0, 999);
   dbgText(ctx, 'Equip swaps the live weapon; the old one goes to the holster unless it was the Bone Popper.', ax, ay + 32, '#6f5c58', hfont(8));
 }
 
@@ -528,7 +535,7 @@ const DEBUG_PAGES = [
 // ---- top-level update / draw ----
 function updateDebug() {
   // infinite-ammo upkeep (also runs while pinned so live play benefits)
-  if (G.debugFlags.infAmmo && G.player && G.player.weapon.ammo !== Infinity) G.player.weapon.ammo = WEAPONS[G.player.weapon.id].ammo;
+  if (G.debugFlags.infAmmo && G.player) for (const inst of [G.player.weapon, G.player.holstered]) if (inst && inst.ammo !== Infinity) inst.ammo = WEAPONS[inst.id].ammo;
 
   // wall-clock fps counter for the stats tab (independent of timescale/freeze)
   DBG.fpsFrames++;

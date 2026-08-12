@@ -61,6 +61,8 @@ const G = {
 const PERK_POWER_WEIGHT = 0.5;
 // ammo economy: global dial for drop frequency (refill size is per-weapon)
 const AMMO_DROP_SCALE = 0.75;
+// Generic ammo refills track the live pressure dial at 80% of the HP scaling.
+function ammoPressureMul() { return 1 + (G.pressure - 1) * 0.8; }
 const STUN_UNIT = 0.03 / 0.97; // Sine Weave raw rating per stack, so the first stack = 3% stagger chance
 const PRESSURE_MIN = 0.60, PRESSURE_MAX = 2.00;
 // seconds a player-dropped weapon stays un-pickable (prevents instant swap loops)

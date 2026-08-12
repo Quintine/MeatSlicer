@@ -77,7 +77,7 @@ const Sfx = {
     try { audio._sfxSource.disconnect(); } catch (e) {}
     // The owning Music entry is discarded immediately; never re-wrap this element.
   },
-  duck(amount, duration) {
+  duck(amount = 0.3, duration = 0.15) {
     if (!this.ctx || !this.duckGain || G.muted) return;
     const t = this.ctx.currentTime, gain = this.duckGain.gain;
     if (gain.cancelAndHoldAtTime) gain.cancelAndHoldAtTime(t);
