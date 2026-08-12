@@ -32,7 +32,6 @@ Score is display-only (it buys nothing) and determines your saved best:
 | Combat room cleared | +50 |
 | Descending to next floor | +250 |
 | XP gained | +1 per XP (rounded) |
-| Heart picked up at full HP | +25 |
 | Ammo picked up with nothing to refill | +15 (+2 per wasted unit otherwise) |
 | Duplicate item at tier cap (IX) | +150 |
 
@@ -55,6 +54,7 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 | **T** | Toggle Auto-Draft (auto-pick random perk on level-up) |
 | **M** | Mute / unmute |
 | **N** | Next music track |
+| **Shift** | Dash in the movement direction; 0.6s of 50% slow after (net 95% of walking distance) |
 
 ### Perk draft screen (level-up)
 
@@ -89,7 +89,7 @@ The desktop app title screen has **[X] Exit to Desktop**. Pause has **[Q] Main M
 The first matching press arms a 3-second confirmation; press it again to confirm. `P` or
 `Escape` resumes. In a web browser, desktop-exit controls are greyed out and non-interactive.
 
-Right-click is disabled (context menu suppressed). There is **no dash, no interact key** — pickups are collected by walking over them.
+Right-click is disabled (context menu suppressed). There is **no interact key** — pickups are collected by walking over them.
 
 ---
 
@@ -119,7 +119,7 @@ Right-click is disabled (context menu suppressed). There is **no dash, no intera
 ### Healing
 
 - Hearts restore 2 HP (1 heart) each.
-- Healing past max HP normally goes to waste (converted to +25 score for heart pickups) — unless you have the **Second Stomach** item, which converts overflow healing into shield HP.
+- Healing past max HP normally goes to waste — unless you have the **Second Stomach** item, which converts overflow healing into shield HP. Hearts are not consumed at full HP (they stay on the floor for later, and the magnet won't drag them).
 - Other healing sources: Vampire Dentures (kill procs), Hemophage (hit procs), Worm Gut / Bone Knit (post-combat heals).
 
 ---
@@ -185,8 +185,8 @@ Clearing a combat room drops:
 | Pickup | Effect |
 |---|---|
 | **XP Gem** (small, value 1 / big, value 5) | Grants XP × your `xpMul`. Fills the level bar; each level-up opens the Mutation Draft. |
-| **Heart** | Heals 2 HP. At full HP: +25 score instead. |
-| **Ammo** | Refills carried special weapons (current + holstered) by their authored `refill` × `ammoPickupMul`, up to 150% of magazine size. Overflow becomes score. |
+| **Heart** | Heals 2 HP. At full HP: stays on the floor for later (the magnet won't drag it). |
+| **Ammo** | Refills carried special weapons (current + holstered) by their authored `refill` × `ammoPickupMul` × `ammoPressureMul()` (pressure scaling at 80% of the HP multiplier), up to 150% of magazine size. Overflow becomes score. |
 | **Weapon** | Equips on walk-over. Your old special weapon drops with its remaining ammo (Bone Popper is never dropped). |
 | **Item** (on pedestal) | Grants/upgrades a passive item. Hovering near a pedestal shows its name. |
 | **Stairs Down** | Appears after every boss kill. Walk over to descend. |

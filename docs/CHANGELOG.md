@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] — 2026-08-12
+
+### Added
+- **Dash (Shift)** — a burst movement in the movement direction, instant displacement D = 0.45 × v × 0.6 then 0.6 s of 50% slow after (net 95% of walking distance); no dash while slowed (DASH_SLOW_T doubles as cooldown)
+- **Decode-ahead asset cache** — sprites are fully decoded into memory during the title screen via `img.decode()`, eliminating first-draw jitter on weak systems
+
+### Changed
+- **Ammo pressure scaling** — generic ammo refills now scale with the live pressure dial at 80% of the HP multiplier (`ammoPressureMul() = 1 + (G.pressure − 1) × 0.8` in `js/state.js`)
+- **Chroma-key pipeline reworked** — `flood_key_magenta` in `tools/gen_assets.py` now has four stages: border flood (unchanged), strict interior-pocket key (r>200, g<80, b>200), 3-pass is_magenta fringe erosion, and despill (excess=min(r,b)−g, cut round(excess×0.6) when >50); both SD and HD tiers regenerated with no magenta pockets
+- **Muzzle alignment** — flame origin shifted right-hand 26px before `spawnMuzzleFx` so pellets and FX share one origin (cone/bile unchanged); beam starts at the muzzle (x0,y0) instead of the pivot; saw rendered flash suppressed (blade sparks are the effect); applied across all 16 weapons
+
+### Fixed
+- **Debug ammo on a holstered spent weapon** — `debugRefillAmmo()` and INF AMMO upkeep now top up both `p.weapon` and `p.holstered`; the live ammo row edits the finite slot when the active weapon has infinite ammo
+- **Hearts at full HP** — hearts stay on the floor instead of converting to score; the magnet won't drag them
+
+### Removed
+- **Retired development-guide row from the docs index** — the `| Development Guide |` table row in `docs/README.md` is removed (the guide was retired in 0.7.0)
+
+---
+
 ## [0.8.0] — 2026-08-12
 
 ### Added
@@ -201,4 +221,4 @@ The initial series of commits that built the game from scratch. Grouped by featu
 
 ---
 
-*Generated from the git log. Last commit: v0.8.0*
+*Generated from the git log. Last commit: v0.9.0*
