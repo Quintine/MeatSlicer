@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0] — 2026-08-12
+
+### Added
+- **HD Remaster setting** — opt-in visual mode toggled from the title screen (press **H** or click the HD REMASTER tag). When on: the canvas renders at 4× resolution (3840×2560) with smooth scaling, the sprite loader serves a 4× WebP tier (`assets/hd/`) generated from the raw source art (`assets/raw/`) by `tools/hd_assets.py`, and the room-layer offscreen canvas renders at 4×. The setting persists to `localStorage` (`meatslicer_hd_remaster`) and reloads the page on toggle (no live hot-swap). If an HD file is missing, the loader falls back per-sprite to the standard PNG. **Default is off** (classic pixelated 960×640 look). Toggle is title-screen only (mid-run reload would lose the run).
+
 ## [0.7.2] — 2026-08-11
 
 ### Fixed
@@ -196,4 +201,4 @@ The initial series of commits that built the game from scratch. Grouped by featu
 
 ---
 
-*Generated from the git log. Last commit: v0.7.2*
+*Generated from the git log. Last commit: v0.8.0*

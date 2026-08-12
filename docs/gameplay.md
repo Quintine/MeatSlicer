@@ -83,6 +83,7 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 | Input | Action |
 |---|---|
 | **Enter / Space / Click** | Start run (title), restart after death |
+| **H / click HD tag** | Toggle HD Remaster (title screen; reloads) |
 
 The desktop app title screen has **[X] Exit to Desktop**. Pause has **[Q] Main Menu** and **[X] Exit**.
 The first matching press arms a 3-second confirmation; press it again to confirm. `P` or
@@ -245,6 +246,10 @@ Values between the anchors interpolate linearly. Negative rise respects the 0.60
 
 The HUD also tracks your **streak** of consecutive rooms cleared without damage. It is purely cosmetic bragging rights — its only mechanical effect is feeding the pressure gain above.
 
+### HD Remaster
+
+An opt-in visual mode toggled from the title screen (press **H** or click the **HD REMASTER** tag). When on: the canvas renders at **4× resolution** (3840×2560) with smooth scaling, and sprites load from a **4× WebP tier** (`assets/hd/`) generated from the raw source art (`assets/raw/`) by `tools/hd_assets.py` — full-color, no palette quantization. The setting persists to `localStorage` (`meatslicer_hd_remaster`). Toggling reloads the page (no live hot-swap). If an HD file is missing for a sprite, the loader falls back per-sprite to the standard PNG. **Default is off** (classic pixelated 960×640 look). The toggle is title-screen only — not in the pause menu (a mid-run reload would lose the run).
+
 ---
 
 ## Difficulty Scaling (summary)
@@ -275,7 +280,7 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 
 | Screen | What it offers |
 |---|---|
-| **Title** | INITIATE DESCENT, PRESSURE DIAL (−10…+10), control reference, best score, confirmed desktop exit |
+| **Title** | INITIATE DESCENT, PRESSURE DIAL (−10…+10), HD REMASTER ON/OFF tag, control reference, best score, confirmed desktop exit |
 | **Pause** | Jukebox (track cycling), SFX/music volume + HUD opacity sliders, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
 | **Mutation Draft** | 3 perk cards, random cut, reroll, auto-draft |
 | **Game Over ("BUTCHERED")** | Floor, kills, score, NEW BEST CUT tag, restart |
@@ -292,6 +297,7 @@ Stored in `localStorage` between sessions:
 - `meatslicer_autoperk` — auto-draft toggle
 - `meatslicer_pressure_dial` — Pressure Dial setting (−10…+10, default 0)
 - `meatslicer_hud_alpha` — HUD opacity (default 1.0)
+- `meatslicer_hd_remaster` — HD Remaster toggle (default off)
 
 Nothing else carries over: no unlocks, no meta-currency, no saved runs. Every descent starts fresh with a Bone Popper and 6 HP.
 

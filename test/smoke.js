@@ -31,11 +31,14 @@ const canvasStub = {
   getBoundingClientRect: () => ({ left: 0, top: 0, width: 960, height: 640 }),
 };
 
+const stored = {};
+let reloadCalls = 0;
 const sandbox = {
   console,
   performance: { now: () => simTime },
   requestAnimationFrame: () => {}, // we drive update() manually
-  localStorage: { getItem: () => null, setItem: () => {} },
+  localStorage: { getItem: k => stored[k] ?? null, setItem: (k, v) => { stored[k] = String(v); } },
+  location: { reload() { reloadCalls++; } },
   document: { getElementById: () => canvasStub },
   Image: class { constructor() { this.width = 32; this.height = 32; } set src(v) { this.onerror && this.onerror(); } },
   Audio: class {
@@ -153,6 +156,110 @@ delete ctx.Sprites.imgs.player_legs_sheet;
 check('legs strip addresses all 8 stride frames', legDraws === 8);
 check('legs strip reads stay in bounds', legOutOfBounds === 0);
 check('legs strip rotates smoothly at runtime', legRotations.length === 8 && legRotations.every(angle => Math.abs(angle - Math.PI / 3) < 0.001));
+
+console.log('== HD sheets address 4x atlases in bounds ==');
+let hdSheetDraws = 0, hdOutOfBounds = 0;
+const hdActorCtx = fakeCtx();
+hdActorCtx.drawImage = (img, sx, sy, sw, sh) => {
+  hdSheetDraws++;
+  if (sx < 0 || sy < 0 || sx + sw > img.width || sy + sh > img.height) hdOutOfBounds++;
+};
+const hdSheetCases = [
+  ['player', 3072, 11136, 96],
+  ['enemy_shambler', 2048, 7424, 64],
+  ['boss_bonesaw', 4096, 14848, 128],
+];
+for (const [name, width, height, targetW] of hdSheetCases) {
+  ctx.Sprites.imgs[name + '_sheet'] = { width, height };
+  for (let dir = 0; dir < 8; dir++) {
+    for (const action of Object.keys(ctx.ACTOR_ANIMS)) {
+      ctx.Sprites.actor(hdActorCtx, name, 0, 0, dir * Math.PI / 4, action, 0.2, targetW);
+    }
+  }
+  delete ctx.Sprites.imgs[name + '_sheet'];
+}
+check('HD sheets address 4x atlases in bounds', hdSheetDraws === 120 && hdOutOfBounds === 0);
+let hdLegDraws = 0, hdLegOutOfBounds = 0;
+const hdLegRotations = [];
+const hdLegCtx = fakeCtx();
+hdLegCtx.rotate = angle => hdLegRotations.push(angle);
+hdLegCtx.drawImage = (img, sx, sy, sw, sh) => {
+  hdLegDraws++;
+  if (sx < 0 || sy < 0 || sx + sw > img.width || sy + sh > img.height) hdLegOutOfBounds++;
+};
+ctx.Sprites.imgs.player_legs_sheet = { width: 3072, height: 384 };
+for (let frame = 0; frame < 8; frame++) {
+  ctx.Sprites.legs(hdLegCtx, 0, 0, Math.PI / 3, frame * Math.PI / 4 + 0.01, 384);
+}
+delete ctx.Sprites.imgs.player_legs_sheet;
+check('HD legs strip addresses 8 stride frames at 4x resolution', hdLegDraws === 8 && hdLegOutOfBounds === 0);
+check('HD legs strip rotates smoothly', hdLegRotations.length === 8 && hdLegRotations.every(a => Math.abs(a - Math.PI / 3) < 0.001));
+
+console.log('== HD loader falls back per sprite to SD ==');
+const origImage = sandbox.Image;
+let attemptedUrls = {};
+ctx.G.hdRemaster = true;
+sandbox.Image = class extends origImage {
+  constructor() { super(); }
+  set src(v) {
+    const base = v.split('?')[0];
+    const name = ctx.SPRITE_MANIFEST.find(n => base === 'assets/hd/' + n + '.webp' || base === 'assets/' + n + '.png');
+    if (name) {
+      if (!attemptedUrls[name]) attemptedUrls[name] = [];
+      attemptedUrls[name].push(v);
+    }
+    this.onerror && this.onerror();
+  }
+};
+ctx.Sprites.load();
+check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
+let hdFallbackOk = 0;
+for (const name of ctx.SPRITE_MANIFEST) {
+  const urls = attemptedUrls[name];
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=55' && urls[1] === 'assets/' + name + '.png?v=55';
+  if (ok) hdFallbackOk++;
+}
+check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
+
+console.log('== SD loader path (pristine restore) ==');
+attemptedUrls = {};
+sandbox.Image = class extends origImage {
+  constructor() { super(); }
+  set src(v) {
+    const base = v.split('?')[0];
+    const name = ctx.SPRITE_MANIFEST.find(n => base === 'assets/hd/' + n + '.webp' || base === 'assets/' + n + '.png');
+    if (name) {
+      if (!attemptedUrls[name]) attemptedUrls[name] = [];
+      attemptedUrls[name].push(v);
+    }
+    this.onerror && this.onerror();
+  }
+};
+ctx.G.hdRemaster = false;
+ctx.Sprites.load();
+check('SD loader loads all images', ctx.G.imagesLoaded === true);
+let sdUrlOk = 0;
+for (const name of ctx.SPRITE_MANIFEST) {
+  const urls = attemptedUrls[name];
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=55';
+  if (ok) sdUrlOk++;
+}
+check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
+sandbox.Image = origImage;
+
+console.log('== HD toggle persists and reloads ==');
+ctx.G.mode = 'menu';
+const reloadBefore = reloadCalls;
+ctx.toggleHdRemaster();
+check('HD toggle enables the flag', ctx.G.hdRemaster === true);
+check('HD toggle persists to localStorage', stored['meatslicer_hd_remaster'] === '1');
+check('HD toggle reloads the page', reloadCalls === reloadBefore + 1);
+ctx.toggleHdRemaster();
+check('HD toggle disables the flag', ctx.G.hdRemaster === false);
+check('HD toggle persists off value', stored['meatslicer_hd_remaster'] === '0');
+check('HD toggle reloads again', reloadCalls === reloadBefore + 2);
+reloadCalls = 0;
+
 check('every weapon has layered render and muzzle geometry', Object.values(ctx.WEAPONS).every(w =>
   Number.isFinite(w.torsoW) && Number.isFinite(w.torsoFwd) && Number.isFinite(w.muzzle) && w.muzzle > 0));
 check('every weapon has finite impact punch metadata', Object.values(ctx.WEAPONS).every(w => Number.isFinite(w.punch) && w.punch > 0));
