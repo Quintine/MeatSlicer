@@ -10,6 +10,7 @@ Usage:
   python tools/gen_assets.py --force                  # full production pass
   python tools/gen_assets.py tile                     # all matching names
   python tools/gen_assets.py --list
+  python tools/gen_assets.py --reprocess              # re-key raw sources, no API
 
 Authentication: ``OPENROUTER_API_KEY`` in the process environment or in the
 user-only ``~/.config/MeatSlicer/.env`` file, which remains outside the served
@@ -32,6 +33,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 
@@ -455,6 +457,7 @@ def flood_key_magenta(image: Image.Image) -> Image.Image:
     image = image.convert("RGBA")
     width, height = image.size
     pixels = image.load()
+    # Stage 1: border flood — key every magenta region connected to the frame.
     seen = bytearray(width * height)
     queue: deque[tuple[int, int]] = deque()
     for x in range(width):
@@ -474,7 +477,52 @@ def flood_key_magenta(image: Image.Image) -> Image.Image:
         if x + 1 < width: queue.append((x + 1, y))
         if y: queue.append((x, y - 1))
         if y + 1 < height: queue.append((x, y + 1))
-    return image
+
+    buf = np.array(image)
+    # Stage 2: interior pockets — enclosed key pools the border flood cannot
+    # reach. Strict predicate so intentional art pinks survive.
+    pockets = (
+        (buf[..., 3] > 0)
+        & (buf[..., 0] > 200)
+        & (buf[..., 1] < 80)
+        & (buf[..., 2] > 200)
+    )
+    buf[pockets] = 0
+
+    def near_transparent() -> np.ndarray:
+        transparent = buf[..., 3] == 0
+        near = np.zeros_like(transparent)
+        near[:-1, :] |= transparent[1:, :]
+        near[1:, :] |= transparent[:-1, :]
+        near[:, :-1] |= transparent[:, 1:]
+        near[:, 1:] |= transparent[:, :-1]
+        return near
+
+    # Stage 3: fringe erosion — eat the anti-aliased key halo hugging
+    # silhouettes and pocket rims (arithmetic mirrors is_magenta).
+    for _pass in range(4):
+        r, g, b = buf[..., 0], buf[..., 1], buf[..., 2]
+        key = (
+            (buf[..., 3] > 0)
+            & (r > 145)
+            & (b > 145)
+            & (g < 175)
+            & (r.astype(np.int32) + b.astype(np.int32) > 2.15 * g)
+        )
+        doomed = key & near_transparent()
+        if not doomed.any():
+            break
+        buf[doomed] = 0
+    # Stage 4: despill — soften the remaining pink rim without punching holes.
+    fringe = (buf[..., 3] > 0) & near_transparent()
+    if fringe.any():
+        excess = np.minimum(buf[..., 0], buf[..., 2]).astype(np.int32) - buf[..., 1].astype(np.int32)
+        strong = fringe & (excess > 50)
+        if strong.any():
+            cut = np.round(excess * 0.6).astype(np.int32)
+            buf[..., 0] = np.where(strong, np.clip(buf[..., 0].astype(np.int32) - cut, 0, 255), buf[..., 0]).astype(np.uint8)
+            buf[..., 2] = np.where(strong, np.clip(buf[..., 2].astype(np.int32) - cut, 0, 255), buf[..., 2]).astype(np.uint8)
+    return Image.fromarray(buf, "RGBA")
 
 
 def palette_image() -> Image.Image:
@@ -562,6 +610,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quality", choices=("low", "medium", "high"), default="medium")
     parser.add_argument("--list", action="store_true", help="list asset names and exit")
     parser.add_argument("--no-sheets", action="store_true", help="do not rebuild actor sheets")
+    parser.add_argument("--reprocess", action="store_true", help="re-key existing assets/raw sources without API calls")
     return parser.parse_args()
 
 
@@ -573,6 +622,32 @@ def main() -> None:
         return
     if not names:
         raise SystemExit("No asset names matched")
+
+    if args.reprocess:
+        reprocessed = 0
+        for index, name in enumerate(names, 1):
+            spec = SPECS[name]
+            if spec.kind == "tile":
+                print(f"[{index}/{len(names)}] {name}: tile, skipped")
+                continue
+            raw_path = RAW / f"{name}.png"
+            if not raw_path.exists():
+                print(f"[{index}/{len(names)}] {name}: no raw source, skipped")
+                continue
+            image = process_sprite(raw_path.read_bytes(), spec.size)
+            image.save(ASSETS / f"{name}.png", optimize=True)
+            reprocessed += 1
+            print(f"[{index}/{len(names)}] {name}: re-keyed -> assets/{name}.png")
+        if not args.no_sheets:
+            actor_names = [name for name in names if name == "player" or name.startswith(("enemy_", "boss_"))]
+            render_sheets(actor_names)
+            from draw_sprites import render_legs_sheet, render_player_death_sheet
+            sheet = render_legs_sheet()
+            print(f"    sheet player_legs: {sheet.width}x{sheet.height}")
+            sheet = render_player_death_sheet()
+            print(f"    sheet player_death: {sheet.width}x{sheet.height}")
+        print(f"\nRe-keyed {reprocessed} assets (no API calls, manifest untouched)")
+        return
 
     key = load_key()
     ASSETS.mkdir(exist_ok=True)
