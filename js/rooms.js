@@ -393,17 +393,19 @@ function drawFloor(ctx, r) {
   // browser; headless tests keep the simple direct path.
   const canCache = typeof document !== 'undefined' && document.createElement && G.imagesLoaded;
   if (!canCache) { drawFloorTiles(ctx, r); return; }
-  const key = r.gx + ',' + r.gy + ':' + G.floor + ':' + r.shape + ':' + r.theme;
+  const key = r.gx + ',' + r.gy + ':' + G.floor + ':' + r.shape + ':' + r.theme + ':' + hdScale();
   if (!G.roomLayer || G.roomLayerKey !== key) {
     const a = roomBounds(r);
+    const rs = hdScale();
     const layer = document.createElement('canvas');
-    layer.width = Math.max(W, a.x1); layer.height = Math.max(H, a.y1);
+    layer.width = Math.max(W, a.x1) * rs; layer.height = Math.max(H, a.y1) * rs;
     const lctx = layer.getContext('2d');
-    lctx.imageSmoothingEnabled = false;
-    drawFloorTiles(lctx, r, layer.width, layer.height);
+    lctx.setTransform(rs, 0, 0, rs, 0, 0);
+    lctx.imageSmoothingEnabled = !G.hdRemaster;
+    drawFloorTiles(lctx, r, layer.width / rs, layer.height / rs);
     G.roomLayer = layer; G.roomLayerKey = key;
   }
-  ctx.drawImage(G.roomLayer, 0, 0);
+  ctx.drawImage(G.roomLayer, 0, 0, G.roomLayer.width / hdScale(), G.roomLayer.height / hdScale());
 }
 
 function drawRoom(ctx) {

@@ -49,6 +49,7 @@ const G = {
   sfxVol: 0.45,
   musicVol: 0.55,
   hudAlpha: 1,
+  hdRemaster: false,
   imagesLoaded: false,
   roomLayer: null,
   roomLayerKey: '',
@@ -69,6 +70,8 @@ const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
 const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
 const DEATH_LOCK = 3;
 const PRESSURE_DIAL_MIN = -10, PRESSURE_DIAL_MAX = 10;
+
+function hdScale() { return G.hdRemaster ? 4 : 1; }
 
 // Preserve the old -5 / 0 / +5 balance while adding genuinely wider extremes.
 function pressureGainUnits(dial) {

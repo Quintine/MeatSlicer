@@ -6,6 +6,7 @@ const PRESSURE_SLIDER_RECT = { x: 300, y: 470, w: 360, h: 46 };
 const MENU_EXIT_BUTTON = { x: W - 208, y: H - 48, w: 180, h: 28 };
 const PAUSE_MENU_BUTTON = { x: W / 2 - 75, y: 526, w: 150, h: 28 };
 const PAUSE_EXIT_BUTTON = { x: W / 2 + 87, y: 526, w: 150, h: 28 };
+const HD_TOGGLE_BUTTON = { x: 28, y: H - 48, w: 220, h: 28 };
 const CONFIRM_WINDOW = 3;
 
 function pauseBars() {
@@ -20,7 +21,11 @@ function pauseBars() {
 function init() {
   canvas = document.getElementById('game');
   ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
+  try { G.hdRemaster = localStorage.getItem('meatslicer_hd_remaster') === '1'; } catch (e) {}
+  canvas.width = W * hdScale();
+  canvas.height = H * hdScale();
+  canvas.style.imageRendering = G.hdRemaster ? 'auto' : 'pixelated';
+  ctx.imageSmoothingEnabled = !G.hdRemaster;
   G.devMode = debugEnabled();
   initInput(canvas);
   Sprites.load();
@@ -65,6 +70,16 @@ function setAutoPerk(enabled) {
   try { localStorage.setItem('meatslicer_autoperk', G.autoPerk ? '1' : '0'); } catch (e) {}
   addToast('AUTO-DRAFT ' + (G.autoPerk ? 'ON' : 'OFF'), G.autoPerk ? 'level-ups now choose randomly' : 'manual mutation drafts restored');
   Sfx.menu();
+}
+
+function setHdRemaster(enabled) {
+  G.hdRemaster = !!enabled;
+  try { localStorage.setItem('meatslicer_hd_remaster', G.hdRemaster ? '1' : '0'); } catch (e) {}
+}
+function toggleHdRemaster() {
+  setHdRemaster(!G.hdRemaster);
+  Sfx.menu();
+  location.reload();
 }
 
 function buildAtmosphereLayer() {
@@ -199,7 +214,8 @@ function update(dt) {
         setPressureDial(Math.round(((Input.mx - sl.x) / sl.w) * 20) - 10);
       }
       if (!Input.mdown) G.menuDialDrag = false;
-      if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl) && !exitClick)) startRun();
+      if (keyPressed('h') || (Input.mpressed && inRect(Input.mx, Input.my, HD_TOGGLE_BUTTON))) { toggleHdRemaster(); break; }
+      if (keyPressed('enter', ' ') || (Input.mpressed && !inRect(Input.mx, Input.my, sl) && !inRect(Input.mx, Input.my, HD_TOGGLE_BUTTON) && !exitClick)) startRun();
       break;
     }
     case 'play':
@@ -296,6 +312,7 @@ function update(dt) {
 }
 
 function draw() {
+  ctx.setTransform(hdScale(), 0, 0, hdScale(), 0, 0);
   ctx.fillStyle = '#0a0506';
   ctx.fillRect(0, 0, W, H);
 
@@ -428,6 +445,12 @@ function drawMenu(ctx) {
     width: MENU_EXIT_BUTTON.w, height: MENU_EXIT_BUTTON.h,
     color: !desktopExit ? '#65595b' : (exitConfirm ? '#ffd36a' : (exitHover ? '#f5e9d6' : '#ad8f8c')),
     accent: !desktopExit ? '#3a2d31' : (exitConfirm ? '#d69a22' : (exitHover ? '#e22b46' : '#6e3843')),
+  });
+  const hdHover = inRect(Input.mx, Input.my, HD_TOGGLE_BUTTON);
+  drawPixelTag(ctx, '[H] HD REMASTER // ' + (G.hdRemaster ? 'ON' : 'OFF'), HD_TOGGLE_BUTTON.x, HD_TOGGLE_BUTTON.y, {
+    width: HD_TOGGLE_BUTTON.w, height: HD_TOGGLE_BUTTON.h,
+    color: G.hdRemaster ? '#e0b94e' : (hdHover ? '#f5e9d6' : '#ad8f8c'),
+    accent: G.hdRemaster ? '#a47e25' : (hdHover ? '#e22b46' : '#6e3843'),
   });
 }
 
