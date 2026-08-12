@@ -81,12 +81,17 @@ const Sprites = {
 
   load() {
     let pending = 0;
+    const hd = !!G.hdRemaster;
     for (const name of SPRITE_MANIFEST) {
       pending++;
       const img = new Image();
-      img.onload = () => { this.imgs[name] = img; if (--pending === 0) G.imagesLoaded = true; };
-      img.onerror = () => { if (--pending === 0) G.imagesLoaded = true; };
-      img.src = 'assets/' + name + '.png?v=54';
+      const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
+      img.onload = () => { this.imgs[name] = img; finish(); };
+      img.onerror = () => {
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=55'; return; }
+        finish();
+      };
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=55' : 'assets/' + name + '.png?v=55';
     }
   },
 
@@ -100,8 +105,8 @@ const Sprites = {
       this.draw(ctx, 'player_legs', x, y, facing, targetW);
       return;
     }
-    const frameSize = 96;
-    const frameCount = Math.max(1, Math.floor(sheet.width / frameSize));
+    const frameSize = sheet.width / 8;
+    const frameCount = 8;
     let frame = Math.floor(Math.max(0, phase) / (TAU / frameCount)) % frameCount;
     if (frame < 0) frame += frameCount;
     const tw = targetW || frameSize;
@@ -120,10 +125,11 @@ const Sprites = {
       this.actor(ctx, 'player', x, y, 0, 'death', time, targetW || frameSize);
       return;
     }
+    const fs = sheet ? sheet.height : frameSize;
     const raw = Math.floor(Math.max(0, time) * fps);
     const frame = hold ? Math.min(frames - 1, raw) : raw % frames;
     const tw = targetW || frameSize;
-    ctx.drawImage(sheet, frame * frameSize, 0, frameSize, frameSize,
+    ctx.drawImage(sheet, frame * fs, 0, fs, fs,
       x - tw / 2, y - tw / 2, tw, tw);
   },
 
@@ -134,7 +140,7 @@ const Sprites = {
       this.draw(ctx, name, x, y, facing, targetW, action === 'hit', alpha, scaleX, scaleY);
       return;
     }
-    const frameSize = name.startsWith('boss_') ? 128 : (name === 'player' ? 96 : 64);
+    const frameSize = sheet.width / 8;
     let direction = Math.round(facing / (TAU / 8)) % 8;
     if (direction < 0) direction += 8;
     const rawFrame = Math.floor(Math.max(0, time) * def.fps);
