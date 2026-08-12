@@ -223,7 +223,7 @@ def a_player():
     return img
 
 
-def _player_legs_frame(index=0, frame_size=96):
+def _player_legs_frame(index=0, frame_size=96, k=1, smooth=False, src_dir=OUT):
     """Eight-frame, distance-driven butcher stride authored facing right.
 
     Uses the generated single-leg production sprite when present, so the walk
@@ -231,7 +231,8 @@ def _player_legs_frame(index=0, frame_size=96):
     procedural blocky fallback below only exists for source-only rebuilds.
     Runtime rendering rotates this forward-facing frame smoothly.
     """
-    leg_path = OUT / "player_leg.png"
+    leg_path = src_dir / "player_leg.png"
+    resample = Image.Resampling.LANCZOS if smooth else Image.Resampling.NEAREST
     if leg_path.exists():
         source = Image.open(leg_path).convert("RGBA")
         box = source.getbbox()
@@ -239,11 +240,11 @@ def _player_legs_frame(index=0, frame_size=96):
             source = source.crop(box)
         # Legs are deliberately tucked under the waist: only boots/lower shins
         # should peek out from beneath the torso during the stride.
-        scale = min(44 / source.width, 25 / source.height)
-        source = source.resize((max(1, round(source.width * scale)), max(1, round(source.height * scale))), Image.Resampling.NEAREST)
+        scale = min(44 * k / source.width, 25 * k / source.height)
+        source = source.resize((max(1, round(source.width * scale)), max(1, round(source.height * scale))), resample)
 
         waist = None
-        waist_path = OUT / "player_waist.png"
+        waist_path = src_dir / "player_waist.png"
         if waist_path.exists():
             waist = Image.open(waist_path).convert("RGBA")
             waist_box = waist.getbbox()
@@ -251,14 +252,14 @@ def _player_legs_frame(index=0, frame_size=96):
                 waist = waist.crop(waist_box)
             # Keep the attachment socket hidden under the freely aimed torso;
             # a larger waist reads as a second body when aim and travel diverge.
-            waist_scale = min(38 / waist.width, 38 / waist.height)
-            waist = waist.resize((max(1, round(waist.width * waist_scale)), max(1, round(waist.height * waist_scale))), Image.Resampling.NEAREST)
+            waist_scale = min(38 * k / waist.width, 38 * k / waist.height)
+            waist = waist.resize((max(1, round(waist.width * waist_scale)), max(1, round(waist.height * waist_scale))), resample)
 
         phase = index / 8 * math.tau
         contact = math.cos(phase)      # frames 0/4 are full-contact extremes
-        pass_k = math.sin(phase)
+        pass_k_val = math.sin(phase)
         frame = Image.new("RGBA", (frame_size, frame_size), (0, 0, 0, 0))
-        cx, cy = frame_size // 2, frame_size // 2 + 3
+        cx, cy = frame_size // 2, frame_size // 2 + round(3 * k)
 
         def paste_leg(extension, side, lift, mirrored=False):
             # Anchor both thighs beneath the waist and vary only their extension.
@@ -266,25 +267,27 @@ def _player_legs_frame(index=0, frame_size=96):
             # the hips; scaling keeps both boots unmistakably pointed forward.
             img = source.transpose(Image.Transpose.FLIP_TOP_BOTTOM) if mirrored else source
             lift_scale = 1 + lift * 0.08
-            img = img.resize((round(extension * lift_scale), round(img.height * lift_scale)), Image.Resampling.NEAREST)
-            x = round(cx - 8)
-            y = round(cy + side * 11 - img.height / 2)
+            img = img.resize((round(extension * lift_scale), round(img.height * lift_scale)), resample)
+            x = round(cx - round(8 * k))
+            y = round(cy + side * round(11 * k) - img.height / 2)
             frame.alpha_composite(img, (x, y))
 
         # Feet trade long/short extensions through contact and pass poses.
         # Mirroring one copy makes the generated art read as a left/right pair.
-        left_extension = 34 + contact * 9
-        right_extension = 34 - contact * 9
-        paste_leg(right_extension, 1, max(0, -pass_k), True)
-        paste_leg(left_extension, -1, max(0, pass_k))
+        left_extension = k * (34 + contact * 9)
+        right_extension = k * (34 - contact * 9)
+        paste_leg(right_extension, 1, max(0, -pass_k_val), True)
+        paste_leg(left_extension, -1, max(0, pass_k_val))
         if waist is not None:
             frame.alpha_composite(waist, (round(cx - waist.width / 2), round(cy - waist.height / 2)))
         else:
             # Source-only fallback: cover the thigh joints with a compact hip block.
             d = ImageDraw.Draw(frame)
-            d.polygon([(cx - 15, cy - 13), (cx + 12, cy - 12), (cx + 16, cy + 11), (cx - 17, cy + 12)], fill=OUTL)
-            d.polygon([(cx - 13, cy - 11), (cx + 10, cy - 10), (cx + 13, cy + 9), (cx - 14, cy + 10)], fill=(116, 76, 45, 255))
-            d.line([(cx - 11, cy - 9), (cx + 8, cy - 9)], fill=(201, 151, 88, 255), width=2)
+            d.polygon([(cx - round(15 * k), cy - round(13 * k)), (cx + round(12 * k), cy - round(12 * k)),
+                       (cx + round(16 * k), cy + round(11 * k)), (cx - round(17 * k), cy + round(12 * k))], fill=OUTL)
+            d.polygon([(cx - round(13 * k), cy - round(11 * k)), (cx + round(10 * k), cy - round(10 * k)),
+                       (cx + round(13 * k), cy + round(9 * k)), (cx - round(14 * k), cy + round(10 * k))], fill=(116, 76, 45, 255))
+            d.line([(cx - round(11 * k), cy - round(9 * k)), (cx + round(8 * k), cy - round(9 * k))], fill=(201, 151, 88, 255), width=2)
         return frame
 
     logical = 48
@@ -328,7 +331,7 @@ def _player_legs_frame(index=0, frame_size=96):
 
     frame = finish_sprite(img, "player_legs")
     if frame.size != (frame_size, frame_size):
-        frame = frame.resize((frame_size, frame_size), Image.Resampling.NEAREST)
+        frame = frame.resize((frame_size, frame_size), resample)
     return frame
 
 
@@ -1334,18 +1337,30 @@ ACTORS = [
 ]
 
 
-def _fit_actor(img, name, frame_size):
+def sd_frame_size(name):
+    """Return the SD frame size for a given actor name."""
+    if name.startswith("boss_"):
+        return 128
+    if name == "player":
+        return 96
+    return 64
+
+
+def _fit_actor(img, name, frame_size, smooth=False, k=None):
     box = img.getbbox()
     img = img.crop(box) if box else img
+    if k is None:
+        k = frame_size / sd_frame_size(name)
     if name.startswith("boss_"):
-        target = 120
+        target = round(120 * k)
     elif name == "player":
-        target = 88
+        target = round(88 * k)
     else:
-        target = 58
-    target = min(target, frame_size - 8)
+        target = round(58 * k)
+    target = min(target, frame_size - round(8 * k))
     scale = min(target / img.width, target / img.height)
-    return img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.Resampling.NEAREST)
+    resample = Image.Resampling.LANCZOS if smooth else Image.Resampling.NEAREST
+    return img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), resample)
 
 
 def _tint(img, color, amount):
@@ -1354,7 +1369,7 @@ def _tint(img, color, amount):
     return Image.blend(img, tint, amount)
 
 
-def _actor_frame(base, name, action, index, count, direction, frame_size):
+def _actor_frame(base, name, action, index, count, direction, frame_size, k=1, smooth=False):
     phase = index / count * math.tau
     work = base.copy()
     xscale = yscale = 1.0
@@ -1363,37 +1378,39 @@ def _actor_frame(base, name, action, index, count, direction, frame_size):
     if action == "idle":
         yscale = 1 + math.sin(phase) * 0.035
         xscale = 1 - math.sin(phase) * 0.018
-        yoff = round(-abs(math.sin(phase)) * 1.5)
+        yoff = round(-abs(math.sin(phase)) * 1.5 * k)
     elif action == "move":
         stride = math.sin(phase)
         xscale = 1 + abs(stride) * 0.06
         yscale = 1 - abs(stride) * 0.045
-        yoff = round(-abs(stride) * 3)
+        yoff = round(-abs(stride) * 3 * k)
         angle = stride * 4.5
-        xoff = round(stride * 1.5)
+        xoff = round(stride * 1.5 * k)
     elif action == "attack":
         thrust = math.sin(min(index / max(count - 1, 1), 1) * math.pi)
         xscale = 1 + thrust * 0.10
         yscale = 1 - thrust * 0.04
-        xoff = round(thrust * 5)
+        xoff = round(thrust * 5 * k)
         angle = -thrust * 5
     elif action == "hit":
-        xoff = (-2, 3, -1)[index % 3]
+        xoff = round((-2, 3, -1)[index % 3] * k)
         angle = (-7, 5, -2)[index % 3]
         work = _tint(work, (255, 236, 218, 255), 0.58 - index * 0.16)
     elif action == "death":
         fall = index / max(count - 1, 1)
         angle = fall * 82
-        xoff = round(fall * 8)
-        yoff = round(fall * 13)
+        xoff = round(fall * 8 * k)
+        yoff = round(fall * 13 * k)
         yscale = max(0.28, 1 - fall * 0.68)
         work.putalpha(work.getchannel("A").point(lambda a: round(a * (1 - fall * 0.62))))
 
+    resample_resize = Image.Resampling.LANCZOS if smooth else Image.Resampling.NEAREST
+    resample_rotate = Image.Resampling.BICUBIC if smooth else Image.Resampling.NEAREST
     w = max(1, round(work.width * xscale))
     h = max(1, round(work.height * yscale))
-    work = work.resize((w, h), Image.Resampling.NEAREST)
+    work = work.resize((w, h), resample_resize)
     if angle:
-        work = work.rotate(angle, Image.Resampling.NEAREST, expand=True)
+        work = work.rotate(angle, resample_rotate, expand=True)
 
     frame = Image.new("RGBA", (frame_size, frame_size), (0, 0, 0, 0))
     frame.alpha_composite(work, ((frame_size - work.width) // 2 + xoff, (frame_size - work.height) // 2 + yoff))
@@ -1404,28 +1421,28 @@ def _actor_frame(base, name, action, index, count, direction, frame_size):
     cy = frame_size // 2
     if action == "attack" and index in (2, 3):
         accent = GORE if "spitter" not in name else GREEN
-        d.line([(cx + frame_size // 5, cy - 3), (cx + frame_size // 2 - 3, cy)], fill=accent, width=max(1, frame_size // 32))
+        d.line([(cx + frame_size // 5, cy - round(3 * k)), (cx + frame_size // 2 - 3, cy)], fill=accent, width=max(1, frame_size // 32))
     if name == "enemy_exploder" and action != "death" and index % 2:
-        d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=YELLOW)
+        d.ellipse([cx - round(3 * k), cy - round(3 * k), cx + round(3 * k), cy + round(3 * k)], fill=YELLOW)
     if name == "boss_gorecrown" and index % 2:
-        d.point([(cx - 12, cy - 10), (cx + 12, cy - 10)], fill=WHITE)
+        d.point([(cx - round(12 * k), cy - round(10 * k)), (cx + round(12 * k), cy - round(10 * k))], fill=WHITE)
 
     # The canonical actor faces right. Bake all eight compass directions into
     # the atlas so runtime rendering never rotates/softens character pixels.
     degrees = direction * 45
     if degrees:
-        frame = frame.rotate(-degrees, Image.Resampling.NEAREST, expand=False)
+        frame = frame.rotate(-degrees, resample_rotate, expand=False)
     return frame
 
 
-def render_actor_sheet(name, use_existing=False):
-    frame_size = 128 if name.startswith("boss_") else (96 if name == "player" else 64)
-    source_path = OUT / f"{name}.png"
+def render_actor_sheet(name, use_existing=False, scale=1, smooth=False, src_dir=OUT, out_dir=OUT):
+    frame_size = sd_frame_size(name) * scale
+    source_path = src_dir / f"{name}.png"
     if use_existing and source_path.exists():
         source = Image.open(source_path).convert("RGBA")
     else:
         source = finish_sprite(ASSETS[name](), name)
-    source = _fit_actor(source, name, frame_size)
+    source = _fit_actor(source, name, frame_size, smooth=smooth)
     columns = 8
     cells = sum(count * 8 for count, _fps in ANIM_ACTIONS.values())
     rows = math.ceil(cells / columns)
@@ -1434,36 +1451,37 @@ def render_actor_sheet(name, use_existing=False):
     for action, (count, _fps) in ANIM_ACTIONS.items():
         for direction in range(8):
             for index in range(count):
-                frame = _actor_frame(source, name, action, index, count, direction, frame_size)
+                frame = _actor_frame(source, name, action, index, count, direction, frame_size, k=scale, smooth=smooth)
                 sheet.alpha_composite(frame, ((cell % columns) * frame_size, (cell // columns) * frame_size))
                 cell += 1
-    sheet.save(OUT / f"{name}_sheet.png", optimize=True)
+    sheet.save(out_dir / f"{name}_sheet.png", optimize=True)
     return sheet
 
 
-def render_legs_sheet():
+def render_legs_sheet(scale=1, smooth=False, src_dir=OUT, out_dir=OUT):
     """Render one forward-facing stride row; runtime rotates it smoothly."""
-    frame_size = 96
+    frame_size = 96 * scale
     sheet = Image.new("RGBA", (frame_size * 8, frame_size), (0, 0, 0, 0))
     planted = None
     for index in range(8):
-        frame = _player_legs_frame(index, frame_size)
+        frame = _player_legs_frame(index, frame_size, k=scale, smooth=smooth, src_dir=src_dir)
         if index == 0:
             planted = frame.copy()
         sheet.alpha_composite(frame, (index * frame_size, 0))
-    sheet.save(OUT / "player_legs_sheet.png", optimize=True)
+    sheet.save(out_dir / "player_legs_sheet.png", optimize=True)
     if planted is not None:
-        planted.save(OUT / "player_legs.png", optimize=True)
+        planted.save(out_dir / "player_legs.png", optimize=True)
     return sheet
 
 
-def render_player_death_sheet():
+def render_player_death_sheet(scale=1, smooth=False, src_dir=OUT, out_dir=OUT):
     """Derive a gore burst from the shipped AI player still without redrawing it."""
-    source_path = OUT / "player.png"
+    frame_size = 128 * scale
+    source_path = src_dir / "player.png"
     if not source_path.exists():
         raise FileNotFoundError("assets/player.png is required for the derived death sheet")
-    source = _fit_actor(Image.open(source_path).convert("RGBA"), "player", 128)
-    frame_size, frame_count = 128, 12
+    source = _fit_actor(Image.open(source_path).convert("RGBA"), "player", frame_size, smooth=smooth, k=scale)
+    frame_count = 12
     sheet = Image.new("RGBA", (frame_size * frame_count, frame_size), (0, 0, 0, 0))
     rng = random.Random(0x5A17CE)
     fragments = []
@@ -1482,21 +1500,23 @@ def render_player_death_sheet():
             a = math.atan2(rely, relx) + rng.uniform(-0.7, 0.7)
             fragments.append((piece, relx, rely, a, rng.uniform(30, 68), rng.uniform(-105, 105)))
 
+    resample_rotate = Image.Resampling.BICUBIC if smooth else Image.Resampling.NEAREST
     for index in range(frame_count):
         p = index / max(1, frame_count - 1)
         burst = p * p * (3 - 2 * p)
         frame = Image.new("RGBA", (frame_size, frame_size), (0, 0, 0, 0))
         d = ImageDraw.Draw(frame)
+        s = frame_size // 2
         if index in (1, 2, 3):
             flash = (1 - abs(index - 2) / 2) * 0.9
-            rr = 8 + index * 9
-            d.ellipse([64 - rr, 64 - rr, 64 + rr, 64 + rr], fill=(255, 223, 164, round(255 * flash)))
+            rr = round((8 + index * 9) * scale)
+            d.ellipse([s - rr, s - rr, s + rr, s + rr], fill=(255, 223, 164, round(255 * flash)))
         for dot in range(20):
             da = (dot * 2.399963 + 0.37) % math.tau
-            dr = burst * (18 + (dot * 17) % 47)
-            rr = max(1, round((3 + dot % 4) * (1 - p * 0.55)))
-            dx = round(64 + math.cos(da) * dr)
-            dy = round(64 + math.sin(da) * dr)
+            dr = burst * round((18 + (dot * 17) % 47) * scale)
+            rr = max(1, round((3 + dot % 4) * (1 - p * 0.55) * scale))
+            dx = round(s + math.cos(da) * dr)
+            dy = round(s + math.sin(da) * dr)
             alpha = round(230 * max(0, 1 - p * 0.75))
             color = (174, 15 + (dot % 3) * 8, 38, alpha)
             d.ellipse([dx - rr, dy - rr, dx + rr, dy + rr], fill=color)
@@ -1510,7 +1530,7 @@ def render_player_death_sheet():
                 work.putalpha(work.getchannel("A").point(lambda alpha: round(alpha * fade)))
             rotation = spin * burst
             if rotation:
-                work = work.rotate(rotation, Image.Resampling.NEAREST, expand=True)
+                work = work.rotate(rotation, resample_rotate, expand=True)
             cx = origin_x + source.width / 2 + relx
             cy = origin_y + source.height / 2 + rely
             travel = speed * burst
@@ -1518,7 +1538,7 @@ def render_player_death_sheet():
             cy += math.sin(ang) * travel + rely * burst * 0.45
             frame.alpha_composite(work, (round(cx - work.width / 2), round(cy - work.height / 2)))
         sheet.alpha_composite(frame, (index * frame_size, 0))
-    sheet.save(OUT / "player_death_sheet.png", optimize=True)
+    sheet.save(out_dir / "player_death_sheet.png", optimize=True)
     return sheet
 
 
