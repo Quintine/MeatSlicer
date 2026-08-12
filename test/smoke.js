@@ -64,7 +64,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugRefillAmmo, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -216,7 +216,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=55' && urls[1] === 'assets/' + name + '.png?v=55';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=56' && urls[1] === 'assets/' + name + '.png?v=56';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -241,7 +241,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=55';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=56';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
@@ -1008,7 +1008,7 @@ console.log('== every weapon actually DAMAGES enemies (NaN regression) ==');
   const noDmg = [];
   for (const wid of Object.keys(ctx.WEAPONS)) {
     ctx.G.enemies.length = 0;
-    const e = ctx.makeEnemy('shambler', p.x + 42, p.y, 1, false);
+    const e = ctx.makeEnemy('shambler', wid === 'spinaltap' ? p.x + 100 : p.x + 42, p.y, 1, false);
     e.spd = 0;
     ctx.G.enemies.push(e);
     p.weapon = { id: wid, ammo: 60 };
@@ -1043,7 +1043,7 @@ console.log('== shared on-hit items work with every weapon ==');
   const misses = [];
   for (const wid of Object.keys(ctx.WEAPONS)) {
     ctx.G.enemies.length = 0; ctx.G.bullets.length = 0; ctx.G.hazards.length = 0;
-    const e = ctx.makeEnemy('shambler', p.x + 42, p.y, 1, false);
+    const e = ctx.makeEnemy('shambler', wid === 'spinaltap' ? p.x + 100 : p.x + 42, p.y, 1, false);
     e.hp = e.maxHp = 10000; e.spd = 0;
     ctx.G.enemies.push(e);
     p.weapon = { id: wid, ammo: 60 }; p.charge = 0; p.fireT = 0;
@@ -1143,6 +1143,147 @@ console.log('== ammo economy structure ==');
   }
   check('every special weapon has a sane authored refill + magazine', bad.length === 0);
   if (bad.length) console.log('   BAD-AMMO: ' + bad.join(', '));
+}
+
+console.log('== ammo refills scale with pressure ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  ctx.G.pressure = 2;
+  p.weapon = { id: 'repeater', ammo: 0 };
+  p.holstered = null;
+  p.stats.ammoPickupMul = 1;
+  ctx.G.pickups.length = 0;
+  ctx.G.enemies.length = 0;
+  ctx.spawnPickup('ammo', p.x, p.y);
+  ctx.updatePickups(0.016); // direct: a full step() would holster the 0-ammo weapon first
+  check('pressure-scaled ammo refill is Math.ceil(42 * 1.8) == 76', p.weapon.ammo === Math.ceil(42 * 1.8));
+  ctx.G.pressure = 1;
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== hearts stay on the floor at full HP ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.hp = p.stats.maxHp;
+  ctx.G.pickups.length = 0;
+  ctx.G.enemies.length = 0;
+  const scoreBefore = ctx.G.score;
+  ctx.spawnPickup('heart', p.x, p.y);
+  step(2, 16);
+  check('heart stays on floor at full HP', ctx.G.pickups.length === 1);
+  check('hp unchanged at full HP', p.hp === p.stats.maxHp);
+  check('score unchanged at full HP', ctx.G.score === scoreBefore);
+  p.hp = 2;
+  step(2, 16);
+  check('heart collected when hp low', ctx.G.pickups.length === 0);
+  check('hp increased after heart pickup', p.hp > 2);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== dash: burst, slow, cooldown ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.x = ctx.G.arena.cx - 200; p.y = ctx.G.arena.cy;
+  ctx.Input.mdown = false;
+  ctx.G.enemies.length = 0;
+  ctx.Input.keys.d = true;
+  step(10, 16);
+  const baselineX = p.x;
+  step(1, 16);
+  const baselineDx = p.x - baselineX;
+  const xBeforeDash = p.x;
+  press('shift');
+  step(1, 16);
+  release('shift');
+  const dashDx = p.x - xBeforeDash;
+  check('dashSlowT > 0 after dash', p.dashSlowT > 0);
+  check('dash burst within 5% of 0.45*178*0.6', Math.abs(dashDx - 0.45*178*0.6) <= 0.05 * 0.45*178*0.6);
+  let slowDist = 0;
+  let slowFrames = 0;
+  let sampledSlowDx = 0;
+  { // a second shift tap while still slowed must not burst again
+    const bx = p.x;
+    press('shift');
+    step(1, 16);
+    release('shift');
+    const doubleDx = p.x - bx;
+    check('no second dash during active slow window', doubleDx < baselineDx * 0.75);
+    slowDist += doubleDx;
+    sampledSlowDx = doubleDx;
+    slowFrames++;
+  }
+  while (p.dashSlowT > 0 && slowFrames < 60) {
+    const bx = p.x;
+    step(1, 16);
+    const dx = p.x - bx;
+    if (dx < baselineDx * 0.75) {
+      slowDist += dx;
+      if (sampledSlowDx === 0) sampledSlowDx = dx;
+      slowFrames++;
+    }
+  }
+  check('slow per-frame dx is roughly half baseline', sampledSlowDx > 0 && sampledSlowDx >= 0.4 * baselineDx && sampledSlowDx <= 0.6 * baselineDx);
+  check('total dash (burst + slow) within 8% of 0.95*178*0.6', Math.abs((dashDx + slowDist) - 0.95*178*0.6) <= 0.08 * 0.95*178*0.6);
+  ctx.Input.keys.d = false;
+  step(3, 16);
+  const xBeforeIdle = p.x;
+  const slowTBeforeIdle = p.dashSlowT;
+  press('shift');
+  step(1, 16);
+  release('shift');
+  check('idle dash does not move player', p.x === xBeforeIdle);
+  check('idle dash does not set slow timer', p.dashSlowT <= slowTBeforeIdle);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== debug refill tops up holstered specials ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.weapon = { id: 'bonepopper', ammo: Infinity };
+  p.holstered = { id: 'repeater', ammo: 0 };
+  ctx.debugRefillAmmo();
+  check('debug refill tops up holstered repeater to 84', p.holstered.ammo === 84);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== loader decodes images before ready ==');
+{
+  const origImg = sandbox.Image;
+  let decodeCount = 0;
+  sandbox.Image = class {
+    constructor() { this.width = 32; this.height = 32; }
+    set src(v) { this.onload && this.onload(); }
+    decode() { decodeCount++; return { then: (res) => res() }; }
+  };
+  ctx.G.imagesLoaded = false;
+  ctx.Sprites.load();
+  check('loader decodes every manifest image', decodeCount === ctx.SPRITE_MANIFEST.length);
+  check('imagesLoaded set true after decode', ctx.G.imagesLoaded === true);
+  sandbox.Image = origImg;
+}
+
+console.log('== muzzle origins match projectile origins ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  p.aim = 0; ctx.G.bullets.length = 0; ctx.G.parts.length = 0;
+  p.weapon = { id: 'cauterizer', ammo: 999 };
+  p.holstered = null;
+  ctx.fireWeapon(p, ctx.WEAPONS.cauterizer);
+  const flame = ctx.G.bullets.filter(b => b.behavior === 'flame');
+  check('flame origin at muzzle + right-hand shift', flame.length > 0 && Math.abs(flame[0].x - (p.x + 76)) < 0.01 && Math.abs(flame[0].y - (p.y + 26)) < 0.01);
+  ctx.G.bullets.length = 0;
+  p.weapon = { id: 'spinaltap', ammo: 7 };
+  ctx.fireBeam(p, ctx.WEAPONS.spinaltap, 1);
+  const beamParts = ctx.G.parts.filter(pt => pt.type === 'beam');
+  const newest = beamParts[beamParts.length - 1];
+  check('beam particle starts at spinaltap muzzle (81px)', newest && Math.abs(newest.x - (p.x + 81)) < 0.01 && Math.abs(newest.y - (p.y)) < 0.01);
+  ctx.G.bullets.length = 0;
+  ctx.startRun(); step(3, 16);
 }
 
 console.log('== drop economy: weapons are rare, elites feed you ==');
