@@ -16,6 +16,7 @@ function angleLerp(a, b, t) {
   if (d < -Math.PI) d += TAU;
   return a + d * t;
 }
+function angleDelta(a, b) { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; }
 // distance from point to segment (for beam weapons)
 function distToSegment(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1, dy = y2 - y1;

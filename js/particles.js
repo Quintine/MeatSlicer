@@ -104,6 +104,10 @@ function spawnShockwave(x, y, radius, color, alpha, important) {
   }, important);
 }
 
+function spawnSweepFx(x, y, ang, reach, arc) {
+  addParticle({ type: 'sweep', x, y, ang, arc, r: 20, maxR: reach, life: 0.18, t: 0 }, true);
+}
+
 function spawnMuzzleFx(x, y, ang, behavior) {
   if (behavior === 'slam') return;
   const back = ang + Math.PI;
@@ -254,6 +258,12 @@ function drawParticles(ctx) {
       ctx.stroke();
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
       ctx.stroke();
+    } else if (p.type === 'sweep') {
+      const progress = 1 - k;
+      const radius = lerp(p.r, p.maxR, progress);
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = '#f0c8b2'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(p.x, p.y, radius, p.ang - p.arc / 2, p.ang + p.arc / 2); ctx.stroke();
     } else if (p.type === 'text') {
       ctx.globalAlpha = Math.min(1, k * 2);
       ctx.fillStyle = p.color;

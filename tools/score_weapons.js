@@ -28,6 +28,7 @@ function effectiveDps(w) {
     case 'lob_trap':    return base * 1.3;                                     // direct + trap zone control
     case 'lob_swarm':   return (w.dmg * 6) / w.interval * 0.85;                // 6 homing maggots
     case 'slam':        return base * 1.3;                                     // AoE multi-hit
+    case 'sweep':       return base * 1.5;                                     // arc can hit multiple enemies
     case 'saw':         return base * 1.1;                                     // continuous contact
     case 'beam':        return (w.dmg * 1.0) / ((w.chargeTime || 0.8) + w.interval) * 1.2; // full-charge cycle, line pierce
     default:            return base;

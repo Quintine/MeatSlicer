@@ -83,7 +83,7 @@ function boot(seed) {
 const AIM_JITTER = {
   bullet: 0.07, spread: 0.05, bounce: 0.07, boomerang: 0.05, pierce_drag: 0.04,
   cone: 0.03, flame: 0.03,
-  homing: 0, lob: 0, lob_trap: 0, lob_swarm: 0, slam: 0, saw: 0, beam: 0,
+  homing: 0, lob: 0, lob_trap: 0, lob_swarm: 0, slam: 0, saw: 0, beam: 0, sweep: 0,
 };
 
 const FLOOR = 3;          // mid-game enemy mix

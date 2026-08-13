@@ -54,7 +54,7 @@ Your best score is saved in `localStorage` as `meatslicer_best` and shown on the
 | **T** | Toggle Auto-Draft (auto-pick random perk on level-up) |
 | **M** | Mute / unmute |
 | **N** | Next music track |
-| **Shift** | Dash in the movement direction; 0.6s of 50% slow after (net 95% of walking distance) |
+| **Shift** | Dash in the movement direction; 2× length, 0.6s of 30% slow |
 
 ### Perk draft screen (level-up)
 

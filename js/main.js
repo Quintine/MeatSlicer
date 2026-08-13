@@ -7,6 +7,10 @@ const MENU_EXIT_BUTTON = { x: W - 208, y: H - 48, w: 180, h: 28 };
 const PAUSE_MENU_BUTTON = { x: W / 2 - 75, y: 526, w: 150, h: 28 };
 const PAUSE_EXIT_BUTTON = { x: W / 2 + 87, y: 526, w: 150, h: 28 };
 const HD_TOGGLE_BUTTON = { x: 28, y: H - 48, w: 220, h: 28 };
+const PAUSE_RESUME_BUTTON = { x: W / 2 - 237, y: 492, w: 150, h: 28 };
+const PAUSE_SWAP_BUTTON   = { x: W / 2 - 75,  y: 492, w: 150, h: 28 };
+const PAUSE_AUTO_BUTTON   = { x: W / 2 + 87,  y: 492, w: 150, h: 28 };
+const PAUSE_MUTE_BUTTON   = { x: W / 2 - 237, y: 526, w: 150, h: 28 };
 const CONFIRM_WINDOW = 3;
 
 function pauseBars() {
@@ -58,6 +62,11 @@ function setPressureDial(n) {
   G.pressureDial = clamp(Math.round(n), PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
   try { localStorage.setItem('meatslicer_pressure_dial', String(G.pressureDial)); } catch (e) {}
   Sfx.menu();
+}
+function toggleMute() {
+  G.muted = !G.muted;
+  Music.setMuted(G.muted);
+  Sfx.setMuted(G.muted);
 }
 
 function setHudAlpha(v) {
@@ -194,11 +203,7 @@ function update(dt) {
   }
 
   // global keys
-  if (keyPressed('m')) {
-    G.muted = !G.muted;
-    Music.setMuted(G.muted);
-    Sfx.setMuted(G.muted);
-  }
+  if (keyPressed('m')) toggleMute();
 
   switch (G.mode) {
     case 'menu': {
@@ -265,12 +270,13 @@ function update(dt) {
       const exitClick = Input.mpressed && inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
       if (keyPressed('q') || menuClick) { confirmAction('menu', returnToMenu); break; }
       if (canQuitDesktop() && (keyPressed('x') || exitClick)) { confirmAction('desktop', quitToDesktop); break; }
-      if (keyPressed('p', 'escape')) { G.mode = 'play'; G.confirmAction = null; G.confirmT = 0; Sfx.menu(); break; }
+      if (keyPressed('p', 'escape') || (Input.mpressed && inRect(Input.mx, Input.my, PAUSE_RESUME_BUTTON))) { G.mode = 'play'; G.confirmAction = null; G.confirmT = 0; Sfx.menu(); break; }
       if (keyPressed('h') || (Input.mpressed && inRect(Input.mx, Input.my, HELP_BUTTON))) {
         G.pauseHelp = true; G.helpPage = 0; G.confirmAction = null; G.confirmT = 0; Sfx.menu(); break;
       }
-      if (keyPressed('r')) swapWeapon(true);
-      if (keyPressed('t')) setAutoPerk(!G.autoPerk);
+      if (keyPressed('r') || (Input.mpressed && inRect(Input.mx, Input.my, PAUSE_SWAP_BUTTON))) swapWeapon(true);
+      if (keyPressed('t') || (Input.mpressed && inRect(Input.mx, Input.my, PAUSE_AUTO_BUTTON))) setAutoPerk(!G.autoPerk);
+      if (Input.mpressed && inRect(Input.mx, Input.my, PAUSE_MUTE_BUTTON)) { toggleMute(); break; }
       if (keyPressed('-', '_')) { Sfx.setVolume(G.sfxVol - 0.1); Sfx.menu(); }
       if (keyPressed('=', '+')) { Sfx.setVolume(G.sfxVol + 0.1); Sfx.menu(); }
       if (keyPressed(',', '<')) { Music.setVolume(G.musicVol - 0.1); Sfx.menu(); }
@@ -541,15 +547,19 @@ function drawPause(ctx) {
   }
 
   const gridX = [W / 2 - 237, W / 2 - 75, W / 2 + 87];
-  drawPixelTag(ctx, '[P] RESUME', gridX[0], 492, { width: 150, height: 28, color: '#f0e5d7', accent: '#b5243a' });
-  drawPixelTag(ctx, '[R] SWAP WEAPON', gridX[1], 492, { width: 150, height: 28, color: '#bba9a1', accent: '#6e3843' });
-  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), gridX[2], 492, { width: 150, height: 28, color: G.autoPerk ? '#79d9ca' : '#bba9a1', accent: G.autoPerk ? '#378b80' : '#6e3843' });
+  const resumeHover = inRect(Input.mx, Input.my, PAUSE_RESUME_BUTTON);
+  const swapHover = inRect(Input.mx, Input.my, PAUSE_SWAP_BUTTON);
+  const autoHover = inRect(Input.mx, Input.my, PAUSE_AUTO_BUTTON);
+  const muteHover = inRect(Input.mx, Input.my, PAUSE_MUTE_BUTTON);
+  drawPixelTag(ctx, '[P] RESUME', gridX[0], 492, { width: 150, height: 28, color: resumeHover ? '#f5e9d6' : '#bba9a1', accent: resumeHover ? '#b5243a' : '#6e3843' });
+  drawPixelTag(ctx, '[R] SWAP WEAPON', gridX[1], 492, { width: 150, height: 28, color: swapHover ? '#f5e9d6' : '#bba9a1', accent: swapHover ? '#b5243a' : '#6e3843' });
+  drawPixelTag(ctx, '[T] AUTO ' + (G.autoPerk ? 'ON' : 'OFF'), gridX[2], 492, { width: 150, height: 28, color: G.autoPerk ? '#79d9ca' : (autoHover ? '#f5e9d6' : '#bba9a1'), accent: G.autoPerk ? '#378b80' : (autoHover ? '#b5243a' : '#6e3843') });
   const menuHover = inRect(Input.mx, Input.my, PAUSE_MENU_BUTTON);
   const exitHover = inRect(Input.mx, Input.my, PAUSE_EXIT_BUTTON);
   const menuConfirm = G.confirmAction === 'menu';
   const desktopExit = canQuitDesktop();
   const exitConfirm = desktopExit && G.confirmAction === 'desktop';
-  drawPixelTag(ctx, '[M] MUTE AUDIO', gridX[0], 526, { width: 150, height: 28, color: '#bba9a1', accent: '#6e3843' });
+  drawPixelTag(ctx, '[M] MUTE AUDIO', gridX[0], 526, { width: 150, height: 28, color: muteHover ? '#f5e9d6' : '#bba9a1', accent: muteHover ? '#b5243a' : '#6e3843' });
   drawPixelTag(ctx, menuConfirm ? '[Q] CONFIRM MENU' : '[Q] MAIN MENU', PAUSE_MENU_BUTTON.x, PAUSE_MENU_BUTTON.y, {
     width: PAUSE_MENU_BUTTON.w, height: PAUSE_MENU_BUTTON.h,
     color: menuConfirm ? '#ffd36a' : (menuHover ? '#f5e9d6' : '#bba9a1'),

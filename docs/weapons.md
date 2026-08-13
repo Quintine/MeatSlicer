@@ -106,18 +106,18 @@ Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but
 
 ### Cleaver Cadence
 
-> *It always comes back*
+> *A wide, dramatic melee sweep*
 
 | Stat | Value |
 |---|---|
-| Damage | 15 |
-| Fire interval | 0.38 s |
-| Projectile speed | 400 (returns at up to 520) |
-| Range | 1.10 s |
+| Damage | 34 |
+| Fire interval | 0.55 s |
+| Reach | 90 px |
+| Arc | 2.4 rad (~137°) |
 | Ammo | 26 (refill 10 per pickup) |
-| Recoil | 0.42 |
+| Recoil | 0.95 (heavy) |
 
-Boomerang: flies out while decelerating for 0.45 s, then accelerates back to you (caught within 20 px). **Always pierces** — it can hit enemies on both the outbound and return trip.
+Melee sweep: one wide swing across the aim direction hits every enemy within 90 px inside a ~137° arc for 34 damage with heavy knockback.
 
 ### Sawblade Launcher
 
