@@ -202,7 +202,7 @@ function updateRoom(dt) {
     const stalled = G.time - G.roomEnterT > 90;
     if (lowHealth || stalled) {
       const decay = lowHealth ? 0.02 : 0.008;
-      applyPressureDelta(-decay * dt * pressureDropScale());
+      applyPressureDelta(-decay * dt * pressureDropScale() * PRESSURE_RELIEF_MUL);
     }
   }
   G.recentHits = (G.recentHits || []).filter(t => G.time - t < 12);
@@ -304,9 +304,12 @@ function nextFloor() {
   Sfx.stairs();
   genFloor(G.floor);
   enterRoom(0, 0);
-  // Shield Heart perk: fresh shield hearts each floor
-  G.player.shieldHp = G.player.stats.shieldPerk || 0;
-  if (G.player.shieldHp > 0) { spawnText(G.player.x, G.player.y - 20, 'SHIELD UP', '#3bc9e0'); Sfx.shieldUp(); }
+  // Shield Heart: regen 25% of max shields per floor, rounded up to the next
+  // whole shield (1 shield = 2 shieldHp). Full shields only at run start.
+  const maxShield = G.player.stats.shieldPerk || 0;
+  const shieldBefore = G.player.shieldHp;
+  G.player.shieldHp = Math.min(maxShield, G.player.shieldHp + 2 * Math.ceil(maxShield / 8));
+  if (G.player.shieldHp > shieldBefore) { spawnText(G.player.x, G.player.y - 20, 'SHIELD UP', '#3bc9e0'); Sfx.shieldUp(); }
   // legendary once-per-floor flags reset
   G.player.secondSkinUsed = false;
   G.player.lastCutActive = false;

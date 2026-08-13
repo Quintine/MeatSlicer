@@ -305,7 +305,7 @@ function pressureRelief(dmgTaken) {
   const severity = clamp(dmgTaken / Math.max(2, p.stats.maxHp * 0.25), 0.4, 2);
   const desperation = 1 + (1 - hpFrac) * 2;
   const churn = 1 + Math.min(G.recentHits.length, 4) * 0.35;
-  return PRESSURE_DROP_BASE * PRESSURE_UNIT * severity * desperation * churn * pressureDropScale();
+  return PRESSURE_DROP_BASE * PRESSURE_UNIT * severity * desperation * churn * pressureDropScale() * PRESSURE_RELIEF_MUL;
 }
 
 function hurtPlayer(dmg, ang, attacker) {
@@ -333,8 +333,9 @@ function hurtPlayer(dmg, ang, attacker) {
   // Meat Grinder: aura damages you for +1 per hit taken
   if (p.stats.meatGrinder > 0) reduced += p.stats.meatGrinder;
   // shield hearts absorb first (from the Shield Heart perk)
+  let absorbed = 0;
   if (p.shieldHp > 0) {
-    const absorbed = Math.min(p.shieldHp, reduced);
+    absorbed = Math.min(p.shieldHp, reduced);
     p.shieldHp -= absorbed;
     reduced -= absorbed;
     if (p.shieldHp <= 0) { spawnText(p.x, p.y - 20, 'SHIELD DOWN', '#3bc9e0'); Sfx.shieldBreak(); }
@@ -352,7 +353,7 @@ function hurtPlayer(dmg, ang, attacker) {
     G.roomDamaged = true;
     G.recentHits = (G.recentHits || []).filter(t => G.time - t < 12);
     G.recentHits.push(G.time);
-    applyPressureDelta(-pressureRelief(reduced));
+    if (absorbed === 0) applyPressureDelta(-pressureRelief(reduced));
     G.streak = 0;
   }
   if (attacker && attacker.hp > 0 && p.stats.thorns > 0) {

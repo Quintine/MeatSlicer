@@ -50,6 +50,7 @@ function init() {
     if (Number.isFinite(sv)) G.sfxVol = clamp(sv, 0, 1);
     if (Number.isFinite(mv)) G.musicVol = clamp(mv, 0, 1);
     G.autoPerk = localStorage.getItem('meatslicer_autoperk') === '1';
+    G.muted = localStorage.getItem('meatslicer_muted') === '1';
     const pd = parseFloat(localStorage.getItem('meatslicer_pressure_dial'));
     if (Number.isFinite(pd)) G.pressureDial = clamp(Math.round(pd), PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX);
     const ha = parseFloat(localStorage.getItem('meatslicer_hud_alpha'));
@@ -67,6 +68,9 @@ function toggleMute() {
   G.muted = !G.muted;
   Music.setMuted(G.muted);
   Sfx.setMuted(G.muted);
+  try { localStorage.setItem('meatslicer_muted', G.muted ? '1' : '0'); } catch (e) {}
+  addToast(G.muted ? 'AUDIO MUTED' : 'AUDIO UNMUTED', G.muted ? 'all sound is silenced' : 'sound restored');
+  if (!G.muted) Sfx.menu();
 }
 
 function setHudAlpha(v) {
@@ -559,7 +563,7 @@ function drawPause(ctx) {
   const menuConfirm = G.confirmAction === 'menu';
   const desktopExit = canQuitDesktop();
   const exitConfirm = desktopExit && G.confirmAction === 'desktop';
-  drawPixelTag(ctx, '[M] MUTE AUDIO', gridX[0], 526, { width: 150, height: 28, color: muteHover ? '#f5e9d6' : '#bba9a1', accent: muteHover ? '#b5243a' : '#6e3843' });
+  drawPixelTag(ctx, '[M] MUTE ' + (G.muted ? 'ON' : 'OFF'), gridX[0], 526, { width: 150, height: 28, color: G.muted ? '#79d9ca' : (muteHover ? '#f5e9d6' : '#bba9a1'), accent: G.muted ? '#378b80' : (muteHover ? '#b5243a' : '#6e3843') });
   drawPixelTag(ctx, menuConfirm ? '[Q] CONFIRM MENU' : '[Q] MAIN MENU', PAUSE_MENU_BUTTON.x, PAUSE_MENU_BUTTON.y, {
     width: PAUSE_MENU_BUTTON.w, height: PAUSE_MENU_BUTTON.h,
     color: menuConfirm ? '#ffd36a' : (menuHover ? '#f5e9d6' : '#bba9a1'),

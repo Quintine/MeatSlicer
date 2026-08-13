@@ -53,7 +53,7 @@ const ITEMS = {
   orbitalknives: { name: 'Orbital Knives',   desc: '+1 circling knife',           rarity: 'rare', cap: 3, apply: s => { s.orbitals += 1; } },
   volatilebile:  { name: 'Volatile Bile',    desc: 'Kills explode (bigger per tier)', rarity: 'rare', cap: 3, apply: s => { s.explodeOnKill = (s.explodeOnKill || 0) + 1; } },
   deadmanswitch: { name: "Dead Man's Switch", desc: 'Kills trigger a fire-rate frenzy', rarity: 'rare', cap: 3, apply: s => { s.frenzy += 0.12; } },
-  boneplate:     { name: 'Bone Plate',       desc: '+½ shield heart each floor',  rarity: 'rare', cap: 3, apply: (s, p) => { s.shieldPerk = (s.shieldPerk || 0) + 1; p.shieldHp += 1; } },
+  boneplate:     { name: 'Bone Plate',       desc: '+½ max shield heart (regens 25% per floor)',  rarity: 'rare', cap: 3, apply: (s, p) => { s.shieldPerk = (s.shieldPerk || 0) + 1; p.shieldHp += 1; } },
   wormgut:       { name: 'Worm Gut',         desc: 'Heal ½ heart after combat rooms', rarity: 'rare', cap: 3, apply: s => { s.roomHeal += 1; } },
   secondstomach: { name: 'Second Stomach',   desc: '+½ heart and excess healing shields', rarity: 'rare', cap: 3, apply: (s, p) => { s.maxHp += 1; s.overShield += 1; p.hp = Math.min(s.maxHp, p.hp + 1); } },
   twinhearts:    { name: 'Twin Hearts',      desc: '+1 max heart, heal to full',  rarity: 'rare', cap: 3, apply: (s, p) => { s.maxHp += 2; p.hp = s.maxHp; } },

@@ -113,7 +113,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 | **Twin Hearts** | +1 max heart, heal to full | `maxHp +2`, `hp = maxHp` — the premium Rare HP item |
 | **Rendered Fat** | +½ heart, +4% armor | `maxHp +1`, `armor +0.04`, heal 1 — clean hybrid HP/armor |
 | **Gristle Cord** | +0.12s hurt immunity, +4% armor | `invBonus +0.12`, `armor +0.04` |
-| **Bone Plate** | +½ shield heart each floor | `shieldPerk +1`, `shieldHp +1` — shields refill every floor (1 shield HP = ½ heart, renders as half a cyan pip) |
+| **Bone Plate** | +½ shield heart each floor | `shieldPerk +1`, `shieldHp +1` — shields regen 25% per floor (rounded up) (1 shield HP = ½ heart, renders as half a cyan pip) |
 | **Second Stomach** | +½ heart and excess healing shields | `maxHp +1`, heal 1, `overShield +1` — overflow healing becomes shield HP |
 | **Tanned Hide** | +8% chance to ignore damage | `armor +0.08` — literal dodge chance, cap 75% |
 | **Dead Man's Clock** | +0.25s hurt immunity | `invBonus +0.25` — post-hit invulnerability 0.9 s → 1.15 s at tier I |
@@ -261,4 +261,4 @@ Holding an active contributes a flat **+2** to power score.
 - **Split Tongue / Hydra Maw / Backstabber** multiply projectile count, which multiplies proc rolls per second — the core of most broken builds.
 - **Piercing Gaze + Ricochet Ribs** feed the slam/saw/beam "inert" bonus (+6% each) on The Tenderizer, Red Right Hand, and Spinal Tap, while also powering Swarm Jar maggots.
 - **Volatile Bile** chains: explosions can kill, which triggers more explosions (and frenzy, and lifesteal procs).
-- **Bone Plate + Shield Heart** (perk) stack into a large shield that refills free every floor.
+- **Bone Plate + Shield Heart** (perk) stack into a large shield pool that regens 25% per floor.

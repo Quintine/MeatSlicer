@@ -64,7 +64,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugRefillAmmo, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, PRESSURE_DROP_BASE, PRESSURE_RELIEF_MUL, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugRefillAmmo, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -216,7 +216,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=57' && urls[1] === 'assets/' + name + '.png?v=57';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=58' && urls[1] === 'assets/' + name + '.png?v=58';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -241,7 +241,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=57';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=58';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
@@ -475,7 +475,7 @@ check('player leveled', ctx.G.player.level > 1);
 
 console.log('== rebalanced perks + automatic draft ==');
 {
-  check('13 new perks added', ctx.PERKS.length === 23);
+  check('perk pool counts 22 perks', ctx.PERKS.length === 22);
   const perkStats = { dmgMul: 1 };
   ctx.PERKS.find(k => k.id === 'sharpen').apply(perkStats, { hp: 1 });
   check('core level-up damage bonus was halved', Math.abs(perkStats.dmgMul - 1.04) < 0.001);
@@ -661,8 +661,23 @@ console.log('== shield heart perk ==');
   check('unshielded hit hurts', p.hp === hpBefore - 1);
   p.hp = hpBefore;
   ctx.nextFloor(); step(3, 16);
-  check('shield refreshes each floor', p.shieldHp === 2);
+  check('floor regen restores a 1-shield pool fully (25% rounds up)', p.shieldHp === 2);
+  p.stats.shieldPerk = 8; p.shieldHp = 0;
+  ctx.nextFloor(); step(3, 16);
+  check('floor regen grants 25% rounded up (4 shields -> 1 shield)', p.shieldHp === 2);
+  p.stats.shieldPerk = 10; p.shieldHp = 0;
+  ctx.nextFloor(); step(3, 16);
+  check('floor regen at 5 shields grants 2 shields', p.shieldHp === 4);
   ctx.startRun(); step(5, 16); // reset floor/state for later sections
+}
+
+console.log('== mute toggle persists like auto-draft ==');
+{
+  const before = ctx.G.muted;
+  ctx.toggleMute();
+  check('toggleMute flips and persists mute', ctx.G.muted === !before && stored['meatslicer_muted'] === (ctx.G.muted ? '1' : '0'));
+  ctx.toggleMute();
+  check('toggleMute flips back and persists', ctx.G.muted === before && stored['meatslicer_muted'] === (before ? '1' : '0'));
 }
 
 console.log('== items ==');
@@ -1449,10 +1464,22 @@ console.log('== adaptive clean-room pressure ==');
   ctx.hurtPlayer(1, 0); const lowHealthRelief = 1.2 - ctx.G.pressure;
   check('low health dynamically grants more pressure relief', lowHealthRelief > fullHealthRelief);
 
+  ctx.G.pressureDial = 0;
+  ctx.G.pressure = 1.2; ctx.G.recentHits = []; p.hp = 10; p.stats.maxHp = 10; p.shieldHp = 0; p.stats.armor = 0; p.invT = 0; ctx.G.mode = 'play';
+  ctx.hurtPlayer(1, 0);
+  // 3 × 0.01 base × 0.4 severity × 1.2 desperation (hp 9/10 after the hit) × 1.35 churn × 1 dial scale × 0.5 mul
+  check('hit relief is halved by the slowdown', Math.abs((1.2 - ctx.G.pressure) - 0.00972) < 1e-9);
+
   ctx.G.pressure = 1.2; ctx.G.streak = 4; ctx.G.roomDamaged = false;
   p.hp = 10; p.shieldHp = 1; p.invT = 0; ctx.G.mode = 'play';
   ctx.hurtPlayer(1, 0);
   check('fully shielded hits preserve a clean-room streak', ctx.G.pressure === 1.2 && ctx.G.streak === 4 && !ctx.G.roomDamaged);
+  p.shieldHp = 0;
+
+  ctx.G.pressure = 1.2; ctx.G.streak = 4; ctx.G.roomDamaged = false;
+  p.hp = 10; p.shieldHp = 1; p.invT = 0; ctx.G.mode = 'play';
+  ctx.hurtPlayer(2, 0); // shield absorbs 1, HP takes 1
+  check('partially shielded hits grant no pressure relief', ctx.G.pressure === 1.2 && ctx.G.streak === 0 && ctx.G.roomDamaged);
   p.shieldHp = 0;
 
   ctx.G.pressure = 0.601; ctx.G.recentHits = []; p.hp = 3; p.invT = 0; ctx.G.mode = 'play';

@@ -113,7 +113,7 @@ Right-click is disabled (context menu suppressed). There is **no interact key** 
 
 - Every hit taken deals a **minimum of 1 damage** (`max(1, round(dmg))`).
 - **Armor** gives a chance to completely ignore a hit. Each source of armor adds its listed chance directly (e.g. Tanned Hide +8%, Thick Hide +4%) — the block chance is simply `armor`, capped at 75%. A blocked hit shows "BLOCKED" and grants only 0.2 s of invulnerability.
-- **Shield hearts** (cyan) absorb damage before real HP. They come from the Bone Plate item and Shield Heart perk, and are refilled to full at the start of each floor. Losing your last shield triggers a "SHIELD DOWN" warning. On the HUD they render at half-heart granularity — **2 shield HP = one full cyan heart**, matching red hearts (2 HP = 1 heart).
+- **Shield hearts** (cyan) absorb damage before real HP. They come from the Bone Plate item and Shield Heart perk, and regenerate each floor: 25% of your max shields, rounded up to the next whole shield (1 shield = one full cyan heart = 2 shield HP); a new run starts at full. Losing your last shield triggers a "SHIELD DOWN" warning. On the HUD they render at half-heart granularity — **2 shield HP = one full cyan heart**, matching red hearts (2 HP = 1 heart).
 - Getting hit knocks you back 14 px, shakes the screen, and flashes a red vignette.
 
 ### Healing
@@ -205,7 +205,7 @@ Clearing a combat room drops:
 | Elite enemy | 3× XP + 3–5 bonus gems · 18% + luck×10% **item** · else 45% + luck×15% ammo |
 | Boss | 1 item pedestal + 1 weapon (rolled at floor + 2) + 1 guaranteed ammo + stairs · the boss room also stocks 1 ammo when you enter · the stair hatch stays sealed for 3 seconds after the kill |
 
-**Luck** is a player stat (Lucky Coin, Crow Bait, Scavenger perk) that scales most drop chances as shown above.
+**Luck** is a player stat (Lucky Coin, Crow Bait) that scales most drop chances as shown above.
 
 ---
 
@@ -224,7 +224,7 @@ The **PRESSURE** meter on the HUD is a run-long adaptive difficulty multiplier a
 
 - Range: **0.60 – 2.00** (starts at 1.00).
 - Gains for rooms cleared **without taking damage** (flawless streak).
-- Taking damage **relieves** pressure, scaled by how big the hit was, how low your HP is, and how many recent hits you've taken.
+- Taking damage **relieves** pressure, scaled by how big the hit was, how low your HP is, and how many recent hits you've taken. Hits that damage a shield grant no relief.
 - Decays passively while below 35% HP, or if you stall in a room for 90+ seconds.
 - Only affects enemies spawned *after* the change — living enemies keep their stats.
 
@@ -234,9 +234,9 @@ The title screen has a **PRESSURE DIAL** (−10 … +10) that tunes how pressure
 
 | Dial | Rise / clean room | Relief on hit (base) | Behaviour |
 |---|---|---|---|
-| **−10** | −0.020 | 0.080 | Strong mercy; negative rise respects the 0.60 floor |
-| **−5** | 0 | 0.050 | Mercy — pressure does not rise from clean rooms |
-| **0** | +0.010 | 0.030 | Standard — today's balance |
+| **−10** | −0.020 | 0.040 | Strong mercy; negative rise respects the 0.60 floor |
+| **−5** | 0 | 0.025 | Mercy — pressure does not rise from clean rooms |
+| **0** | +0.010 | 0.015 | Standard tuning |
 | **+5** | +0.050 | 0 (none) | Ratchet — pressure can only ever rise; score floored at 1.00× |
 | **+10** | +0.100 | 0 | Maximum ratchet; pressure respects the 2.00 ceiling |
 

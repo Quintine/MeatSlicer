@@ -1,12 +1,12 @@
 # Perks
 
-All **23 perks** in MeatSlicer, with exact effects pulled from `js/perks.js`. Perks are chosen through the **Mutation Draft** each time you level up, and last for the rest of the run.
+All **22 perks** in MeatSlicer, with exact effects pulled from `js/perks.js`. Perks are chosen through the **Mutation Draft** each time you level up, and last for the rest of the run.
 
 ---
 
 ## The Mutation Draft
 
-- Gaining a level queues a draft. When it opens, you're offered **3 random perks** from the full pool — all 23 perks are equally weighted; there is no rarity system.
+- Gaining a level queues a draft. When it opens, you're offered **3 random perks** from the full pool — all 22 perks are equally weighted; there is no rarity system.
 - Choose with **1 / 2 / 3**, by **clicking a card**, or press **4 / Space** for a "Random Cut".
 - Press **R** to **reroll** all three choices (costs 1 reroll token). Rerolls come from the **Reroll Rib** item, which also grants +1 reroll every level-up.
 - Press **T** to toggle **Auto-Draft**: future level-ups instantly pick a random perk without pausing the game. The setting persists between sessions.
@@ -54,7 +54,7 @@ XP comes from gems dropped by kills, room clears, and bosses, scaled by your `xp
 | Perk | Description | Exact effect |
 |---|---|---|
 | **Big Heart** | +½ max heart, heal ½ heart | `maxHp +1`, heal 1 |
-| **Shield Heart** | +½ shield heart at the start of each floor | `shieldPerk +1`, `shieldHp +1` — refills every floor transition |
+| **Shield Heart** | +½ shield heart at the start of each floor | `shieldPerk +1`, `shieldHp +1` — regen: 25% of max shields (rounded up to a whole shield) each floor transition |
 | **Thick Hide** | +4% chance to ignore damage | `armor +0.04` — literal dodge chance, cap 75% |
 | **Second Wind** | +0.15s hurt immunity | `invBonus +0.15` — post-hit invulnerability 0.9 s → 1.05 s |
 | **Spite Flesh** | Contact attackers take damage | `thorns +4` — melee attackers take `4 × dmgMul` |
@@ -68,7 +68,7 @@ XP comes from gems dropped by kills, room clears, and bosses, scaled by your `xp
 | **Sinew Weave** | +3% move speed and range | `speedMul ×1.03`, `rangeMul ×1.03` |
 | **Magnet Bile** | +10% pickup radius | `magnet ×1.10` |
 | **Carrion Sense** | +8% pickup radius and pull speed | `magnet ×1.08`, `magnetPull ×1.08` *(note: pull speed is not currently wired into pickup movement — the radius half works)* |
-| **Scavenger** | +4% drop luck | `luck +0.04` |
+
 | **Bloodrush** | +5% XP gain, bonus crystal chance | `xpMul ×1.05` |
 | **Scrap Feed** | 5% less ammo (diminishing) | `ammoEff +0.05` per stack — saving fraction = rating/(1+rating), so each extra stack helps less (like Thick Hide) |
 
@@ -93,18 +93,17 @@ XP comes from gems dropped by kills, room clears, and bosses, scaled by your `xp
 | 13 | Long Bone | Offensive |
 | 14 | Magnet Bile | Utility |
 | 15 | Quickening | Mobility |
-| 16 | Scavenger | Utility |
-| 17 | Scrap Feed | Utility |
-| 18 | Second Wind | Defensive |
-| 19 | Sharpened | Offensive |
-| 20 | Shield Heart | Defensive |
-| 21 | Sinew Weave | Mobility |
-| 22 | Spite Flesh | Defensive |
-| 23 | Thick Hide | Defensive |
+| 16 | Scrap Feed | Utility |
+| 17 | Second Wind | Defensive |
+| 18 | Sharpened | Offensive |
+| 19 | Shield Heart | Defensive |
+| 20 | Sinew Weave | Mobility |
+| 21 | Spite Flesh | Defensive |
+| 22 | Thick Hide | Defensive |
 
 ## Drafting advice
 
 - **Perks are small, items are big.** A perk is worth ~0.5 power score; an item tier is worth 1.0. Perks smooth out a build; items define it.
-- **Shield Heart** is one of the strongest defensive picks — it's a free refilling shield pip every floor, and it stacks with Bone Plate.
-- **Scavenger / Bloodrush / Magnet Bile** early compound over a long run; **Sharpened / Adrenal Surge** scale whatever your weapon already does well.
+- **Shield Heart** is one of the strongest defensive picks — it's free shield capacity that regens 25% each floor, and it stacks with Bone Plate.
+- **Bloodrush / Magnet Bile** early compound over a long run; **Sharpened / Adrenal Surge** scale whatever your weapon already does well.
 - With **Auto-Draft** on, perks become a no-attention background bonus — good for speedrunning floors, bad if you're fishing for a specific build.

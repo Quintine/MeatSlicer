@@ -178,7 +178,7 @@ function drawHelpPerkList(ctx, px, py) {
   let ty = py + HELP_BODY;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#d7a934'; ctx.font = hfont(9, true);
-  ctx.fillText('23 PERKS · DRAFT 1 OF 3 PER LEVEL · XP FOR NEXT LEVEL: 8 + LEVEL × 4', x, ty);
+  ctx.fillText(PERKS.length + ' PERKS · DRAFT 1 OF 3 PER LEVEL · XP FOR NEXT LEVEL: 8 + LEVEL × 4', x, ty);
   ty += 11;
   ctx.fillStyle = '#7d6a68'; ctx.font = hfont(8, false);
   ctx.fillText('REROLL RIB GRANTS TOKENS (R TO REDRAW) · AUTO-DRAFT (T) PICKS RANDOMLY', x, ty + 11);
@@ -304,11 +304,11 @@ function drawHelpPressure(ctx, px, py) {
       'ALL SCORE IS MULTIPLIED BY LIVE PRESSURE',
       'DIAL ' + (d > 0 ? '+' : '') + d + ' — RISE ' + gain.toFixed(1) + '/10 PER CLEAN ROOM · RELIEF ' + drop.toFixed(1) + '/10 ON HIT',
       '+' + pressureGain().toFixed(3) + ' FOR EVERY ROOM CLEARED WITHOUT TAKING ANY DAMAGE',
-      'RELIEF ON HIT = ' + (0.03 * scale).toFixed(3) + ' × SEVERITY × DESPERATION × CHURN',
+      'RELIEF ON HIT = ' + (PRESSURE_DROP_BASE * PRESSURE_UNIT * PRESSURE_RELIEF_MUL * scale).toFixed(3) + ' × SEVERITY × DESPERATION × CHURN',
       '  SEVERITY = HIT / (MAX HP × 0.25), CLAMPED 0.4 – 2',
       '  DESPERATION = 1 + 2 × (1 − HP FRACTION) — MORE RELIEF WHEN HURT',
       '  CHURN = 1 + 0.35 × HITS IN LAST 12S (CAP +4) — MORE WHEN SWARMED',
-      'DECAY: ' + (0.02 * scale).toFixed(3) + '/S BELOW 35% HP · ' + (0.008 * scale).toFixed(3) + '/S AFTER 90S IN ONE ROOM',
+      'DECAY: ' + (0.02 * scale * PRESSURE_RELIEF_MUL).toFixed(3) + '/S BELOW 35% HP · ' + (0.008 * scale * PRESSURE_RELIEF_MUL).toFixed(3) + '/S AFTER 90S IN ONE ROOM',
       'LIVING ENEMIES KEEP THEIR STATS — ONLY NEW SPAWNS CHANGE',
       'STREAK = CONSECUTIVE FLAWLESS CLEARS (COSMETIC)',
     ] },
@@ -316,7 +316,7 @@ function drawHelpPressure(ctx, px, py) {
       'ARMOR = BLOCK CHANCE: RATING / (1 + RATING), HARD CAP 75%',
       '  THICK HIDE +1/24 RATING · TANNED HIDE +0.08/0.92 (DIMINISHING)',
       'BLOCKED HIT: 0 DAMAGE, 0.2S I-FRAMES, STREAK PRESERVED',
-      'SHIELD HEARTS ABSORB FIRST, REFILL EACH FLOOR · 0.9S I-FRAMES ON HIT',
+      'SHIELD HEARTS ABSORB FIRST, REGEN 25% EACH FLOOR · SHIELDED HITS NO RELIEF · 0.9S I-FRAMES ON HIT',
       'CRIT: 5% BASE CHANCE, ×2 DAMAGE (CRITMUL STACKS)',
     ] },
   ], HELP_PANEL.w - 80);

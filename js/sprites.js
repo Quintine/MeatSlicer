@@ -18,7 +18,7 @@ const SPRITE_MANIFEST = [
   'decal_blood1', 'decal_blood2', 'decal_blood3', 'decal_blood4',
   // level-up perk emblems
   'perk_adrenal', 'perk_sharpen', 'perk_quick', 'perk_longbone', 'perk_bigheart',
-  'perk_magnetb', 'perk_shieldheart', 'perk_scavenge', 'perk_bloodrush', 'perk_deadeye',
+  'perk_magnetb', 'perk_shieldheart', 'perk_bloodrush', 'perk_deadeye',
   'perk_critbone', 'perk_critmeat', 'perk_flensing', 'perk_ember', 'perk_frostbile',
   'perk_heavyhand', 'perk_thickhide', 'perk_secondwind', 'perk_scrapfeed', 'perk_boneknit',
   'perk_spiteflesh', 'perk_carrion', 'perk_sinew',
@@ -88,10 +88,10 @@ const Sprites = {
       const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
       img.onload = () => { this.imgs[name] = img; if (typeof img.decode === 'function') img.decode().then(finish, finish); else finish(); };
       img.onerror = () => {
-        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=57'; return; }
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=58'; return; }
         finish();
       };
-      img.src = hd ? 'assets/hd/' + name + '.webp?v=57' : 'assets/' + name + '.png?v=57';
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=58' : 'assets/' + name + '.png?v=58';
     }
   },
 

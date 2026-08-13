@@ -70,6 +70,7 @@ const WEAPON_DROP_LOCKOUT = 2.5;
 const PRESSURE_UNIT = 0.01;          // one "point" on the dial scale
 const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
 const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
+const PRESSURE_RELIEF_MUL = 0.5;   // global brake: all pressure drops (hit relief + passive decay) are halved
 const DEATH_LOCK = 3;
 const PRESSURE_DIAL_MIN = -10, PRESSURE_DIAL_MAX = 10;
 
