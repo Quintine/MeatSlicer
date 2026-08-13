@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] — 2026-08-13
+
+### Changed
+- **Static wall bands cached** — wall tiles render once into an offscreen canvas layer (`G.wallLayer`) and are composited each frame; the layer is invalidated on room entry (`G.wallLayerKey`), so door sprites stay dynamic.
+- **Sprite draw fast path** — `Sprites.draw` issues a single `drawImage` when a sprite has no rotation, scale, alpha, or flash.
+- **Canvas rect cached** — the input canvas `getBoundingClientRect` is cached (`Input.updateRect`) and refreshed on canvas fit instead of every frame.
+
 ## [0.9.0] — 2026-08-12
 
 ### Added
@@ -221,4 +228,4 @@ The initial series of commits that built the game from scratch. Grouped by featu
 
 ---
 
-*Generated from the git log. Last commit: v0.9.0*
+*Generated from the git log. Last commit: v0.9.1*
