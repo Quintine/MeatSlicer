@@ -216,7 +216,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=56' && urls[1] === 'assets/' + name + '.png?v=56';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=57' && urls[1] === 'assets/' + name + '.png?v=57';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -241,7 +241,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=56';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=57';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);

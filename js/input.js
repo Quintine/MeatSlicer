@@ -9,6 +9,10 @@ const Input = {
   anyKey: false,
 };
 
+let _rect = null;
+
+Input.updateRect = function () { _rect = canvas ? canvas.getBoundingClientRect() : null; };
+
 function initInput(canvas) {
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
@@ -21,7 +25,7 @@ function initInput(canvas) {
   window.addEventListener('blur', () => { Input.keys = {}; Input.mdown = false; });
 
   function setMouse(e) {
-    const r = canvas.getBoundingClientRect();
+    const r = _rect || (_rect = canvas.getBoundingClientRect());
     Input.mx = (e.clientX - r.left) * (W / r.width);
     Input.my = (e.clientY - r.top) * (H / r.height);
   }

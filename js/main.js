@@ -105,6 +105,7 @@ function fitCanvas() {
   const k = Math.min(window.innerWidth / W, window.innerHeight / H) * 0.97;
   canvas.style.width = Math.floor(W * k) + 'px';
   canvas.style.height = Math.floor(H * k) + 'px';
+  if (Input.updateRect) Input.updateRect();
 }
 
 function resetRun() {

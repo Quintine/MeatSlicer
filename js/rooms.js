@@ -94,6 +94,8 @@ function enterRoom(gx, gy) {
   G.boss = null;
   G.roomLayer = null;
   G.roomLayerKey = '';
+  G.wallLayer = null;
+  G.wallLayerKey = '';
   G.roomDamaged = false;
   G.roomEnterT = G.time;
   G.entryFresh = false;
@@ -435,8 +437,7 @@ function drawRoom(ctx) {
   drawWalls(ctx, r);
 }
 
-function drawWalls(ctx, r) {
-  const locked = roomLocked();
+function drawWallBands(target, r) {
   const a = roomBounds(r);
   const theme = ROOM_THEMES[r.theme] || ROOM_THEMES.abattoir;
   const wallPool = theme.wall;
@@ -444,43 +445,69 @@ function drawWalls(ctx, r) {
   const top = a.y0 - WALL, bottom = a.y1 + WALL;
 
   function clipBand(dir) {
-    ctx.beginPath();
+    target.beginPath();
     if (dir === 'n' || dir === 's') {
       const y = dir === 'n' ? top : a.y1;
       if (r.doors[dir]) {
-        ctx.rect(left, y, a.cx - DOOR_HALF - left, WALL);
-        ctx.rect(a.cx + DOOR_HALF, y, right - a.cx - DOOR_HALF, WALL);
-      } else ctx.rect(left, y, right - left, WALL);
+        target.rect(left, y, a.cx - DOOR_HALF - left, WALL);
+        target.rect(a.cx + DOOR_HALF, y, right - a.cx - DOOR_HALF, WALL);
+      } else target.rect(left, y, right - left, WALL);
     } else {
       const x = dir === 'w' ? left : a.x1;
       if (r.doors[dir]) {
-        ctx.rect(x, top, WALL, a.cy - DOOR_HALF - top);
-        ctx.rect(x, a.cy + DOOR_HALF, WALL, bottom - a.cy - DOOR_HALF);
-      } else ctx.rect(x, top, WALL, bottom - top);
+        target.rect(x, top, WALL, a.cy - DOOR_HALF - top);
+        target.rect(x, a.cy + DOOR_HALF, WALL, bottom - a.cy - DOOR_HALF);
+      } else target.rect(x, top, WALL, bottom - top);
     }
-    ctx.clip();
+    target.clip();
   }
 
   for (const dir of ['n', 's']) {
-    ctx.save(); clipBand(dir);
+    target.save(); clipBand(dir);
     const y = dir === 'n' ? top + TILE / 2 : a.y1 + TILE / 2;
     for (let x = left; x < right; x += TILE) {
       const h = hashTile(Math.floor(x / TILE) + r.gx * 17, (dir === 'n' ? -1 : 11) + r.gy * 19);
-      Sprites.draw(ctx, wallPool[h % wallPool.length], x + TILE / 2, y, 0, TILE);
+      Sprites.draw(target, wallPool[h % wallPool.length], x + TILE / 2, y, 0, TILE);
     }
-    ctx.restore();
+    target.restore();
   }
   for (const dir of ['w', 'e']) {
-    ctx.save(); clipBand(dir);
+    target.save(); clipBand(dir);
     const x = dir === 'w' ? left + TILE / 2 : a.x1 + TILE / 2;
     for (let y = top; y < bottom; y += TILE) {
       const h = hashTile((dir === 'w' ? -1 : 16) + r.gx * 17, Math.floor(y / TILE) + r.gy * 19);
-      Sprites.draw(ctx, wallPool[h % wallPool.length], x, y + TILE / 2, Math.PI / 2, TILE);
+      Sprites.draw(target, wallPool[h % wallPool.length], x, y + TILE / 2, Math.PI / 2, TILE);
     }
-    ctx.restore();
+    target.restore();
   }
-  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 3;
-  ctx.strokeRect(a.x0, a.y0, a.w, a.h);
+  target.strokeStyle = 'rgba(0,0,0,0.5)'; target.lineWidth = 3;
+  target.strokeRect(a.x0, a.y0, a.w, a.h);
+}
+
+function drawWalls(ctx, r) {
+  const locked = roomLocked();
+  const a = roomBounds(r);
+
+  // static wall tiles are cached; door sprites are dynamic per frame
+  const canCache = typeof document !== 'undefined' && document.createElement && G.imagesLoaded;
+  if (canCache) {
+    const key = r.gx + ',' + r.gy + ':' + G.floor + ':' + r.shape + ':' + r.theme + ':' + hdScale();
+    if (!G.wallLayer || G.wallLayerKey !== key) {
+      const rs = hdScale();
+      const layer = document.createElement('canvas');
+      layer.width = (a.x1 + WALL) * rs;
+      layer.height = (a.y1 + WALL) * rs;
+      const lctx = layer.getContext('2d');
+      lctx.setTransform(rs, 0, 0, rs, 0, 0);
+      lctx.imageSmoothingEnabled = !G.hdRemaster;
+      drawWallBands(lctx, r);
+      G.wallLayer = layer;
+      G.wallLayerKey = key;
+    }
+    ctx.drawImage(G.wallLayer, 0, 0, G.wallLayer.width / hdScale(), G.wallLayer.height / hdScale());
+  } else {
+    drawWallBands(ctx, r);
+  }
 
   for (const [dir, has] of Object.entries(r.doors)) {
     if (!has) continue;

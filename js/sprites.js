@@ -88,10 +88,10 @@ const Sprites = {
       const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
       img.onload = () => { this.imgs[name] = img; if (typeof img.decode === 'function') img.decode().then(finish, finish); else finish(); };
       img.onerror = () => {
-        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=56'; return; }
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=57'; return; }
         finish();
       };
-      img.src = hd ? 'assets/hd/' + name + '.webp?v=56' : 'assets/' + name + '.png?v=56';
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=57' : 'assets/' + name + '.png?v=57';
     }
   },
 
@@ -161,6 +161,11 @@ const Sprites = {
   draw(ctx, name, x, y, rot, targetW, flash, alpha, scaleX, scaleY) {
     const img = this.imgs[name];
     const tw = targetW || 32;
+    if (img && !rot && scaleX === undefined && scaleY === undefined && alpha === undefined && !flash) {
+      const dh = img.height * (tw / img.width);
+      ctx.drawImage(img, x - tw / 2, y - dh / 2, tw, dh);
+      return;
+    }
     ctx.save();
     ctx.translate(x, y);
     if (rot) ctx.rotate(rot);
