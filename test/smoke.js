@@ -1200,7 +1200,7 @@ console.log('== dash: burst, slow, cooldown ==');
   release('shift');
   const dashDx = p.x - xBeforeDash;
   check('dashSlowT > 0 after dash', p.dashSlowT > 0);
-  check('dash burst within 5% of 0.9*178*0.6', Math.abs(dashDx - 0.9*178*0.6) <= 0.05 * 0.9*178*0.6);
+  check('dash burst within 5% of 0.45*178*0.6', Math.abs(dashDx - 0.45*178*0.6) <= 0.05 * 0.45*178*0.6);
   let slowDist = 0;
   let slowFrames = 0;
   let sampledSlowDx = 0;
@@ -1225,8 +1225,8 @@ console.log('== dash: burst, slow, cooldown ==');
       slowFrames++;
     }
   }
-  check('slow per-frame dx is roughly 30% of baseline', sampledSlowDx > 0 && sampledSlowDx >= 0.25 * baselineDx && sampledSlowDx <= 0.35 * baselineDx);
-  check('total dash (burst + slow) within 8% of 1.2*178*0.6', Math.abs((dashDx + slowDist) - 1.2*178*0.6) <= 0.08 * 1.2*178*0.6);
+  check('slow per-frame dx is roughly half baseline', sampledSlowDx > 0 && sampledSlowDx >= 0.4 * baselineDx && sampledSlowDx <= 0.6 * baselineDx);
+  check('total dash (burst + slow) within 8% of 0.95*178*0.6', Math.abs((dashDx + slowDist) - 0.95*178*0.6) <= 0.08 * 0.95*178*0.6);
   ctx.Input.keys.d = false;
   step(3, 16);
   const xBeforeIdle = p.x;

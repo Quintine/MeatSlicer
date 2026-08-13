@@ -1,6 +1,6 @@
 // ---- the butcher (player) ----
 
-const DASH_SLOW_T = 0.6; // seconds of 30% move speed after a dash; doubles as the dash cooldown
+const DASH_SLOW_T = 0.6; // seconds of 50% move speed after a dash; doubles as the dash cooldown
 
 function defaultPlayerStats() {
   return {
@@ -86,7 +86,7 @@ function updatePlayer(dt) {
     const len = Math.hypot(mx, my);
     const firing = held ? (w.id === 'bonepopper' ? 0.95 : 0.85) : 1;
     if (keyPressed('shift') && p.dashSlowT <= 0) {
-      const dashD = 0.9 * (178 * st.speedMul * firing) * DASH_SLOW_T;
+      const dashD = 0.45 * (178 * st.speedMul * firing) * DASH_SLOW_T;
       p.x += (mx / len) * dashD;
       p.y += (my / len) * dashD;
       p.dashSlowT = DASH_SLOW_T;
@@ -94,7 +94,7 @@ function updatePlayer(dt) {
       spawnShockwave(p.x, p.y, 26, '#d8c9a8', 0.35);
       Sfx.duck();
     }
-    const spd = 178 * st.speedMul * firing * (p.dashSlowT > 0 ? 0.3 : 1);
+    const spd = 178 * st.speedMul * firing * (p.dashSlowT > 0 ? 0.5 : 1);
     p.x += (mx / len) * spd * dt;
     p.y += (my / len) * spd * dt;
     p.step += dt * 9 * Math.min(st.speedMul, 1.8);
