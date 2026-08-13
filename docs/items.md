@@ -1,6 +1,6 @@
 # Items
 
-All **72 passive items** in MeatSlicer, with exact effects pulled from `js/items.js` and the proc logic in `js/enemies.js` / `js/player.js`.
+All **82 passive items** in MeatSlicer, with exact effects pulled from `js/items.js` and the proc logic in `js/enemies.js` / `js/player.js`.
 
 ---
 
@@ -37,7 +37,7 @@ Legendary items are **boss-exclusive** — they never roll from item rooms or el
 
 ## Damage & Fire Rate
 
-| Item | Description | Effect per tier |
+| Item | Description | Exact effect per tier |
 |---|---|---|
 | **Hollow Points** | +25% damage | `dmgMul ×1.25` |
 | **Marrow Glut** | +20% damage, −10% fire rate | `dmgMul ×1.20`, `rateMul ×0.90` |
@@ -53,7 +53,7 @@ Note: attack size (`sizeMul`) also enlarges melee arcs, blast radii, acid pools,
 
 ## Shot Modifiers
 
-| Item | Description | Effect per tier |
+| Item | Description | Exact effect per tier |
 |---|---|---|
 | **Scalpel** | +25% shot speed | `shotSpeedMul ×1.25` |
 | **Lead Marrow** | +25% range | `rangeMul ×1.25` |
@@ -123,7 +123,7 @@ All of these trigger from your weapon hits (orbital knives proc at half chance).
 
 ## Criticals
 
-| Item | Description | Effect per tier |
+| Item | Description | Exact effect per tier |
 |---|---|---|
 | **Bloodshot Eye** | +6% critical chance | `crit +0.06` (base 5%) |
 | **Hollow Needle** | +50% critical damage | `critMul +0.50` (base ×2.0) |

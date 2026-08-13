@@ -84,12 +84,77 @@ Small, vicious gore-red chaser. Never spawns directly from room waves. Splitter 
 
 Suicide bomber. Charges at you; within 56 px its **0.5 s fuse** lights (it flashes). When the fuse ends — or when it's killed by anything — it detonates: radius 70 (fuse) / 60 (killed), **2 damage**. The blast only hurts *you*, not other enemies. Kill them at range or bait the fuse and back off.
 
+### Censer
+
+| Stat | Value |
+|---|---|
+| Base HP | 34 |
+| Base speed | 45 |
+| Contact damage | 1 |
+| Hitbox radius | 19 |
+| XP | 3 |
+| First appears | Floor 4 (spawn weight 8) |
+
+A zone caster that every ~3.3s predicts player movement and telegraphs a hostile acid pool (radius 38, 0.75s warning, ~4.2s life). Excluded from wave picks when the arena's minimum dimension is below 300px.
+
+### Bulwark
+
+| Stat | Value |
+|---|---|
+| Base HP | 60 |
+| Base speed | 38 |
+| Contact damage | 2 |
+| Hitbox radius | 23 |
+| XP | 3 |
+| First appears | Floor 5 (spawn weight 8) |
+
+Slowly faces the player; hits within ±70° of its front deal 20%, flank/rear hits full. Resists on-hit stun and cannot be elite.
+
+### Flenserling
+
+| Stat | Value |
+|---|---|
+| Base HP | 22 |
+| Base speed | 150 |
+| Contact damage | 2 |
+| Hitbox radius | 16 |
+| XP | 3 |
+| First appears | Floor 5 (spawn weight 7) |
+
+Periodically phases untargetable, appears behind the aim vector, and lunges.
+
+### Choirmaster
+
+| Stat | Value |
+|---|---|
+| Base HP | 40 |
+| Base speed | 50 |
+| Contact damage | 1 |
+| Hitbox radius | 19 |
+| XP | 4 |
+| First appears | Floor 6 (spawn weight 6) |
+
+Its 180px aura grants +35% speed and heals nearby non-boss monsters ~1.8% max HP per second (minimum 0.5). At most one is selected by a normal wave.
+
+### Brood Sac
+
+| Stat | Value |
+|---|---|
+| Base HP | 45 |
+| Base speed | 20 |
+| Contact damage | 1 |
+| Hitbox radius | 22 |
+| XP | 4 |
+| First appears | Floor 7 (spawn weight 6) |
+
+Spawns 2 Minis every 4s and 4 on death. At most two are wave-selected; the brood population cap is 40. Cannot be elite and is excluded from thin halls.
+
 ---
 
 ## Spawn weights
 
 | Enemy | First floor | Weight |
-|---|---:|---:|
+|---|---|---|
 | Shambler | 1 | 30 |
 | Runner | 1 | 22 |
 | Spitter | 2 | 14 |
@@ -102,18 +167,6 @@ Suicide bomber. Charges at you; within 56 px its **0.5 s fuse** lights (it flash
 | Brood Sac | 7 | 6 |
 
 Weights stay flat once unlocked; floors get harder through stat scaling and wave size, not new mixes.
-
-## New enemy types
-
-**Censer** — 34 HP, speed 45, damage 1, radius 19, XP 3; floor 4, weight 8. A zone caster that every ~3.3s predicts player movement and telegraphs a hostile acid pool (radius 38, 0.75s warning, ~4.2s life). Excluded from wave picks when the arena's minimum dimension is below 300px.
-
-**Bulwark** — 60 HP, speed 38, damage 2, radius 23, XP 3; floor 5, weight 8. Slowly faces the player; hits within ±70° of its front deal 20%, flank/rear hits full. Resists on-hit stun and cannot be elite.
-
-**Flenserling** — 22 HP, speed 150, damage 2, radius 16, XP 3; floor 5, weight 7. Periodically phases untargetable, appears behind the aim vector, and lunges.
-
-**Choirmaster** — 40 HP, speed 50, damage 1, radius 19, XP 4; floor 6, weight 6. Its 180px aura grants +35% speed and heals nearby non-boss monsters ~1.8% max HP per second (minimum 0.5). At most one is selected by a normal wave.
-
-**Brood Sac** — 45 HP, speed 20, damage 1, radius 22, XP 4; floor 7, weight 6. Spawns 2 Minis every 4s and 4 on death. At most two are wave-selected; the brood population cap is 40. Cannot be elite and is excluded from thin halls.
 
 ## Elites
 

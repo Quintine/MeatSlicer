@@ -4,6 +4,8 @@ An in-game cheat / inspection toolset. It is gated behind a dev launch flag so
 it doesn't interfere with normal play, and it's documented here because the
 game is still in development — testers and players are welcome to use it.
 
+---
+
 ## Enabling it
 
 The console is gated behind a dev flag and is completely inert otherwise (the
@@ -57,7 +59,7 @@ pinning) do **not** taint. Taint resets on the next run (`resetRun()`).
    Give +1 (routes through `giveItem`), remove 1 tier, remove all, set to max
    tier, or set an exact tier. Presets: *one of everything*, *max everything*,
    *clear build*.
-4. **PERKS+ACTIVE** — grant any of the 22 `PERKS` by id, remove a drafted perk,
+4. **PERKS+ACTIVE** — grant any of the 23 `PERKS` by id, remove a drafted perk,
    clear all perks. Set / fire an active item from `ACTIVES`.
 5. **WORLD** — warp to floor N (`genFloor` + `enterRoom`), next floor, teleport
    to the boss/item room, clear room, kill all, kill boss, regen floor. Spawn
