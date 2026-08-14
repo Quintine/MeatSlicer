@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.6] — 2026-08-15
+
+### Changed
+- **Cleaver Cadence** — wider, harder whirl (`sweepRange` 90→110, `sweepArc` 2.4→2.85, `dmg` 34→42). Magazine stays 26 / refill 10. The butcher spins ~2.5 turns during the swing. Dual-arc blood/spark VFX and hit gibs; yellow gun muzzle is suppressed.
+- **Elite Splitters** — now leave 2 Minis on death, same as a normal Splitter (instant, no telegraph).
+
+### Fixed
+- **HD Remaster first boss-room hitch** — `drawBossLoad` now first-draws the 4× floor/wall caches and blits the boss sheet onto the game canvas under the overlay, so combat starts without a first-frame GPU stall. SD and re-visits are unchanged.
+
+
 ## [0.9.5] — 2026-08-15
 
 ### Added

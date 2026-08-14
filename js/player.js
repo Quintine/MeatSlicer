@@ -444,18 +444,22 @@ function drawPlayer(ctx) {
   }
 
   const w = WEAPONS[p.weapon.id];
+  let swingFacing = p.aim;
+  if (w.id === 'cleaver' && p.attackT > 0) {
+    swingFacing = p.aim + (1 - clamp(p.attackT / 0.4, 0, 1)) * TAU * 2.5;
+  }
   const kick = p.recoil * 3;
   Sprites.shadow(ctx, p.x, p.y + 17, 27 + p.moveBlend * 2, 9, 0.46);
   if (p.hp <= 0) {
     Sprites.strip(ctx, 'player_death_sheet', p.x, p.y, p.deathT || 0, 12, 14, 128, 144, true);
   } else {
-    Sprites.legs(ctx, p.x, p.y + 4, p.bodyFacing, p.step, 124);
+    Sprites.legs(ctx, p.x, p.y + 4, w.id === 'cleaver' && p.attackT > 0 ? swingFacing : p.bodyFacing, p.step, 124);
     const torsoOffset = (w.torsoFwd || 18) - kick;
-    const torsoX = p.x + Math.cos(p.aim) * torsoOffset;
-    const torsoY = p.y + Math.sin(p.aim) * torsoOffset;
-    Sprites.draw(ctx, 'pt_' + p.weapon.id, torsoX, torsoY, p.aim, w.torsoW || 116, p.hitT > 0);
+    const torsoX = p.x + Math.cos(swingFacing) * torsoOffset;
+    const torsoY = p.y + Math.sin(swingFacing) * torsoOffset;
+    Sprites.draw(ctx, 'pt_' + p.weapon.id, torsoX, torsoY, swingFacing, w.torsoW || 116, p.hitT > 0);
   }
-  if (p.hp > 0 && p.muzzleT > 0 && w.behavior !== 'slam' && w.behavior !== 'saw') {
+  if (p.hp > 0 && p.muzzleT > 0 && w.behavior !== 'slam' && w.behavior !== 'saw' && w.behavior !== 'sweep') {
     const muzzleDist = (w.muzzle || 40) - kick;
     let mx = p.x + Math.cos(p.aim) * muzzleDist, my = p.y + Math.sin(p.aim) * muzzleDist;
     if (w.behavior === 'flame') { const rh = p.aim + Math.PI / 2; mx += Math.cos(rh) * 26; my += Math.sin(rh) * 26; }

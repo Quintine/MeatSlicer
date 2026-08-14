@@ -1,7 +1,7 @@
 {
   "name": "meatslicer",
   "productName": "MeatSlicer",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "private": true,
   "description": "A Butcher's Descent - clear, harvest, descend.",
   "main": "desktop/main.js",

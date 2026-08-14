@@ -106,18 +106,18 @@ Shotgun. Up to 66 damage per trigger pull at point blank before multipliers, but
 
 ### Cleaver Cadence
 
-> *A wide, dramatic melee sweep*
+> *A wider, gory whirl of steel*
 
 | Stat | Value |
 |---|---|
-| Damage | 34 |
+| Damage | 42 |
 | Fire interval | 0.55 s |
-| Reach | 90 px |
-| Arc | 2.4 rad (~137°) |
+| Reach | 110 px |
+| Arc | 2.85 rad (~163°) |
 | Ammo | 26 (refill 10 per pickup) |
 | Recoil | 0.95 (heavy) |
 
-Melee sweep: one wide swing across the aim direction hits every enemy within 90 px inside a ~137° arc for 34 damage with heavy knockback.
+Melee sweep: one wide whirl across the aim direction hits every enemy within 110 px inside a ~163° arc for 42 damage with heavy knockback. The butcher spins ~2.5 turns during the swing. Blood and sparks ride the arc; there is no yellow gun muzzle.
 
 ### Sawblade Launcher
 

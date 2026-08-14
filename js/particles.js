@@ -113,11 +113,20 @@ function spawnDashBurst(x, y, ang) {
 
 
 function spawnSweepFx(x, y, ang, reach, arc) {
-  addParticle({ type: 'sweep', x, y, ang, arc, r: 20, maxR: reach, life: 0.18, t: 0 }, true);
+  addParticle({ type: 'sweep', x, y, ang, arc, r: 20, maxR: reach, life: 0.22, t: 0 }, true);
+  addParticle({ type: 'sweep', x, y, ang, arc: arc * 0.72, r: 12, maxR: reach * 0.82, life: 0.14, t: 0 }, true);
+  spawnShockwave(x, y, reach * 0.55, '#8b1020', 0.45);
+  for (let i = 0; i < 10; i++) {
+    const a = ang - arc / 2 + (i / 9) * arc;
+    const d = reach * rand(0.35, 1);
+    const px = x + Math.cos(a) * d, py = y + Math.sin(a) * d;
+    spawnBlood(px, py, a, 2, i % 3 === 0);
+    if (i % 2 === 0) spawnSpark(px, py, a);
+  }
 }
 
 function spawnMuzzleFx(x, y, ang, behavior) {
-  if (behavior === 'slam') return;
+  if (behavior === 'slam' || behavior === 'sweep') return;
   const back = ang + Math.PI;
   if (behavior === 'flame') {
     for (let i = 0; i < 3; i++) {

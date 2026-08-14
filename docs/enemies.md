@@ -56,7 +56,7 @@ Ranged kiter. Holds 190–250 px away from you — approaches if you're farther 
 | XP | 1 |
 | First appears | Floor 2 (spawn weight 16) |
 
-Chaser that **splits into 2 Minis on death** (non-elite Splitters only). Slightly tankier than a Shambler. Explosions and AoE that kill the Minis with the parent are valuable here.
+Chaser that **splits into 2 Minis on death** (elite and normal). Slightly tankier than a Shambler. Explosions and AoE that kill the Minis with the parent are valuable here.
 
 ### Mini
 

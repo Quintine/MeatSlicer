@@ -385,6 +385,17 @@ function draw() {
 }
 
 function drawBossLoad(ctx) {
+  if (G.cur) {
+    drawFloor(ctx, G.cur);
+    drawWalls(ctx, G.cur);
+  }
+  const sheet = G.bossLoadSheet && Sprites.get(G.bossLoadSheet);
+  if (sheet) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(sheet, 0, 0);
+    ctx.restore();
+  }
   ctx.fillStyle = '#0a0506';
   ctx.fillRect(0, 0, W, H);
   ctx.textAlign = 'center';

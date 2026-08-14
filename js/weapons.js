@@ -11,7 +11,7 @@ const WEAPONS = {
   bonepopper:  { id: 'bonepopper',  name: 'Bone Popper',      held: 38, torsoW: 106, torsoFwd: 18, muzzle: 62, tier: -1, ammo: Infinity, interval: 0.60, dmg: 8,  spd: 540, range: 0.45, behavior: 'bullet',      sprite: 'bullet_bone',    sfx: 'default',   punch: 0.42, desc: 'Trusty bone-shard sidearm' },
   repeater:    { id: 'repeater',    name: 'Ribcage Repeater', held: 52, torsoW: 120, torsoFwd: 20, muzzle: 70, tier: 0,  ammo: 84, refill: 42, interval: 0.09, dmg: 6,  spd: 560, spread: 0.10, range: 0.42, behavior: 'bullet', sprite: 'bullet_bone', sfx: 'rapid', punch: 0.18, desc: 'Rattles off rib slivers' },
   marrow:      { id: 'marrow',      name: 'Marrow Scatter',   held: 54, torsoW: 120, torsoFwd: 20, muzzle: 69, tier: 0,  ammo: 20, refill: 6,  interval: 0.58, dmg: 11, spd: 500, pellets: 6, spread: 0.55, range: 0.38, behavior: 'spread', sprite: 'bullet_bone', sfx: 'spread', punch: 0.92, desc: 'A devastating close blast of jagged bone' },
-  cleaver:     { id: 'cleaver',     name: 'Cleaver Cadence',  held: 60, torsoW: 124, torsoFwd: 21, muzzle: 73, tier: 1,  ammo: 26, refill: 10, interval: 0.55, dmg: 34, behavior: 'sweep', sprite: 'bullet_cleaver', sfx: 'heavy', punch: 0.95, sweepRange: 90, sweepArc: 2.4, desc: 'A wide, dramatic melee sweep' },
+  cleaver:     { id: 'cleaver',     name: 'Cleaver Cadence',  held: 60, torsoW: 124, torsoFwd: 21, muzzle: 73, tier: 1,  ammo: 26, refill: 10, interval: 0.55, dmg: 42, behavior: 'sweep', sprite: 'bullet_cleaver', sfx: 'heavy', punch: 0.95, sweepRange: 110, sweepArc: 2.85, desc: 'A wider, gory whirl of steel' },
   saw:         { id: 'saw',         name: 'Sawblade Launcher',held: 52, torsoW: 118, torsoFwd: 20, muzzle: 70, tier: 1,  ammo: 24, refill: 9,  interval: 0.34, dmg: 13, spd: 360, bounces: 5, range: 0.60, behavior: 'bounce', sprite: 'bullet_saw', sfx: 'saw', punch: 0.45, desc: 'Bouncing, hungry steel' },
   bile:        { id: 'bile',        name: 'Bile Blunderbuss', held: 54, torsoW: 118, torsoFwd: 20, muzzle: 68, tier: 2,  ammo: 80, refill: 21, drain: 8, interval: 0.12, dmg: 7,  spd: 340, spread: 0.32, range: 0.38, behavior: 'cone', sprite: 'bullet_gore', sfx: 'flame', punch: 0.34, desc: 'A brutal corrosive torrent; pools linger' },
   hemophage:   { id: 'hemophage',   name: 'Hemophage',        held: 50, torsoW: 116, torsoFwd: 19, muzzle: 67, tier: 1,  ammo: 70, refill: 42, interval: 0.19, dmg: 8,  spd: 480, lifesteal: 0.5, range: 0.45, behavior: 'bullet', sprite: 'bullet_syringe', sfx: 'default', punch: 0.35, desc: 'Drinks what it touches' },
@@ -141,9 +141,12 @@ function fireWeapon(p, w) {
         const a = angleTo(p.x, p.y, e.x, e.y);
         if (Math.abs(angleDelta(a, ang)) > half) continue;
         damageEnemy(e, w.dmg * dmgMul, a, true, { source: 'player' });
+        spawnBlood(e.x, e.y, a, 8, true);
+        spawnGibs(e.x, e.y, 3);
+        addShake(2);
       }
       spawnSweepFx(p.x, p.y, ang, reach, w.sweepArc || 2.4);
-      addShake(4);
+      addShake(6);
       break;
     }
     default: { // bullet, bounce and homing projectiles

@@ -378,7 +378,7 @@ function killEnemy(e, ang) {
   }
 
   // splitter splits
-  if (ENEMY_TYPES[e.type].splits && !e.elite) {
+  if (ENEMY_TYPES[e.type].splits) {
     Sfx.split(e);
     for (let i = 0; i < 2 && G.enemies.length < MAX_ENEMIES; i++) {
       const m = makeEnemy('mini', e.x + rand(-18, 18), e.y + rand(-18, 18), G.floor, false);

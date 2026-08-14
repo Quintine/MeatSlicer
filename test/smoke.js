@@ -218,7 +218,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=60' && urls[1] === 'assets/' + name + '.png?v=60';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=61' && urls[1] === 'assets/' + name + '.png?v=61';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -243,7 +243,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=60';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=61';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
@@ -766,6 +766,28 @@ check('Marrow Scatter was substantially strengthened', ctx.WEAPONS.marrow.dmg >=
 check('Bile Blunderbuss was substantially strengthened', ctx.WEAPONS.bile.dmg >= 7 && ctx.WEAPONS.bile.range >= 0.38);
 check('Cauterizer was substantially strengthened', ctx.WEAPONS.cauterizer.dmg >= 4.5 && ctx.WEAPONS.cauterizer.range >= 0.36);
 check('melee weapons were substantially strengthened', ctx.WEAPONS.tenderizer.dmg >= 60 && ctx.WEAPONS.redhand.dmg >= 7);
+
+console.log('== cleaver cadence ==');
+{
+  const c = ctx.WEAPONS.cleaver;
+  check('cleaver magazine unchanged', c.ammo === 26 && c.refill === 10);
+  check('cleaver sweep is larger and hits harder', c.dmg === 42 && c.sweepRange === 110 && c.sweepArc === 2.85);
+  const p = ctx.G.player;
+  p.weapon = { id: 'cleaver', ammo: 26 };
+  p.holstered = null;
+  p.fireT = 0; p.attackT = 0; p.aim = 0;
+  ctx.G.enemies.length = 0; ctx.G.parts.length = 0;
+  const e = ctx.makeEnemy('shambler', p.x + 50, p.y, 1, false);
+  e.spd = 0; e.hp = e.maxHp = 200;
+  ctx.G.enemies.push(e);
+  ctx.Input.mx = e.x; ctx.Input.my = e.y;
+  ctx.Input.mdown = true; step(3, 16); ctx.Input.mdown = false;
+  check('cleaver swing damages in the new reach', e.hp < e.maxHp);
+  check('cleaver swing starts the spin window', p.attackT > 0);
+  check('cleaver swing emits sweep VFX', ctx.G.parts.some(pt => pt.type === 'sweep'));
+  ctx.G.enemies.length = 0; ctx.G.parts.length = 0;
+  p.weapon = { id: 'bonepopper', ammo: Infinity };
+}
 
 console.log('== continuous saw frame-rate independence ==');
 {
@@ -1619,6 +1641,13 @@ console.log('== 750ms entry-wave spawn telegraph ==');
   const minis = ctx.G.enemies.filter(e => e.type === 'mini');
   check('splitter splits into minis', minis.length === 2);
   check('splits spawn instantly (no telegraph)', minis.every(m => (m.warmT || 0) === 0));
+  ctx.G.enemies.length = 0;
+  const eliteSplit = ctx.makeEnemy('splitter', ctx.W / 2, ctx.H / 2, 1, true);
+  ctx.G.enemies.push(eliteSplit);
+  ctx.damageEnemy(eliteSplit, 99999, 0, false);
+  const eliteMinis = ctx.G.enemies.filter(en => en.type === 'mini');
+  check('elite splitter splits into minis', eliteSplit.elite === true && eliteMinis.length === 2);
+  check('elite splits spawn instantly', eliteMinis.every(m => (m.warmT || 0) === 0));
   ctx.G.enemies.length = 0;
   ctx.startRun(); step(3, 16);
 }
