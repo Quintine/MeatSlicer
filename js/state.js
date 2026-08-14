@@ -51,6 +51,8 @@ const G = {
   hudAlpha: 1,
   hdRemaster: false,
   imagesLoaded: false,
+  bossLoadT: 0,
+  bossLoadSheet: null,
   roomLayer: null,
   roomLayerKey: '',
   atmosphereLayer: null,
@@ -72,6 +74,7 @@ const PRESSURE_GAIN = PRESSURE_UNIT; // retained: dial 0 == 1 point
 const PRESSURE_DROP_BASE = 3;        // dial 0 == 0.03 relief base
 const PRESSURE_RELIEF_MUL = 0.5;   // global brake: all pressure drops (hit relief + passive decay) are halved
 const DEATH_LOCK = 3;
+const BOSS_LOAD_MIN = 1.0;
 const PRESSURE_DIAL_MIN = -10, PRESSURE_DIAL_MAX = 10;
 
 function hdScale() { return G.hdRemaster ? 4 : 1; }

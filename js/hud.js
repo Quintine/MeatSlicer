@@ -167,8 +167,6 @@ function drawHUD(ctx) {
   ctx.fillText('KILLS ' + String(G.kills).padStart(3, '0'), W - 18, H - 67);
   ctx.fillStyle = '#f0e5d7'; ctx.font = 'bold 11px monospace';
   ctx.fillText('SCORE ' + String(G.score).padStart(6, '0'), W - 18, H - 46);
-  ctx.fillStyle = '#8f7770'; ctx.font = '8px monospace';
-  ctx.fillText('×' + (G.pressure || 1).toFixed(2), W - 168, H - 46);
   ctx.textAlign = 'left';
   const dialTxt = ' D' + (G.pressureDial > 0 ? '+' : '') + G.pressureDial;
   ctx.fillStyle = G.pressure > 1 ? '#d6aa39' : '#69b8bd'; ctx.font = 'bold 8px monospace';

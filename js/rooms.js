@@ -187,6 +187,10 @@ function enterRoom(gx, gy) {
       // boss fights are a pure ammo drain, so stock the room on the way in
       spawnPickup('ammo', a.cx, a.cy + 140);
       Music.playBoss(boss.bossKind);
+      G.mode = 'bossload';
+      G.bossLoadSheet = boss.sprite + '_sheet';
+      G.bossLoadT = BOSS_LOAD_MIN;
+      Sprites.warm(G.bossLoadSheet);
     } else if (room.type === 'item') {
       spawnItemPedestal(a.cx - 45, a.cy, null, 'room');
       // item rooms sometimes also stock a weapon

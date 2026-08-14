@@ -246,6 +246,11 @@ function update(dt) {
       updateParticles(dt);
       drawToastsUpdate(dt);
       break;
+    case 'bossload':
+      updateParticles(dt);
+      if (G.bossLoadT > 0) G.bossLoadT -= dt;
+      if (G.bossLoadT <= 0 && Sprites.warm(G.bossLoadSheet)) G.mode = 'play';
+      break;
     case 'levelup':
       updateLevelup(dt);
       updateParticles(dt);
@@ -328,6 +333,7 @@ function draw() {
   ctx.fillRect(0, 0, W, H);
 
   if (G.mode === 'menu') { drawMenu(ctx); return; }
+  if (G.mode === 'bossload') { drawBossLoad(ctx); return; }
 
   updateCamera();
 
@@ -376,6 +382,24 @@ function draw() {
   else if (G.mode === 'gameover') drawGameOver(ctx);
   else if (G.mode === 'debug') drawDebug(ctx);
   if (G.devMode) { if (G.debugPin && G.mode !== 'debug') drawDebugPin(ctx); }
+}
+
+function drawBossLoad(ctx) {
+  ctx.fillStyle = '#0a0506';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  const name = G.boss && G.boss.name ? G.boss.name : 'FRESH MEAT';
+  ctx.fillStyle = '#d9c9bc'; ctx.font = 'bold 28px monospace';
+  ctx.fillText(name, W / 2, H / 2 - 6);
+  ctx.fillStyle = '#8f1f2e'; ctx.font = 'bold 11px monospace';
+  ctx.fillText('FRESH MEAT APPROACHES', W / 2, H / 2 + 16);
+  const pr = Math.min(1, Math.max(0, G.bossLoadT / BOSS_LOAD_MIN));
+  const tier = Math.floor((1 - pr) * 5) % 3;
+  ctx.fillStyle = '#3a1a1e';
+  for (let i = 0; i < 3; i++) ctx.fillRect(W / 2 - 22 + i * 14, H / 2 + 30, 8, 8);
+  ctx.fillStyle = '#d7a934';
+  ctx.fillRect(W / 2 - 22 + tier * 14, H / 2 + 30, 8, 8);
+  ctx.textAlign = 'left';
 }
 
 function drawMenu(ctx) {

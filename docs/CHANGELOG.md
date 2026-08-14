@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.5] — 2026-08-15
+
+### Added
+- **Boss-room loading overlay** — first visit of a boss room holds combat in `bossload` for at least 1s while the boss action sheet is warmed (decode + GPU upload) so the roar is not cut by the hitch. Re-entering a visited boss room skips the overlay. A failed sheet cannot deadlock the screen.
+
+### Changed
+- **Elite Brood Sac summons** — an elite sac now seeds 4–6 minis per cycle (normal remains 2). Wave elite rolls still exclude Brood Sac; debug/other elite paths are the intended case. Death burst is unchanged (4).
+
+### Removed
+- **Redundant RUN DATA pressure multiplier** — the `×N.NN` number next to score is gone; `PRESSURE NN%` and the bar remain.
+
+
 ## [0.9.1] — 2026-08-13
 
 ### Changed

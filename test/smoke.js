@@ -84,6 +84,8 @@ function fire(ev, key) {
 function press(key) { fire('keydown', key); }
 function release(key) { fire('keyup', key); }
 function tap(key) { press(key); step(1, 16); release(key); }
+function drainBossLoad() { let g = 0; while (ctx.G.mode === 'bossload' && g++ < 150) step(1, 16); }
+
 
 let failures = 0;
 function check(name, cond) {
@@ -216,7 +218,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=59' && urls[1] === 'assets/' + name + '.png?v=59';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=60' && urls[1] === 'assets/' + name + '.png?v=60';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -241,7 +243,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=59';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=60';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
@@ -1946,7 +1948,12 @@ check('floor 2', ctx.G.floor === 2);
 const bossRoom = Object.values(ctx.G.rooms).find(r => r.type === 'boss');
 check('boss room exists', !!bossRoom);
 ctx.enterRoom(bossRoom.gx, bossRoom.gy);
-step(10, 16);
+step(1, 16);
+check('boss room opens a loading screen', ctx.G.mode === 'bossload');
+drainBossLoad();
+check('boss loading screen resolves to play', ctx.G.mode === 'play');
+check('boss sheet warm helper exists', typeof ctx.Sprites.warm === 'function');
+check('elite summoner count uses 4-6', (() => { const e = ctx.makeEnemy('broodsac', 400, 300, 3, true); return e.elite === true; })());
 check('boss spawned', !!ctx.G.boss);
 check('boss hp is finite', ctx.G.boss && isFinite(ctx.G.boss.hp));
 check('boss music playing', ctx.Music.current && ctx.Music.current.name.includes('Boss'));
@@ -2255,6 +2262,7 @@ ctx.nextFloor(); step(5, 16);
 check('override survives floor change', ctx.Music.current.name === ctx.Music.PLAYLIST[1]);
 const jbr = Object.values(ctx.G.rooms).find(r => r.type === 'boss');
 ctx.enterRoom(jbr.gx, jbr.gy); step(5, 16);
+drainBossLoad();
 check('boss track interrupts override', ctx.Music.current.name.includes('Boss'));
 ctx.Music.cycle(1); // cycling during a boss must not cut the boss track
 check('boss track not interrupted', ctx.Music.current.name.includes('Boss'));

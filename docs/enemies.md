@@ -147,7 +147,7 @@ Its 180px aura grants +35% speed and heals nearby non-boss monsters ~1.8% max HP
 | XP | 4 |
 | First appears | Floor 7 (spawn weight 6) |
 
-Spawns 2 Minis every 4s and 4 on death. At most two are wave-selected; the brood population cap is 40. Cannot be elite and is excluded from thin halls.
+Spawns 2 Minis every 4s (elite: 4–6 every 3s) and 4 on death. At most two are wave-selected; the brood population cap is 40. Excluded from normal wave elite rolls and thin halls; an elite sac (debug or other spawn paths) still uses the elite summon count.
 
 ---
 

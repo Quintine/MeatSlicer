@@ -551,7 +551,7 @@ function updateEnemyAI(e, dt) {
     e.summonT -= dt;
     if (e.summonT <= 0) {
       e.summonT = e.elite ? 3 : 4;
-      spawnBroodMinis(e, 2, 0.35);
+      spawnBroodMinis(e, e.elite ? irand(4, 6) : 2, 0.35);
       e.attackT = 0.5; e.actionT = 0;
     }
   } else if (t.ranged) {

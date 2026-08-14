@@ -88,14 +88,31 @@ const Sprites = {
       const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
       img.onload = () => { this.imgs[name] = img; if (typeof img.decode === 'function') img.decode().then(finish, finish); else finish(); };
       img.onerror = () => {
-        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=59'; return; }
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=60'; return; }
+        this.imgs[name] = null;
         finish();
       };
-      img.src = hd ? 'assets/hd/' + name + '.webp?v=59' : 'assets/' + name + '.png?v=59';
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=60' : 'assets/' + name + '.png?v=60';
     }
   },
 
   get(name) { return this.imgs[name] || null; },
+
+  forceUpload(img) {
+    if (typeof document === 'undefined' || !document.createElement) return;
+    if (!document.createElement('canvas').getContext) return;
+    if (!this._warmCtx) {
+      const c = document.createElement('canvas');
+      c.width = 1; c.height = 1;
+      this._warmCtx = c.getContext('2d');
+    }
+    if (this._warmCtx) this._warmCtx.drawImage(img, 0, 0, 1, 1);
+  },
+
+  warm(name) {
+    if (this.imgs[name]) { this.forceUpload(this.imgs[name]); return true; }
+    return this.imgs[name] !== undefined;
+  },
 
   // Compact player-only strip: eight forward-facing stride frames.
   // Runtime rotation is smooth; distance-driven phase keeps contacts from skating.

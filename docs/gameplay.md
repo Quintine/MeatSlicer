@@ -271,7 +271,7 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 - **Top-left — BUTCHER // VITALS:** level, hearts (red, 2 HP per heart; half containers render as half outlines) and shield hearts (cyan, 2 shield HP per heart), shown on up to two rows, XP bar, active weapon + ammo (red when below 25%), holstered weapon with `[R]` swap hint.
 - **Item tray** (below vitals): up to 24 item icons with tier numerals I–IX.
 - **Top-right — SECTOR MAP:** minimap. White = current room, red = boss, gold = item, gray = cleared, maroon = uncleared. Includes floor number.
-- **Bottom-right — RUN DATA:** floor, kills, score (with the live pressure multiplier), PRESSURE % (with the dial setting), STREAK, pressure bar.
+- **Bottom-right — RUN DATA:** floor, kills, score, PRESSURE % (with the dial setting), STREAK, pressure bar.
 - **HUD opacity** is adjustable from the pause menu (`;` / `'` or the HUD slider, 25%–100%). The boss HP bar and toast notifications always stay fully opaque.
 - **Bottom-center:** boss HP bar (during boss fights).
 - **Top-center:** toast notifications (pickups, floor intros, boss events).
@@ -281,6 +281,7 @@ Full formulas are in [enemies.md](enemies.md) and [bosses.md](bosses.md).
 | Screen | What it offers |
 |---|---|
 | **Title** | INITIATE DESCENT, PRESSURE DIAL (−10…+10), HD REMASTER ON/OFF tag, control reference, best score, confirmed desktop exit |
+| **Boss approach** | Full-screen hold on first boss-room entry: boss name + FRESH MEAT APPROACHES, ≥1s, then combat |
 | **Pause** | Jukebox (track cycling), SFX/music volume + HUD opacity sliders, resume/swap/auto/mute hints, Field Manual (`H` / `?` button) |
 | **Mutation Draft** | 3 perk cards, random cut, reroll, auto-draft |
 | **Game Over ("BUTCHERED")** | Floor, kills, score, NEW BEST CUT tag, restart |
