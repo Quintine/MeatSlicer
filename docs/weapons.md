@@ -295,7 +295,7 @@ Point-blank slam — no projectile, an instant circular blast in front of you. B
 
 | Stat | Value |
 |---|---|
-| Damage | 95 (× 0.4–1.0 by charge) |
+| Damage | 190 (× 0.4–1.0 by charge) |
 | Charge time | 0.85 s (minimum 40% charge = 0.34 s to fire) |
 | Beam length | 900 × rangeMul |
 | Beam width | 14 × √sizeMul |

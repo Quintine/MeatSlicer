@@ -22,7 +22,7 @@ const WEAPONS = {
   trapqueen:   { id: 'trapqueen',   name: 'Trap Queen',       held: 58, torsoW: 124, torsoFwd: 21, muzzle: 73, tier: 2,  ammo: 26, refill: 13, interval: 0.55, dmg: 10, spd: 999, behavior: 'lob_trap',    sprite: 'bullet_saw',     sfx: 'lob', punch: 0.65, desc: 'Bear traps. For bears. And worse' },
   tenderizer:  { id: 'tenderizer',  name: 'The Tenderizer',   held: 66, torsoW: 132, torsoFwd: 23, muzzle: 78, tier: 3,  ammo: 10, refill: 5,  interval: 0.58, dmg: 60, spd: 0,   behavior: 'slam',        sprite: 'bullet_bone',    sfx: 'heavy', punch: 1.00, desc: 'A room-shaking close-range meat paste' },
   redhand:     { id: 'redhand',     name: 'Red Right Hand',   held: 68, torsoW: 134, torsoFwd: 24, muzzle: 80, tier: 2,  ammo: 150, refill: 72, drain: 18, interval: 0.10, dmg: 7,  spd: 0,   behavior: 'saw',         sprite: 'bullet_saw',     sfx: 'saw', punch: 0.38, desc: 'A chainsaw that liquefies anything in reach' },
-  spinaltap:   { id: 'spinaltap',   name: 'Spinal Tap',       held: 68, torsoW: 136, torsoFwd: 24, muzzle: 81, tier: 3,  ammo: 7,  refill: 4,  interval: 0.30, dmg: 95, spd: 0,   chargeTime: 0.85, behavior: 'beam', sprite: 'bullet_bone', sfx: 'beam', punch: 1.00, desc: 'Charge it. Delete a line of meat' },
+  spinaltap:   { id: 'spinaltap',   name: 'Spinal Tap',       held: 68, torsoW: 136, torsoFwd: 24, muzzle: 81, tier: 3,  ammo: 7,  refill: 4,  interval: 0.30, dmg: 190, spd: 0,   chargeTime: 0.85, behavior: 'beam', sprite: 'bullet_bone', sfx: 'beam', punch: 1.00, desc: 'Charge it. Delete a line of meat' },
   swarmjar:    { id: 'swarmjar',    name: 'Swarm Jar',        held: 62, torsoW: 124, torsoFwd: 21, muzzle: 73, tier: 3,  ammo: 12, refill: 6,  interval: 0.80, dmg: 9,  spd: 999, behavior: 'lob_swarm',   sprite: 'bullet_gore',    sfx: 'lob', punch: 0.70, desc: 'A jar of friends. They are hungry' },
 };
 
@@ -215,7 +215,7 @@ function fireBeam(p, def, charge) {
   p.actionT = 0;
   addShake(8);
   Sfx.shoot(def);
-  p.weapon.ammo -= 1 / st.ammoEff;
+  if (!(p.marrowDraughtT > 0)) p.weapon.ammo -= 1 / st.ammoEff;
 }
 
 // damage every enemy in a radius (slams, explosions)

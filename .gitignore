@@ -7,3 +7,6 @@ dist/
 served-state.txt
 __pycache__/
 *.pyc
+assets/raw/models/
+assets/raw/meshy/
+assets/raw/meshy_manifest.jsonl

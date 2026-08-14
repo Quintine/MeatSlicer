@@ -53,7 +53,7 @@ function updatePickups(dt) {
     }
 
     // gems & small pickups fly to the player inside magnet radius
-    if ((k.type === 'gem' || k.type === 'ammo' || (k.type === 'heart' && p.hp < p.stats.maxHp)) && d < magR) {
+    if ((k.type === 'gem' || k.type === 'ammo' || (k.type === 'heart' && (p.hp < p.stats.maxHp || (p.stats.overShield > 0 && p.shieldHp < (p.stats.shieldPerk || 0) + p.stats.overShield)))) && d < magR) {
       const a = angleTo(k.x, k.y, p.x, p.y);
       const sp = lerp(320, 60, d / magR) * p.stats.magnetPull;
       k.x += Math.cos(a) * sp * dt; k.y += Math.sin(a) * sp * dt;
@@ -73,9 +73,8 @@ function collectPickup(k) {
       Sfx.gem();
       break;
     case 'heart': {
-      // At full HP hearts stay on the floor for later; Glutton's Gut heals +1
-      // extra per tier below that.
-      if (p.hp >= p.stats.maxHp) return false;
+      // At full HP hearts stay unless Second Stomach has unused overflow-shield room.
+      if (p.hp >= p.stats.maxHp && !(p.stats.overShield > 0 && p.shieldHp < (p.stats.shieldPerk || 0) + p.stats.overShield)) return false;
       const healAmt = 2 + (p.stats.gluttonGut || 0);
       healPlayer(healAmt); spawnText(p.x, p.y, '+' + healAmt, '#d92038');
       Sfx.heart();

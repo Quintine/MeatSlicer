@@ -216,7 +216,7 @@ check('HD loader loads all images (fallbacks)', ctx.G.imagesLoaded === true);
 let hdFallbackOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=58' && urls[1] === 'assets/' + name + '.png?v=58';
+  const ok = urls && urls.length === 2 && urls[0] === 'assets/hd/' + name + '.webp?v=59' && urls[1] === 'assets/' + name + '.png?v=59';
   if (ok) hdFallbackOk++;
 }
 check('HD loader tries WebP then PNG per sprite', hdFallbackOk === ctx.SPRITE_MANIFEST.length);
@@ -241,7 +241,7 @@ check('SD loader loads all images', ctx.G.imagesLoaded === true);
 let sdUrlOk = 0;
 for (const name of ctx.SPRITE_MANIFEST) {
   const urls = attemptedUrls[name];
-  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=58';
+  const ok = urls && urls.length === 1 && urls[0] === 'assets/' + name + '.png?v=59';
   if (ok) sdUrlOk++;
 }
 check('SD loader requests one PNG per sprite', sdUrlOk === ctx.SPRITE_MANIFEST.length);
@@ -1127,6 +1127,7 @@ console.log('== generic ammo drops ==');
     ctx.WEAPONS.repeater.refill > ctx.WEAPONS.spinaltap.refill * 10);
   check('stream weapons are time-denominated (drain, not per-shot)',
     ctx.WEAPONS.bile.drain > 0 && ctx.WEAPONS.cauterizer.drain > 0 && ctx.WEAPONS.redhand.drain > 0);
+  check('Spinal Tap base damage is 190', ctx.WEAPONS.spinaltap.dmg === 190);
 
   const repeaterCap = ctx.WEAPONS.repeater.ammo * 1.5;
   p.weapon = { id: 'repeater', ammo: repeaterCap - 1 };
@@ -1194,6 +1195,28 @@ console.log('== hearts stay on the floor at full HP ==');
   step(2, 16);
   check('heart collected when hp low', ctx.G.pickups.length === 0);
   check('hp increased after heart pickup', p.hp > 2);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== Second Stomach hearts fill overflow shields ==');
+{
+  ctx.startRun(); step(3, 16);
+  const p = ctx.G.player;
+  ctx.giveItem('secondstomach');
+  p.hp = p.stats.maxHp;
+  p.shieldHp = 0;
+  const cap = (p.stats.shieldPerk || 0) + p.stats.overShield;
+  ctx.G.pickups.length = 0;
+  ctx.G.enemies.length = 0;
+  ctx.spawnPickup('heart', p.x, p.y);
+  step(2, 16);
+  check('Second Stomach collects heart at full HP', ctx.G.pickups.length === 0);
+  check('heart overflow fills shields', p.hp === p.stats.maxHp && p.shieldHp === Math.min(cap, 2));
+  p.hp = p.stats.maxHp;
+  p.shieldHp = cap;
+  ctx.spawnPickup('heart', p.x, p.y);
+  step(2, 16);
+  check('heart stays when Second Stomach shields are full', ctx.G.pickups.length === 1);
   ctx.startRun(); step(3, 16);
 }
 
@@ -1297,6 +1320,13 @@ console.log('== muzzle origins match projectile origins ==');
   const beamParts = ctx.G.parts.filter(pt => pt.type === 'beam');
   const newest = beamParts[beamParts.length - 1];
   check('beam particle starts at spinaltap muzzle (81px)', newest && Math.abs(newest.x - (p.x + 81)) < 0.01 && Math.abs(newest.y - (p.y)) < 0.01);
+  p.weapon = { id: 'spinaltap', ammo: 7 };
+  p.marrowDraughtT = 5;
+  ctx.fireBeam(p, ctx.WEAPONS.spinaltap, 1);
+  check('Marrow Draught fireBeam spends no ammo', p.weapon.ammo === 7);
+  p.marrowDraughtT = 0;
+  ctx.fireBeam(p, ctx.WEAPONS.spinaltap, 1);
+  check('fireBeam spends ammo without Marrow Draught', p.weapon.ammo === 6);
   ctx.G.bullets.length = 0;
   ctx.startRun(); step(3, 16);
 }

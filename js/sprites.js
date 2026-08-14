@@ -88,10 +88,10 @@ const Sprites = {
       const finish = () => { if (--pending === 0) G.imagesLoaded = true; };
       img.onload = () => { this.imgs[name] = img; if (typeof img.decode === 'function') img.decode().then(finish, finish); else finish(); };
       img.onerror = () => {
-        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=58'; return; }
+        if (hd && !img._sdRetry) { img._sdRetry = true; img.src = 'assets/' + name + '.png?v=59'; return; }
         finish();
       };
-      img.src = hd ? 'assets/hd/' + name + '.webp?v=58' : 'assets/' + name + '.png?v=58';
+      img.src = hd ? 'assets/hd/' + name + '.webp?v=59' : 'assets/' + name + '.png?v=59';
     }
   },
 

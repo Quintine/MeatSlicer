@@ -119,7 +119,7 @@ Right-click is disabled (context menu suppressed). There is **no interact key** 
 ### Healing
 
 - Hearts restore 2 HP (1 heart) each.
-- Healing past max HP normally goes to waste — unless you have the **Second Stomach** item, which converts overflow healing into shield HP. Hearts are not consumed at full HP (they stay on the floor for later, and the magnet won't drag them).
+- Healing past max HP normally goes to waste — unless you have the **Second Stomach** item, which converts overflow healing into shield HP. Hearts stay on the floor at full HP unless Second Stomach has unused overflow-shield room (then they magnetize, collect, and fill shields).
 - Other healing sources: Vampire Dentures (kill procs), Hemophage (hit procs), Worm Gut / Bone Knit (post-combat heals).
 
 ---
