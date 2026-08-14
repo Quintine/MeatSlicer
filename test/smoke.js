@@ -64,7 +64,7 @@ for (const f of files) {
 }
 // const/let top-level bindings live in the context's lexical scope, not on the
 // global object — expose the ones the harness pokes at directly.
-vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, PRESSURE_DROP_BASE, PRESSURE_RELIEF_MUL, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugRefillAmmo, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK })', sandbox);
+vm.runInContext('Object.assign(this, { G, Input, WEAPONS, Music, Sfx, SfxBank, W, H, WALL, ITEMS, ACTIVES, PERKS, ENEMY_TYPES, BOSS_DEFS, SPRITE_MANIFEST, Sprites, ACTOR_ANIMS, PRESSURE_UNIT, PRESSURE_MIN, PRESSURE_MAX, PRESSURE_DIAL_MIN, PRESSURE_DIAL_MAX, PRESSURE_DROP_BASE, PRESSURE_RELIEF_MUL, ROOM_SHAPES, ROOM_THEMES, HELP_PAGES, HELP_RENDERERS, SPAWN_WARN, ENTRY_WARN, ENTRY_BUFFER, STUN_UNIT, stunChance, separateEntryWave, defaultPlayerStats, applyPressureDelta, debugRebuildStats, debugRefillAmmo, debugEnabled, DEBUG_PAGES, updateCamera, mxW, myW, angleTo, genFloor, roomBounds, WEAPON_DROP_LOCKOUT, CAM_EDGE_PEEK, placeRoomObstacles, resolveSolids, spawnDashBurst })', sandbox);
 
 let simTime = 0;
 const ctx = sandbox;
@@ -1274,6 +1274,47 @@ console.log('== dash: burst, slow, cooldown ==');
   release('shift');
   check('idle dash does not move player', p.x === xBeforeIdle);
   check('idle dash does not set slow timer', p.dashSlowT <= slowTBeforeIdle);
+  ctx.startRun(); step(3, 16);
+}
+
+console.log('== large-room blood pools and dash gore ==');
+{
+  ctx.startRun(); step(3, 16);
+  const hall = ctx.makeRoom(0, 0, 'combat'); hall.shape = 'hall'; hall.doors = {};
+  ctx.placeRoomObstacles(hall);
+  check('small rooms get no obstacles', hall.obstacles.length === 0);
+
+  const meat = ctx.makeRoom(1, 0, 'combat'); meat.shape = 'meat_hall';
+  meat.doors = { e: true, w: true, n: false, s: false };
+  ctx.placeRoomObstacles(meat);
+  check('meat_hall places five pools', meat.obstacles.length === 5);
+  const mb = ctx.roomBounds(meat);
+  check('pools stay off center and doors', meat.obstacles.every(o =>
+    Math.hypot(o.x - mb.cx, o.y - mb.cy) >= 110));
+
+  ctx.G.cur = meat; ctx.setArenaForRoom(meat);
+  const o = meat.obstacles[0];
+  const pushed = ctx.resolveSolids(o.x, o.y, 20);
+  check('resolveSolids pushes out of a pool', Math.hypot(pushed.x - o.x, pushed.y - o.y) >= o.r + 20 - 0.05);
+
+  const p = ctx.G.player;
+  p.x = o.x - (o.r + p.r + 8); p.y = o.y; p.dashSlowT = 0;
+  ctx.G.parts.length = 0;
+  ctx.Input.keys.d = true;
+  press('shift'); step(1, 16); release('shift');
+  check('dash does not enter the pool', Math.hypot(p.x - o.x, p.y - o.y) >= o.r + p.r - 0.05);
+  check('dash emits a bloodball', ctx.G.parts.some(pt => pt.type === 'bloodball'));
+  ctx.Input.keys.d = false;
+
+  ctx.G.bullets.length = 0;
+  ctx.G.bullets.push({
+    x: o.x - 80, y: o.y, vx: 400, vy: 0, r: 5, dmg: 1,
+    pierce: 0, bounce: 0, bounces: 0, life: 1, t: 0, behavior: 'bullet',
+    sprite: 'bullet_bone', homing: 0, hit: null, dragTarget: null,
+  });
+  ctx.updateBullets(0.3);
+  check('projectiles pass through pools', ctx.G.bullets.length === 1 && ctx.G.bullets[0].x > o.x);
+
   ctx.startRun(); step(3, 16);
 }
 

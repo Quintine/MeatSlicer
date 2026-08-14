@@ -87,11 +87,16 @@ function updatePlayer(dt) {
     const firing = held ? (w.id === 'bonepopper' ? 0.95 : 0.85) : 1;
     if (keyPressed('shift') && p.dashSlowT <= 0) {
       const dashD = 0.45 * (178 * st.speedMul * firing) * DASH_SLOW_T;
-      p.x += (mx / len) * dashD;
-      p.y += (my / len) * dashD;
+      const sx = p.x, sy = p.y;
+      const stepD = dashD / 8;
+      for (let i = 0; i < 8; i++) {
+        p.x += (mx / len) * stepD;
+        p.y += (my / len) * stepD;
+        const pos = resolveSolids(p.x, p.y, p.r);
+        p.x = pos.x; p.y = pos.y;
+      }
       p.dashSlowT = DASH_SLOW_T;
-      spawnSmoke(p.x, p.y, Math.atan2(-my, -mx), 6, '#9b8d84');
-      spawnShockwave(p.x, p.y, 26, '#d8c9a8', 0.35);
+      spawnDashBurst(sx, sy, Math.atan2(my, mx));
       Sfx.duck();
     }
     const spd = 178 * st.speedMul * firing * (p.dashSlowT > 0 ? 0.5 : 1);
@@ -107,8 +112,8 @@ function updatePlayer(dt) {
   p.moveBlend = lerp(p.moveBlend, mx || my ? 1 : 0, clamp(dt * 12, 0, 1));
   p.recoil = Math.max(0, p.recoil - dt * 7);
   p.muzzleT = Math.max(0, p.muzzleT - dt);
-  p.x = clamp(p.x, G.arena.x0 + p.r, G.arena.x1 - p.r);
-  p.y = clamp(p.y, G.arena.y0 + p.r, G.arena.y1 - p.r);
+  const pos = resolveSolids(p.x, p.y, p.r);
+  p.x = pos.x; p.y = pos.y;
 
   // aim
   p.aim = angleTo(p.x, p.y, mxW(), myW());

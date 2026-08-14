@@ -100,6 +100,8 @@ function spawnPosAwayFromPlayer() {
     const y = rand(a.y0 + 40, a.y1 - 40);
     if (dist(x, y, p.x, p.y) <= safeDist) continue;
     if (nearAnyDoor(x, y)) continue;
+    const obstacles = G.cur && G.cur.obstacles;
+    if (obstacles && obstacles.some(o => dist(x, y, o.x, o.y) < 16 + o.r)) continue;
     return { x, y };
   }
   // fallback: a bounded central region, valid even in the thin hall variants
@@ -458,8 +460,8 @@ function updateEnemies(dt) {
         e.x += px; e.y += py; o.x -= px; o.y -= py;
       }
     }
-    e.x = clamp(e.x, G.arena.x0 + e.r, G.arena.x1 - e.r);
-    e.y = clamp(e.y, G.arena.y0 + e.r, G.arena.y1 - e.r);
+    const pos = resolveSolids(e.x, e.y, e.r);
+    e.x = pos.x; e.y = pos.y;
 
     // contact damage
     if (e.hitT > 0) e.hitT -= dt;
@@ -522,6 +524,8 @@ function updateEnemyAI(e, dt) {
         const behind = p.aim + Math.PI, range = rand(90, 125);
         e.x = clamp(p.x + Math.cos(behind) * range, G.arena.x0 + e.r, G.arena.x1 - e.r);
         e.y = clamp(p.y + Math.sin(behind) * range, G.arena.y0 + e.r, G.arena.y1 - e.r);
+        const landed = resolveSolids(e.x, e.y, e.r);
+        e.x = landed.x; e.y = landed.y;
         e.phased = false; e.alpha = 1; e.ambushState = 'lunge'; e.lungeT = 0.48;
         e.faceDir = angleTo(e.x, e.y, p.x, p.y); e.attackT = 0.48; e.actionT = 0;
       }

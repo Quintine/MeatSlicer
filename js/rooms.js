@@ -2,6 +2,9 @@
 
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const OPP = { n: 's', s: 'n', e: 'w', w: 'e' };
+const OBSTACLE_COUNTS = { grand_hall: 3, deep_hall: 3, meat_hall: 5 };
+const OBSTACLE_R = 42;
+
 const ROOM_SHAPES = {
   hall:      { x0: 48,  y0: 48,  x1: 912, y1: 592 },   // unchanged — start & boss rooms
   wide_hall: { x0: 48,  y0: 176, x1: 912, y1: 464 },   // h 224 -> 288 ("a little wider"; cy stays 320, min dim 288 < 300 keeps censer/broodsac excluded)
@@ -64,15 +67,66 @@ function genFloor(floor) {
     for (const [dir, [dx, dy]] of Object.entries(DIRS)) {
       r.doors[dir] = !!G.rooms[(r.gx + dx) + ',' + (r.gy + dy)];
     }
+    placeRoomObstacles(r);
   }
 }
 
 function makeRoom(gx, gy, type) {
   return { gx, gy, type, shape: 'hall', theme: 'abattoir', doors: {}, cleared: type === 'start',
-    visited: false, decals: [], wavesLeft: 0, spawnT: 0, bossSpawned: false, pickups: [] };
+    visited: false, decals: [], obstacles: [], wavesLeft: 0, spawnT: 0, bossSpawned: false, pickups: [] };
 }
 
 function roomKey(x, y) { return x + ',' + y; }
+
+function nearRoomDoor(room, x, y) {
+  const a = roomBounds(room);
+  const M = Math.min(130, Math.min(a.w, a.h) * 0.32);
+  if (room.doors.n && Math.abs(x - a.cx) < DOOR_HALF + 30 && y < a.y0 + M) return true;
+  if (room.doors.s && Math.abs(x - a.cx) < DOOR_HALF + 30 && y > a.y1 - M) return true;
+  if (room.doors.e && Math.abs(y - a.cy) < DOOR_HALF + 30 && x > a.x1 - M) return true;
+  if (room.doors.w && Math.abs(y - a.cy) < DOOR_HALF + 30 && x < a.x0 + M) return true;
+  return false;
+}
+
+function placeRoomObstacles(room) {
+  room.obstacles = [];
+  const count = OBSTACLE_COUNTS[room.shape];
+  if (!count) return;
+  const a = roomBounds(room);
+  for (let tries = 0; tries < 80 && room.obstacles.length < count; tries++) {
+    const x = rand(a.x0 + 80, a.x1 - 80);
+    const y = rand(a.y0 + 80, a.y1 - 80);
+    if (nearRoomDoor(room, x, y)) continue;
+    if (dist(x, y, a.cx, a.cy) < 110) continue;
+    if (room.obstacles.some(o => dist(x, y, o.x, o.y) < OBSTACLE_R * 2 + 24)) continue;
+    room.obstacles.push({ x, y, r: OBSTACLE_R, kind: 'bloodpool' });
+  }
+}
+
+function resolveSolids(x, y, r) {
+  const obstacles = G.cur && G.cur.obstacles;
+  if (obstacles && obstacles.length) {
+    for (let pass = 0; pass < 2; pass++) {
+      for (const o of obstacles) {
+        const d = dist(x, y, o.x, o.y);
+        if (d < r + o.r) {
+          if (d > 0.01) {
+            const n = (r + o.r) / d;
+            x = o.x + (x - o.x) * n;
+            y = o.y + (y - o.y) * n;
+          } else {
+            x = o.x + r + o.r;
+            y = o.y;
+          }
+        }
+      }
+    }
+  }
+  x = clamp(x, G.arena.x0 + r, G.arena.x1 - r);
+  y = clamp(y, G.arena.y0 + r, G.arena.y1 - r);
+  return { x, y };
+}
+
 
 function wavesFor(floor) {
   const base = 3 + Math.ceil(floor * 1.4);
@@ -110,8 +164,9 @@ function enterRoom(gx, gy) {
   // spawn protection: brief invincibility walking into a fresh room
   if (G.player) {
     G.player.invT = Math.max(G.player.invT, 1.0);
-    G.player.x = clamp(G.player.x, a.x0 + G.player.r, a.x1 - G.player.r);
-    G.player.y = clamp(G.player.y, a.y0 + G.player.r, a.y1 - G.player.r);
+    const pos = resolveSolids(G.player.x, G.player.y, G.player.r);
+    G.player.x = pos.x;
+    G.player.y = pos.y;
   }
   // Iron Lung: re-arm the once-per-room hit block
   if (G.player && G.player.stats.ironLung > 0) G.player.ironLungReady = true;
@@ -419,6 +474,10 @@ function drawRoom(ctx) {
   // blood decals
   for (const d of r.decals) {
     Sprites.draw(ctx, d.img, d.x, d.y, d.rot, 48 * d.s, false, 0.55);
+  }
+  for (const o of r.obstacles) {
+    Sprites.draw(ctx, 'decal_blood1', o.x, o.y, 0, o.r * 2.4, false, 0.92);
+    Sprites.draw(ctx, 'decal_blood3', o.x, o.y, 0.7, o.r * 1.7, false, 0.75);
   }
   // hazards
   for (const h of G.hazards) {

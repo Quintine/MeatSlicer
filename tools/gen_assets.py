@@ -390,6 +390,12 @@ def reference_payload(name: str) -> list[dict]:
     if not REFERENCE.exists():
         raise SystemExit(f"Missing style reference: {REFERENCE}")
     references = [{"type": "image_url", "image_url": {"url": data_url(REFERENCE)}}]
+    if name.startswith(("w_", "wt_", "pt_")):
+        mid = name[3:] if name.startswith(("wt_", "pt_")) else name[2:]
+        prefix = "wt_" if name.startswith(("wt_", "pt_")) else "w_"
+        model = RAW / "guides" / "models" / f"{prefix}{mid}.png"
+        if model.exists():
+            references.append({"type": "image_url", "image_url": {"url": data_url(model)}})
     guide = shape_guide(name)
     if guide:
         references.append({"type": "image_url", "image_url": {"url": data_url(guide)}})

@@ -104,6 +104,14 @@ function spawnShockwave(x, y, radius, color, alpha, important) {
   }, important);
 }
 
+function spawnDashBurst(x, y, ang) {
+  addParticle({ type: 'bloodball', x, y, vx: 0, vy: 0, life: 0.18, t: 0, r: 10, maxR: 56 }, true);
+  spawnShockwave(x, y, 52, '#8b1020', 0.75);
+  spawnBlood(x, y, ang, 16, true);
+  spawnGibs(x, y, 7, false);
+}
+
+
 function spawnSweepFx(x, y, ang, reach, arc) {
   addParticle({ type: 'sweep', x, y, ang, arc, r: 20, maxR: reach, life: 0.18, t: 0 }, true);
 }
@@ -249,6 +257,15 @@ function drawParticles(ctx) {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, radius, radius * 0.72, 0, 0, TAU); ctx.stroke();
       ctx.globalAlpha = k * 0.18;
       ctx.fillStyle = p.color; ctx.beginPath(); ctx.ellipse(p.x, p.y, radius * 0.86, radius * 0.58, 0, 0, TAU); ctx.fill();
+    } else if (p.type === 'bloodball') {
+      const progress = 1 - k;
+      const radius = lerp(p.r, p.maxR, progress);
+      ctx.globalAlpha = k * 0.82;
+      ctx.fillStyle = '#6a0b14';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, radius, radius * 0.72, 0, 0, TAU); ctx.fill();
+      ctx.globalAlpha = k * 0.55;
+      ctx.fillStyle = '#b41828';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, radius * 0.55, radius * 0.55 * 0.72, 0, 0, TAU); ctx.fill();
     } else if (p.type === 'beam') {
       ctx.globalAlpha = k;
       ctx.strokeStyle = '#d9f6ff'; ctx.lineWidth = 13 * k + 3;
